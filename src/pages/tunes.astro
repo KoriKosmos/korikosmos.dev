@@ -1,9 +1,21 @@
 ---
 import Layout from '../layouts/Layout.astro';
 
-const { LASTFM_USER, LASTFM_API_KEY } = import.meta.env;
-const user = LASTFM_USER;
-const apiKey = LASTFM_API_KEY;
+const user = import.meta.env.LASTFM_USER;
+const apiKey = import.meta.env.LASTFM_API_KEY;
+
+const ignoreNames = ['the magnus archives', 'the yard'];
+
+function getImage(images, size = 'medium') {
+  if (!Array.isArray(images)) return null;
+  const img = images.find((i) => i.size === size);
+  return img && img['#text'] ? img['#text'] : null;
+}
+
+function isMusic(name) {
+  const lower = (name || '').toLowerCase();
+  return !ignoreNames.some((bad) => lower.includes(bad));
+}
 
 async function fetchLastFm(method) {
   const url = `https://ws.audioscrobbler.com/2.0/?method=${method}&user=${user}&api_key=${apiKey}&format=json`;
@@ -18,9 +30,15 @@ const recentData = await fetchLastFm('user.getrecenttracks');
 const topTracksData = await fetchLastFm('user.gettoptracks');
 const topArtistsData = await fetchLastFm('user.gettopartists');
 
-const recentTracks = recentData?.recenttracks?.track?.slice(0,5) ?? [];
-const topTracks = topTracksData?.toptracks?.track?.slice(0,5) ?? [];
-const topArtists = topArtistsData?.topartists?.artist?.slice(0,5) ?? [];
+const recentTracks = (recentData?.recenttracks?.track ?? [])
+  .filter((t) => isMusic(t.name) && isMusic(t?.artist?.['#text']))
+  .slice(0, 5);
+const topTracks = (topTracksData?.toptracks?.track ?? [])
+  .filter((t) => isMusic(t.name) && isMusic(t?.artist?.name))
+  .slice(0, 5);
+const topArtists = (topArtistsData?.topartists?.artist ?? [])
+  .filter((a) => isMusic(a.name))
+  .slice(0, 5);
 ---
 
 <Layout title="Tunes">
@@ -29,7 +47,10 @@ const topArtists = topArtistsData?.topartists?.artist?.slice(0,5) ?? [];
     <h2 class="text-2xl font-semibold mb-4">Recent Tracks</h2>
     <ul class="space-y-2">
       {recentTracks.map(track => (
-        <li class="border-b pb-2" key={track.mbid || track.url}>
+        <li class="border-b pb-2 flex items-center gap-4" key={track.mbid || track.url}>
+          {getImage(track.image) && (
+            <img src={getImage(track.image)} alt={`Art for ${track.name}`} class="w-12 h-12 object-cover rounded" loading="lazy" />
+          )}
           <a href={track.url} class="hover:underline" target="_blank">
             {track.artist['#text']} – {track.name}
           </a>
@@ -42,7 +63,10 @@ const topArtists = topArtistsData?.topartists?.artist?.slice(0,5) ?? [];
     <h2 class="text-2xl font-semibold mb-4">Top Tracks</h2>
     <ol class="list-decimal pl-5 space-y-2">
       {topTracks.map((track, i) => (
-        <li key={track.mbid || track.url}>
+        <li class="flex items-center gap-4" key={track.mbid || track.url}>
+          {getImage(track.image) && (
+            <img src={getImage(track.image)} alt={`Art for ${track.name}`} class="w-12 h-12 object-cover rounded" loading="lazy" />
+          )}
           <a href={track.url} class="hover:underline" target="_blank">
             {track.artist.name} – {track.name}
           </a>
@@ -55,7 +79,10 @@ const topArtists = topArtistsData?.topartists?.artist?.slice(0,5) ?? [];
     <h2 class="text-2xl font-semibold mb-4">Top Artists</h2>
     <ol class="list-decimal pl-5 space-y-2">
       {topArtists.map((artist, i) => (
-        <li key={artist.mbid || artist.url}>
+        <li class="flex items-center gap-4" key={artist.mbid || artist.url}>
+          {getImage(artist.image) && (
+            <img src={getImage(artist.image)} alt={`Photo of ${artist.name}`} class="w-12 h-12 object-cover rounded-full" loading="lazy" />
+          )}
           <a href={artist.url} class="hover:underline" target="_blank">
             {artist.name}
           </a>
