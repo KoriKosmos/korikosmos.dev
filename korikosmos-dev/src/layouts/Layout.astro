@@ -1,22 +1,32 @@
-<!doctype html>
-<html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro Basics</title>
-	</head>
-	<body>
-		<slot />
-	</body>
-</html>
+---
+import "../styles/global.css";
+const { title = 'KoriKosmos' } = Astro.props
+---
 
-<style>
-	html,
-	body {
-		margin: 0;
-		width: 100%;
-		height: 100%;
-	}
-</style>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<title>{title}</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</head>
+<body class="bg-white text-gray-900 font-sans">
+<header class="p-4 border-b">
+	<nav class="flex gap-4">
+		<a href="/" class="hover:underline">Home</a>
+		<a href="/about" class="hover:underline">About</a>
+		<a href="/portfolio" class="hover:underline">Portfolio</a>
+		<a href="/cv" class="hover:underline">CV</a>
+		<a href="/tunes" class="hover:underline">Tunes</a>
+		<a href="/blog" class="hover:underline">Blog</a>
+	</nav>
+</header>
+
+<main class="max-w-3xl mx-auto px-4">
+	<slot />
+</main>
+
+<footer class="text-center text-sm text-gray-500 p-6">
+	© {new Date().getFullYear()} Maan – KoriKosmos
+</footer>
+</body>
+</html>
