@@ -31,6 +31,33 @@ async function fetchLastFm(method) {
   return await res.json();
 }
 
+async function fetchTrackInfo(track) {
+  const params = new URLSearchParams({ api_key: apiKey, format: 'json' });
+  if (track.mbid) {
+    params.append('mbid', track.mbid);
+  } else {
+    params.append('artist', track.artist?.name || track.artist);
+    params.append('track', track.name);
+  }
+  const url = `https://ws.audioscrobbler.com/2.0/?method=track.getInfo&${params.toString()}`;
+  const res = await fetch(url);
+  if (!res.ok) return null;
+  return await res.json();
+}
+
+async function fetchArtistInfo(artist) {
+  const params = new URLSearchParams({ api_key: apiKey, format: 'json' });
+  if (artist.mbid) {
+    params.append('mbid', artist.mbid);
+  } else {
+    params.append('artist', artist.name);
+  }
+  const url = `https://ws.audioscrobbler.com/2.0/?method=artist.getInfo&${params.toString()}`;
+  const res = await fetch(url);
+  if (!res.ok) return null;
+  return await res.json();
+}
+
 const recentData = await fetchLastFm('user.getrecenttracks');
 const topTracksData = await fetchLastFm('user.gettoptracks');
 const topArtistsData = await fetchLastFm('user.gettopartists');
@@ -44,6 +71,25 @@ const topTracks = (topTracksData?.toptracks?.track ?? [])
 const topArtists = (topArtistsData?.topartists?.artist ?? [])
   .filter((a) => isMusic(a.name))
   .slice(0, 5);
+
+for (const track of topTracks) {
+  if (!getImage(track.image)) {
+    const info = await fetchTrackInfo(track);
+    const candidate = info?.track?.album?.image || info?.track?.artist?.image;
+    if (candidate) {
+      track.image = candidate;
+    }
+  }
+}
+
+for (const artist of topArtists) {
+  if (!getImage(artist.image)) {
+    const info = await fetchArtistInfo(artist);
+    if (info?.artist?.image) {
+      artist.image = info.artist.image;
+    }
+  }
+}
 ---
 
 <Layout title="Tunes">
