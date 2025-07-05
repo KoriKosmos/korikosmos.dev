@@ -1,3 +1,66 @@
 ---
+import Layout from '../layouts/Layout.astro';
 
+const { LASTFM_USER, LASTFM_API_KEY } = Astro.env;
+const user = LASTFM_USER;
+const apiKey = LASTFM_API_KEY;
+
+async function fetchLastFm(method) {
+  const url = `https://ws.audioscrobbler.com/2.0/?method=${method}&user=${user}&api_key=${apiKey}&format=json`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    return null;
+  }
+  return await res.json();
+}
+
+const recentData = await fetchLastFm('user.getrecenttracks');
+const topTracksData = await fetchLastFm('user.gettoptracks');
+const topArtistsData = await fetchLastFm('user.gettopartists');
+
+const recentTracks = recentData?.recenttracks?.track?.slice(0,5) ?? [];
+const topTracks = topTracksData?.toptracks?.track?.slice(0,5) ?? [];
+const topArtists = topArtistsData?.topartists?.artist?.slice(0,5) ?? [];
 ---
+
+<Layout title="Tunes">
+  <h1 class="text-3xl font-bold my-6">Tunes</h1>
+  <section class="mb-8">
+    <h2 class="text-2xl font-semibold mb-4">Recent Tracks</h2>
+    <ul class="space-y-2">
+      {recentTracks.map(track => (
+        <li class="border-b pb-2" key={track.mbid || track.url}>
+          <a href={track.url} class="hover:underline" target="_blank">
+            {track.artist['#text']} – {track.name}
+          </a>
+        </li>
+      ))}
+    </ul>
+  </section>
+
+  <section class="mb-8">
+    <h2 class="text-2xl font-semibold mb-4">Top Tracks</h2>
+    <ol class="list-decimal pl-5 space-y-2">
+      {topTracks.map((track, i) => (
+        <li key={track.mbid || track.url}>
+          <a href={track.url} class="hover:underline" target="_blank">
+            {track.artist.name} – {track.name}
+          </a>
+        </li>
+      ))}
+    </ol>
+  </section>
+
+  <section class="mb-8">
+    <h2 class="text-2xl font-semibold mb-4">Top Artists</h2>
+    <ol class="list-decimal pl-5 space-y-2">
+      {topArtists.map((artist, i) => (
+        <li key={artist.mbid || artist.url}>
+          <a href={artist.url} class="hover:underline" target="_blank">
+            {artist.name}
+          </a>
+        </li>
+      ))}
+    </ol>
+  </section>
+</Layout>
