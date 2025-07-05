@@ -1,3 +1,73 @@
 ---
+import Layout from '../layouts/Layout.astro'
 
+const apiKey = import.meta.env.LASTFM_API_KEY
+const username = import.meta.env.LASTFM_USERNAME
+
+let recentTracks = []
+let topTracks = []
+let topArtists = []
+
+if (apiKey && username) {
+  const recentUrl = `https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=${username}&api_key=${apiKey}&format=json&limit=5`
+  const topTracksUrl = `https://ws.audioscrobbler.com/2.0/?method=user.gettoptracks&user=${username}&api_key=${apiKey}&format=json&limit=5&period=7day`
+  const topArtistsUrl = `https://ws.audioscrobbler.com/2.0/?method=user.gettopartists&user=${username}&api_key=${apiKey}&format=json&limit=5&period=7day`
+
+  try {
+    const [recentRes, tracksRes, artistsRes] = await Promise.all([
+      fetch(recentUrl),
+      fetch(topTracksUrl),
+      fetch(topArtistsUrl)
+    ])
+    const recentJson = await recentRes.json()
+    const tracksJson = await tracksRes.json()
+    const artistsJson = await artistsRes.json()
+
+    recentTracks = recentJson.recenttracks?.track ?? []
+    topTracks = tracksJson.toptracks?.track ?? []
+    topArtists = artistsJson.topartists?.artist ?? []
+  } catch (err) {
+    console.error('Failed to fetch Last.fm data', err)
+  }
+}
 ---
+
+<Layout title="Tunes">
+  <h1 class="text-3xl font-bold mb-6">Tunes</h1>
+  {apiKey && username ? (
+    <>
+      <section class="mb-8">
+        <h2 class="text-2xl font-semibold mb-2">Recent Tracks</h2>
+        <ul class="list-disc list-inside space-y-1">
+          {recentTracks.map((track) => (
+            <li>
+              <span class="font-medium">{track.artist['#text']}</span> – {track.name}
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section class="mb-8">
+        <h2 class="text-2xl font-semibold mb-2">Top Tracks</h2>
+        <ol class="list-decimal list-inside space-y-1">
+          {topTracks.map((track) => (
+            <li>
+              <span class="font-medium">{track.artist.name}</span> – {track.name}
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <section>
+        <h2 class="text-2xl font-semibold mb-2">Top Artists</h2>
+        <ol class="list-decimal list-inside space-y-1">
+          {topArtists.map((artist) => (
+            <li>{artist.name}</li>
+          ))}
+        </ol>
+      </section>
+    </>
+  ) : (
+    <p class="text-red-600">Missing LASTFM_API_KEY or LASTFM_USERNAME environment variables.</p>
+  )}
+</Layout>
