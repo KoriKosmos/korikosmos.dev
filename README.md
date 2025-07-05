@@ -18,3 +18,5 @@ builds, use `import.meta.env` to access these values in your server-side code.
 ## Features
 
 - Displays recent and top tracks with accompanying album or artist artwork.
+
+- Toggle a cute cursor-following cat using the corner button.
