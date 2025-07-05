@@ -6,10 +6,15 @@ const apiKey = import.meta.env.LASTFM_API_KEY;
 
 const ignoreNames = ['the magnus archives', 'the yard'];
 
-function getImage(images, size = 'medium') {
+function getImage(images, preferredSize = 'medium') {
   if (!Array.isArray(images)) return null;
-  const img = images.find((i) => i.size === size);
-  return img && img['#text'] ? img['#text'] : null;
+  // Try to find an image in the requested size first.
+  let img = images.find((i) => i.size === preferredSize && i['#text']);
+  if (img && img['#text']) return img['#text'];
+
+  // Fallback to any available size with a valid url.
+  img = images.find((i) => i['#text']);
+  return img ? img['#text'] : null;
 }
 
 function isMusic(name) {
