@@ -1,7 +1,7 @@
 # Astro Starter Kit: Basics
 
 Before running the project, copy `.env.example` to `.env` and provide your Last.fm credentials.
-Astro automatically loads variables from this `.env` file and exposes them to server-side code through `Astro.env`.
+Astro automatically loads variables from this `.env` file. Access them with `import.meta.env` when building a static site. `Astro.env` is only available when running with a server output.
 ```sh
 npm create astro@latest -- --template basics
 ```

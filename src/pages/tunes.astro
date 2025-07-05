@@ -1,7 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 
-const { LASTFM_USER, LASTFM_API_KEY } = Astro.env;
+const { LASTFM_USER, LASTFM_API_KEY } = import.meta.env;
 const user = LASTFM_USER;
 const apiKey = LASTFM_API_KEY;
 
