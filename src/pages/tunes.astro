@@ -22,8 +22,15 @@ function isMusic(name) {
   return !ignoreNames.some((bad) => lower.includes(bad));
 }
 
-async function fetchLastFm(method) {
-  const url = `https://ws.audioscrobbler.com/2.0/?method=${method}&user=${user}&api_key=${apiKey}&format=json`;
+async function fetchLastFm(method, extraParams = {}) {
+  const params = new URLSearchParams({
+    method,
+    user,
+    api_key: apiKey,
+    format: 'json',
+    ...extraParams,
+  });
+  const url = `https://ws.audioscrobbler.com/2.0/?${params.toString()}`;
   const res = await fetch(url);
   if (!res.ok) {
     return null;
@@ -31,19 +38,62 @@ async function fetchLastFm(method) {
   return await res.json();
 }
 
-const recentData = await fetchLastFm('user.getrecenttracks');
-const topTracksData = await fetchLastFm('user.gettoptracks');
-const topArtistsData = await fetchLastFm('user.gettopartists');
+async function fetchTrackInfo(track) {
+  const params = new URLSearchParams({ api_key: apiKey, format: 'json' });
+  if (track.mbid) {
+    params.append('mbid', track.mbid);
+  } else {
+    params.append('artist', track.artist?.name || track.artist);
+    params.append('track', track.name);
+  }
+  const url = `https://ws.audioscrobbler.com/2.0/?method=track.getInfo&${params.toString()}`;
+  const res = await fetch(url);
+  if (!res.ok) return null;
+  return await res.json();
+}
+
+async function fetchArtistInfo(artist) {
+  const params = new URLSearchParams({ api_key: apiKey, format: 'json' });
+  if (artist.mbid) {
+    params.append('mbid', artist.mbid);
+  } else {
+    params.append('artist', artist.name);
+  }
+  const url = `https://ws.audioscrobbler.com/2.0/?method=artist.getInfo&${params.toString()}`;
+  const res = await fetch(url);
+  if (!res.ok) return null;
+  return await res.json();
+}
+
+const recentData = await fetchLastFm('user.getrecenttracks', { limit: 5 });
+const topTracksData = await fetchLastFm('user.gettoptracks', { limit: 5 });
+const topArtistsData = await fetchLastFm('user.gettopartists', { limit: 5 });
 
 const recentTracks = (recentData?.recenttracks?.track ?? [])
-  .filter((t) => isMusic(t.name) && isMusic(t?.artist?.['#text']))
-  .slice(0, 5);
+  .filter((t) => isMusic(t.name) && isMusic(t?.artist?.['#text']));
 const topTracks = (topTracksData?.toptracks?.track ?? [])
-  .filter((t) => isMusic(t.name) && isMusic(t?.artist?.name))
-  .slice(0, 5);
+  .filter((t) => isMusic(t.name) && isMusic(t?.artist?.name));
 const topArtists = (topArtistsData?.topartists?.artist ?? [])
-  .filter((a) => isMusic(a.name))
-  .slice(0, 5);
+  .filter((a) => isMusic(a.name));
+
+for (const track of topTracks) {
+  if (!getImage(track.image)) {
+    const info = await fetchTrackInfo(track);
+    const candidate = info?.track?.album?.image || info?.track?.artist?.image;
+    if (candidate) {
+      track.image = candidate;
+    }
+  }
+}
+
+for (const artist of topArtists) {
+  if (!getImage(artist.image)) {
+    const info = await fetchArtistInfo(artist);
+    if (info?.artist?.image) {
+      artist.image = info.artist.image;
+    }
+  }
+}
 ---
 
 <Layout title="Tunes">
