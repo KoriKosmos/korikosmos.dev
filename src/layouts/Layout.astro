@@ -1,5 +1,6 @@
 ---
 import "../styles/global.css";
+import OnekoToggle from "../components/OnekoToggle.astro";
 const { title = 'KoriKosmos' } = Astro.props
 ---
 
@@ -26,7 +27,8 @@ const { title = 'KoriKosmos' } = Astro.props
 </main>
 
 <footer class="text-center text-sm text-gray-500 p-6">
-	© {new Date().getFullYear()} Maan – KoriKosmos
+        © {new Date().getFullYear()} Maan – KoriKosmos
 </footer>
+<OnekoToggle />
 </body>
 </html>
