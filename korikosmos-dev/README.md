@@ -1,5 +1,6 @@
 # Astro Starter Kit: Basics
 
+Before running the project, copy `.env.example` to `.env` and provide your Last.fm credentials.
 ```sh
 npm create astro@latest -- --template basics
 ```
