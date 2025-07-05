@@ -1,0 +1,2 @@
+# korikosmos.dev
+Personal Website
