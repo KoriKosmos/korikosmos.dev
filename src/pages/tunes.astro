@@ -64,8 +64,9 @@ const recentData = await fetchLastFm('user.getrecenttracks');
 
 const recentTracks = (recentData?.recenttracks?.track ?? [])
   .filter((t) => isMusic(t.name) && isMusic(t?.artist?.['#text']))
-  .slice(0, 5);
-// const topTracks = (topTracksData?.toptracks?.track ?? [])
+
+  .slice(0, 10);
+cks = (topTracksData?.toptracks?.track ?? [])
 //   .filter((t) => isMusic(t.name) && isMusic(t?.artist?.name))
 //   .slice(0, 5);
 // const topArtists = (topArtistsData?.topartists?.artist ?? [])
@@ -96,11 +97,11 @@ const recentTracks = (recentData?.recenttracks?.track ?? [])
   <h1 class="text-3xl font-bold my-6">Tunes</h1>
   <section class="mb-8">
     <h2 class="text-2xl font-semibold mb-4">Recent Tracks</h2>
-    <div id="player" class="border rounded p-4 max-w-xs mx-auto">
+    <div id="player" class="border rounded p-4 max-w-md mx-auto">
       {recentTracks.map((track, i) => (
         <div class={`track ${i === 0 ? '' : 'hidden'}`} key={track.mbid || track.url}>
-          {getImage(track.image) && (
-            <img src={getImage(track.image)} alt={`Art for ${track.name}`} class="w-full h-48 object-cover rounded mb-4" loading="lazy" />
+          {getImage(track.image, 'extralarge') && (
+            <img src={getImage(track.image, 'extralarge')} alt={`Art for ${track.name}`} class="w-full h-64 object-cover rounded mb-4" loading="lazy" />
           )}
           <div class="text-center">
             <p class="font-semibold">{track.name}</p>
@@ -108,9 +109,9 @@ const recentTracks = (recentData?.recenttracks?.track ?? [])
           </div>
         </div>
       ))}
-      <div class="flex justify-between mt-4">
-        <button id="prev" class="px-3 py-1 border rounded">Prev</button>
-        <button id="next" class="px-3 py-1 border rounded">Next</button>
+      <div class="flex justify-between mt-4 text-2xl">
+        <button id="prev" class="px-3 py-1 border rounded" aria-label="Previous">&#x23EE;</button>
+        <button id="next" class="px-3 py-1 border rounded" aria-label="Next">&#x23ED;</button>
       </div>
     </div>
   </section>
