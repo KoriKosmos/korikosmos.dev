@@ -59,86 +59,74 @@ async function fetchArtistInfo(artist) {
 }
 
 const recentData = await fetchLastFm('user.getrecenttracks');
-const topTracksData = await fetchLastFm('user.gettoptracks');
-const topArtistsData = await fetchLastFm('user.gettopartists');
+// const topTracksData = await fetchLastFm('user.gettoptracks');
+// const topArtistsData = await fetchLastFm('user.gettopartists');
 
 const recentTracks = (recentData?.recenttracks?.track ?? [])
   .filter((t) => isMusic(t.name) && isMusic(t?.artist?.['#text']))
   .slice(0, 5);
-const topTracks = (topTracksData?.toptracks?.track ?? [])
-  .filter((t) => isMusic(t.name) && isMusic(t?.artist?.name))
-  .slice(0, 5);
-const topArtists = (topArtistsData?.topartists?.artist ?? [])
-  .filter((a) => isMusic(a.name))
-  .slice(0, 5);
+// const topTracks = (topTracksData?.toptracks?.track ?? [])
+//   .filter((t) => isMusic(t.name) && isMusic(t?.artist?.name))
+//   .slice(0, 5);
+// const topArtists = (topArtistsData?.topartists?.artist ?? [])
+//   .filter((a) => isMusic(a.name))
+//   .slice(0, 5);
 
-for (const track of topTracks) {
-  if (!getImage(track.image)) {
-    const info = await fetchTrackInfo(track);
-    const candidate = info?.track?.album?.image || info?.track?.artist?.image;
-    if (candidate) {
-      track.image = candidate;
-    }
-  }
-}
+// for (const track of topTracks) {
+//   if (!getImage(track.image)) {
+//     const info = await fetchTrackInfo(track);
+//     const candidate = info?.track?.album?.image || info?.track?.artist?.image;
+//     if (candidate) {
+//       track.image = candidate;
+//     }
+//   }
+// }
 
-for (const artist of topArtists) {
-  if (!getImage(artist.image)) {
-    const info = await fetchArtistInfo(artist);
-    if (info?.artist?.image) {
-      artist.image = info.artist.image;
-    }
-  }
-}
+// for (const artist of topArtists) {
+//   if (!getImage(artist.image)) {
+//     const info = await fetchArtistInfo(artist);
+//     if (info?.artist?.image) {
+//       artist.image = info.artist.image;
+//     }
+//   }
+// }
 ---
 
 <Layout title="Tunes">
   <h1 class="text-3xl font-bold my-6">Tunes</h1>
   <section class="mb-8">
     <h2 class="text-2xl font-semibold mb-4">Recent Tracks</h2>
-    <ul class="space-y-2">
-      {recentTracks.map(track => (
-        <li class="border-b pb-2 flex items-center gap-4" key={track.mbid || track.url}>
+    <div id="player" class="border rounded p-4 max-w-xs mx-auto">
+      {recentTracks.map((track, i) => (
+        <div class={`track ${i === 0 ? '' : 'hidden'}`} key={track.mbid || track.url}>
           {getImage(track.image) && (
-            <img src={getImage(track.image)} alt={`Art for ${track.name}`} class="w-12 h-12 object-cover rounded" loading="lazy" />
+            <img src={getImage(track.image)} alt={`Art for ${track.name}`} class="w-full h-48 object-cover rounded mb-4" loading="lazy" />
           )}
-          <a href={track.url} class="hover:underline" target="_blank">
-            {track.artist['#text']} – {track.name}
-          </a>
-        </li>
+          <div class="text-center">
+            <p class="font-semibold">{track.name}</p>
+            <p class="text-sm text-gray-500">{track.artist['#text']}</p>
+          </div>
+        </div>
       ))}
-    </ul>
+      <div class="flex justify-between mt-4">
+        <button id="prev" class="px-3 py-1 border rounded">Prev</button>
+        <button id="next" class="px-3 py-1 border rounded">Next</button>
+      </div>
+    </div>
   </section>
 
-  <section class="mb-8">
-    <h2 class="text-2xl font-semibold mb-4">Top Tracks</h2>
-    <ol class="list-decimal pl-5 space-y-2">
-      {topTracks.map((track, i) => (
-        <li class="flex items-center gap-4" key={track.mbid || track.url}>
-          {getImage(track.image) && (
-            <img src={getImage(track.image)} alt={`Art for ${track.name}`} class="w-12 h-12 object-cover rounded" loading="lazy" />
-          )}
-          <a href={track.url} class="hover:underline" target="_blank">
-            {track.artist.name} – {track.name}
-          </a>
-        </li>
-      ))}
-    </ol>
-  </section>
-
-  <section class="mb-8">
-    <h2 class="text-2xl font-semibold mb-4">Top Artists</h2>
-    <ol class="list-decimal pl-5 space-y-2">
-      {topArtists.map((artist, i) => (
-        <li class="flex items-center gap-4" key={artist.mbid || artist.url}>
-          {getImage(artist.image) && (
-            <img src={getImage(artist.image)} alt={`Photo of ${artist.name}`} class="w-12 h-12 object-cover rounded-full" loading="lazy" />
-          )}
-          <a href={artist.url} class="hover:underline" target="_blank">
-            {artist.name}
-          </a>
-        </li>
-      ))}
-    </ol>
-  </section>
+  <script is:inline>
+    const tracks = Array.from(document.querySelectorAll('#player .track'));
+    let current = 0;
+    document.getElementById('prev').addEventListener('click', () => {
+      tracks[current].classList.add('hidden');
+      current = (current - 1 + tracks.length) % tracks.length;
+      tracks[current].classList.remove('hidden');
+    });
+    document.getElementById('next').addEventListener('click', () => {
+      tracks[current].classList.add('hidden');
+      current = (current + 1) % tracks.length;
+      tracks[current].classList.remove('hidden');
+    });
+  </script>
 </Layout>
