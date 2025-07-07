@@ -64,8 +64,9 @@ const recentData = await fetchLastFm('user.getrecenttracks');
 
 const recentTracks = (recentData?.recenttracks?.track ?? [])
   .filter((t) => isMusic(t.name) && isMusic(t?.artist?.['#text']))
+
   .slice(0, 10);
-// const topTracks = (topTracksData?.toptracks?.track ?? [])
+cks = (topTracksData?.toptracks?.track ?? [])
 //   .filter((t) => isMusic(t.name) && isMusic(t?.artist?.name))
 //   .slice(0, 5);
 // const topArtists = (topArtistsData?.topartists?.artist ?? [])
