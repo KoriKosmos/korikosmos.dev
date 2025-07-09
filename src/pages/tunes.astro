@@ -64,18 +64,9 @@ const recentData = await fetchLastFm('user.getrecenttracks');
 
 const recentTracks = (recentData?.recenttracks?.track ?? [])
   .filter((t) => isMusic(t.name) && isMusic(t?.artist?.['#text']))
-  .slice(0, 10);
 
-for (const track of recentTracks) {
-  if (!getImage(track.image, 'extralarge')) {
-    const info = await fetchTrackInfo(track);
-    const candidate = info?.track?.album?.image || info?.track?.artist?.image;
-    if (candidate) {
-      track.image = candidate;
-    }
-  }
-}
-// const topTracks = (topTracksData?.toptracks?.track ?? [])
+  .slice(0, 10);
+cks = (topTracksData?.toptracks?.track ?? [])
 //   .filter((t) => isMusic(t.name) && isMusic(t?.artist?.name))
 //   .slice(0, 5);
 // const topArtists = (topArtistsData?.topartists?.artist ?? [])
