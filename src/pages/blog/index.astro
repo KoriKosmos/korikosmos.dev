@@ -1,8 +1,18 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import UnderConstruction from '../../components/UnderConstruction.astro';
+import { getCollection } from 'astro:content';
+
+const posts = await getCollection('blog');
 ---
 
 <Layout title="Blog">
-  <UnderConstruction />
+  <h1 class="text-3xl font-bold my-6">Blog</h1>
+  <ul class="space-y-4">
+    {posts.map(post => (
+      <li>
+        <a href={`/blog/${post.slug}/`} class="text-xl text-blue-400 hover:underline">{post.data.title}</a>
+        <p class="text-gray-400">{post.data.description}</p>
+      </li>
+    ))}
+  </ul>
 </Layout>

@@ -12,11 +12,9 @@ This repo contains the source for **korikosmos.dev**, my personal website built 
    ```sh
    cp .env.example .env
    ```
-   `LASTFM_USER` and `LASTFM_API_KEY` are read automatically by Astro. These values never reach the browser – they're only used server side.
-Astro loads variables from this file. Access them with `import.meta.env` during the build; `Astro.env` only works when using a server output.
+   `LASTFM_USER` and `LASTFM_API_KEY` are read automatically by Astro. These values never reach the browser – they're only used server side. Astro loads variables from this file. Access them with `import.meta.env` during the build; `Astro.env` only works when using a server output.
 
 ## Development
-
 
 Start a local server at `http://localhost:4321`:
 
@@ -28,7 +26,8 @@ npm run dev
 
 - Displays my most recently played tracks with album artwork
 - Toggle a little cursor-following cat from the corner button
-- Showcases my projects from `src/data/projects.js`
+- Showcases my projects from `src/content/projects`
+- Manage posts and projects from Netlify CMS at `/admin`
 - Responsive Tailwind styling
 
 ## Project Structure
@@ -36,12 +35,15 @@ npm run dev
 ```
 /
 ├── public/
+│   └── admin/           # Netlify CMS
 ├── src/
 │   ├── assets/
 │   ├── components/
 │   ├── layouts/
 │   ├── pages/
-│   └── data/projects.js
+│   └── content/
+│       ├── blog/
+│       └── projects/
 └── ...
 ```
 
@@ -58,5 +60,3 @@ Run these from the project root:
 | `npm run build`     | Build the production site to `./dist/`         |
 | `npm run preview`   | Preview the built site locally                 |
 | `npm run astro ...` | Run additional Astro CLI commands              |
-
-
