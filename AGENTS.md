@@ -1,0 +1,35 @@
+# Development Guidelines
+
+This project contains the source for **korikosmos.dev**, a personal site built with [Astro](https://astro.build/). It serves as a portfolio hub, CV, blog and music showcase.
+
+## Site Structure & Objectives
+
+- `src/pages/index.astro` – Landing page with a short greeting and link to the portfolio.
+- `src/pages/about.astro` – Will provide a biography; currently uses the `UnderConstruction` component.
+- `src/pages/cv.astro` – Full curriculum vitae including education, skills and work history.
+- `src/pages/portfolio.astro` – Placeholder for project showcases.
+- `src/pages/blog/` – Future blog posts; the index page is under construction.
+- `src/pages/tunes.astro` – Displays recent Last.fm tracks and requires `LASTFM_USER` and `LASTFM_API_KEY` in `.env`.
+- `src/layouts/Layout.astro` – Base layout used by pages; includes navigation links and the oneko cat toggle.
+- `src/components/UnderConstruction.astro` – Simple component indicating a page is unfinished.
+
+## Getting Started
+
+1. Install dependencies with `npm install`.
+2. Copy `.env.example` to `.env` and provide your Last.fm credentials.
+3. Use `npm run dev` to start the local dev server.
+4. Run `npm run build` to generate the production build before committing.
+
+## Contributing
+
+- Follow the existing coding style (two‑space indentation, semicolons in JS/TS).
+- Keep commits focused and write a short imperative subject line (e.g. `Fix navbar links`).
+- Verify that `npm run build` succeeds; there are no automated tests.
+- New pages go in `src/pages`, and reusable pieces belong in `src/components`.
+
+## Useful Commands
+
+- `npm run dev` – start development server at `localhost:4321`.
+- `npm run build` – build to `dist/`.
+- `npm run preview` – preview the production build locally.
+
