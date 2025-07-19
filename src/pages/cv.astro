@@ -3,20 +3,24 @@ import Layout from '../layouts/Layout.astro';
 ---
 
 <Layout title="CV">
-  <section class="my-8">
-    <h1 class="text-4xl font-bold mb-2">Kori Kosmos</h1>
-    <p class="text-lg mb-2">MSci Computer Science Graduate</p>
-    <p>WD23 3FH, United Kingdom</p>
-    <p class="mb-4">
-      <a href="mailto:kori@korikosmos.dev" class="text-blue-400 hover:underline">kori@korikosmos.dev</a>
-      &bull;
-      <a href="https://korikosmos.dev" class="text-blue-400 hover:underline">korikosmos.dev</a>
-      &bull;
-      <a href="https://linkedin.com/in/maan-meher-449094a0" class="text-blue-400 hover:underline">LinkedIn</a>
-    </p>
+  <section class="my-8 text-center">
+    <div class="bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl p-8 shadow-lg">
+      <h1 class="text-5xl font-extrabold mb-2">Kori Kosmos</h1>
+      <p class="text-xl mb-2">MSci Computer Science Graduate</p>
+      <p>WD23 3FH, United Kingdom</p>
+      <p class="mt-4 flex flex-wrap justify-center gap-4">
+        <a href="mailto:kori@korikosmos.dev" class="text-white underline hover:text-gray-200">kori@korikosmos.dev</a>
+        <span class="text-white">&bull;</span>
+        <a href="https://korikosmos.dev" class="text-white underline hover:text-gray-200">korikosmos.dev</a>
+        <span class="text-white">&bull;</span>
+        <a href="https://linkedin.com/in/maan-meher-449094a0" class="text-white underline hover:text-gray-200">LinkedIn</a>
+      </p>
+    </div>
   </section>
 
-  <section class="mb-8">
+  <div class="space-y-8">
+
+  <section class="bg-gray-800/60 rounded-lg p-6 shadow">
     <h2 class="text-2xl font-semibold mb-2">Summary</h2>
     <p class="mb-2">With a strong foundation in computer science and particular interests in artificial intelligence, systems, and design-focused technologies, I approach challenges with curiosity, structure, and a systems mindset. My experience spans low-level programming, cybersecurity, and application development, shaped by academic study and personal exploration.</p>
     <p class="mb-2">I’m especially comfortable learning on the go and adapting quickly to new tools, environments, and workflows. I thrive in spaces that challenge me or align with my interests, especially those that value independent thought and flexibility over rigid structure.</p>
@@ -24,7 +28,7 @@ import Layout from '../layouts/Layout.astro';
     <p>Having lived in Pakistan, Indonesia, Wales, and England, I bring a global outlook and confidence working in multicultural environments. Outside of computing, I draw creative inspiration from comics and narrative media, often carrying those influences into my design thinking.</p>
   </section>
 
-  <section class="mb-8">
+  <section class="bg-gray-800/60 rounded-lg p-6 shadow">
     <h2 class="text-2xl font-semibold mb-2">Education</h2>
     <ul class="list-disc pl-5 space-y-2">
       <li><strong>2021–2025:</strong> MSci Computer Science (Integrated Masters), Royal Holloway, University of London – <em>Classification: Second Class Honours (Upper Division)</em></li>
@@ -45,7 +49,7 @@ import Layout from '../layouts/Layout.astro';
     </ul>
   </section>
 
-  <section class="mb-8">
+  <section class="bg-gray-800/60 rounded-lg p-6 shadow">
     <h2 class="text-2xl font-semibold mb-2">Technical Skills</h2>
     <ul class="list-disc pl-5 space-y-1">
       <li><strong>Languages:</strong> Java, Python, C++, Haskell, Prolog, SQL, Bash</li>
@@ -55,7 +59,7 @@ import Layout from '../layouts/Layout.astro';
     </ul>
   </section>
 
-  <section class="mb-8">
+  <section class="bg-gray-800/60 rounded-lg p-6 shadow">
     <h2 class="text-2xl font-semibold mb-2">Key Modules</h2>
     <ul class="list-disc pl-5 space-y-2">
       <li><strong>AI &amp; ML:</strong> Machine Learning, Deep Learning, Symbolic AI, Natural Language Processing, Reinforcement Learning<br/>Covered core AI concepts and applications. Gained practical experience in building models, understanding data biases, and applying algorithms to real-world scenarios.</li>
@@ -66,7 +70,7 @@ import Layout from '../layouts/Layout.astro';
     </ul>
   </section>
 
-  <section class="mb-8">
+  <section class="bg-gray-800/60 rounded-lg p-6 shadow">
     <h2 class="text-2xl font-semibold mb-2">Projects</h2>
     <ul class="list-disc pl-5 space-y-2">
       <li><strong>Tales of Zelmore (Year 1 Team Game):</strong> Developed a complete 2D top-down arcade shooter using Python and SimpleGUI. The game includes custom sprite animations, AI-driven enemy behavior, item drops with varied effects, and an interactive GUI system. Implemented robust collision detection, real-time input handling, and multiple gameplay states.</li>
@@ -79,7 +83,7 @@ import Layout from '../layouts/Layout.astro';
     </ul>
   </section>
 
-  <section class="mb-8">
+  <section class="bg-gray-800/60 rounded-lg p-6 shadow">
     <h2 class="text-2xl font-semibold mb-2">Work Experience</h2>
     <ul class="list-disc pl-5 space-y-2">
       <li><strong>Jun 2025 – Present:</strong> Sales Assistant, CeX (Webuy Entertainment), Watford, UK
@@ -115,7 +119,7 @@ import Layout from '../layouts/Layout.astro';
     </ul>
   </section>
 
-  <section class="mb-8">
+  <section class="bg-gray-800/60 rounded-lg p-6 shadow">
     <h2 class="text-2xl font-semibold mb-2">Languages</h2>
     <ul class="list-disc pl-5">
       <li><strong>Fluent:</strong> English, Urdu</li>
@@ -124,8 +128,10 @@ import Layout from '../layouts/Layout.astro';
     </ul>
   </section>
 
-  <section class="mb-8">
+  <section class="bg-gray-800/60 rounded-lg p-6 shadow">
     <h2 class="text-2xl font-semibold mb-2">Interests</h2>
     <p>Video games, comics/manga, game design, world-building, interactive storytelling</p>
   </section>
+
+  </div>
 </Layout>
