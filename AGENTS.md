@@ -7,11 +7,12 @@ This project contains the source for **korikosmos.dev**, a personal site built w
 - `src/pages/index.astro` – Landing page with a short greeting and link to the portfolio.
 - `src/pages/about.astro` – Will provide a biography; currently uses the `UnderConstruction` component.
 - `src/pages/cv.astro` – Full curriculum vitae including education, skills and work history.
-- `src/pages/portfolio.astro` – Placeholder for project showcases.
-- `src/pages/blog/` – Future blog posts; the index page is under construction.
+- `src/pages/portfolio.astro` – Lists projects from `src/content/projects`.
+- `src/pages/blog/` – Blog posts generated from Markdown content.
 - `src/pages/tunes.astro` – Displays recent Last.fm tracks and requires `LASTFM_USER` and `LASTFM_API_KEY` in `.env`.
 - `src/layouts/Layout.astro` – Base layout used by pages; includes navigation links and the oneko cat toggle.
 - `src/components/UnderConstruction.astro` – Simple component indicating a page is unfinished.
+- `src/content/` – Markdown files managed by Netlify CMS at `/admin`.
 
 ## Getting Started
 
@@ -37,6 +38,7 @@ This project contains the source for **korikosmos.dev**, a personal site built w
 
 
 ## Notes
+- Content is edited through Netlify CMS at `/admin`.
 - Keep the main `README.md` up to date. Avoid writing documentation changes only in `Astro-README.md`.
 - Use a first-person voice in docs. Write from my perspective.
 - Sync useful content from Astro-README.md back to README.md when needed.

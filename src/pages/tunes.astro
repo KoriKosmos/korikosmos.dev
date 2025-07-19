@@ -58,7 +58,10 @@ async function fetchArtistInfo(artist) {
   return await res.json();
 }
 
-const recentData = await fetchLastFm('user.getrecenttracks');
+let recentData = null;
+if (user && apiKey) {
+  recentData = await fetchLastFm('user.getrecenttracks');
+}
 
 const recentTracks = (() => {
   const seen = new Set();
