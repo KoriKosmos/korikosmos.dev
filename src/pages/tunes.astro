@@ -65,8 +65,10 @@ const recentTracks = (() => {
   const unique = [];
   for (const t of recentData?.recenttracks?.track ?? []) {
     if (!isMusic(t.name) || !isMusic(t?.artist?.['#text'])) continue;
-    const key = `${t.artist['#text']}__${t.name}`;
-    if (seen.has(key)) continue;
+
+    const key = t.mbid || t.name.trim().toLowerCase();
+    if (!key || seen.has(key)) continue;
+    
     seen.add(key);
     unique.push(t);
     if (unique.length >= 10) break;
