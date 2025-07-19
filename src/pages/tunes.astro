@@ -59,38 +59,21 @@ async function fetchArtistInfo(artist) {
 }
 
 const recentData = await fetchLastFm('user.getrecenttracks');
-// const topTracksData = await fetchLastFm('user.gettoptracks');
-// const topArtistsData = await fetchLastFm('user.gettopartists');
 
-const recentTracks = (recentData?.recenttracks?.track ?? [])
-  .filter((t) => isMusic(t.name) && isMusic(t?.artist?.['#text']))
+const recentTracks = (() => {
+  const seen = new Set();
+  const unique = [];
+  for (const t of recentData?.recenttracks?.track ?? []) {
+    if (!isMusic(t.name) || !isMusic(t?.artist?.['#text'])) continue;
+    const key = t.mbid || t.name.trim().toLowerCase();
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    unique.push(t);
+    if (unique.length >= 10) break;
+  }
+  return unique;
+})();
 
-  .slice(0, 10);
-cks = (topTracksData?.toptracks?.track ?? [])
-//   .filter((t) => isMusic(t.name) && isMusic(t?.artist?.name))
-//   .slice(0, 5);
-// const topArtists = (topArtistsData?.topartists?.artist ?? [])
-//   .filter((a) => isMusic(a.name))
-//   .slice(0, 5);
-
-// for (const track of topTracks) {
-//   if (!getImage(track.image)) {
-//     const info = await fetchTrackInfo(track);
-//     const candidate = info?.track?.album?.image || info?.track?.artist?.image;
-//     if (candidate) {
-//       track.image = candidate;
-//     }
-//   }
-// }
-
-// for (const artist of topArtists) {
-//   if (!getImage(artist.image)) {
-//     const info = await fetchArtistInfo(artist);
-//     if (info?.artist?.image) {
-//       artist.image = info.artist.image;
-//     }
-//   }
-// }
 ---
 
 <Layout title="Tunes">
