@@ -26,9 +26,9 @@ npm run dev
 
 ## Features
 
-- Displays **my** most recently played tracks with album artwork
+- Displays my most recently played tracks with album artwork
 - Toggle a little cursor-following cat from the corner button
-- Showcases **my** projects from `src/data/projects.js`
+- Showcases my projects from `src/data/projects.js`
 - Responsive Tailwind styling
 
 ## Project Structure
