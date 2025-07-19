@@ -35,3 +35,8 @@ This project contains the source for **korikosmos.dev**, a personal site built w
 - `npm run build` – build to `dist/`.
 - `npm run preview` – preview the production build locally.
 
+
+## Notes
+- Keep the main `README.md` up to date. Avoid writing documentation changes only in `Astro-README.md`.
+- Use a first-person voice in docs. Write from my perspective.
+- Sync useful content from Astro-README.md back to README.md when needed.
