@@ -22,3 +22,6 @@ Your Last.fm API key is only used on the server and never sent to the browser.
 - Displays your most recently played tracks with accompanying album artwork.
 
 - Toggle a cute cursor-following cat using the corner button.
+
+- Showcase personal projects on the Portfolio page. Add new entries in
+  `src/data/projects.js` to link GitHub repos or describe non-git work.
