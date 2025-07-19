@@ -3,82 +3,6 @@ import Layout from '../layouts/Layout.astro';
 
 const user = import.meta.env.LASTFM_USER;
 const apiKey = import.meta.env.LASTFM_API_KEY;
-
-const ignoreNames = ['the magnus archives', 'the yard'];
-
-function getImage(images, preferredSize = 'medium') {
-  if (!Array.isArray(images)) return null;
-  // Try to find an image in the requested size first.
-  let img = images.find((i) => i.size === preferredSize && i['#text']);
-  if (img && img['#text']) return img['#text'];
-
-  // Fallback to any available size with a valid url.
-  img = images.find((i) => i['#text']);
-  return img ? img['#text'] : null;
-}
-
-function isMusic(name) {
-  const lower = (name || '').toLowerCase();
-  return !ignoreNames.some((bad) => lower.includes(bad));
-}
-
-async function fetchLastFm(method) {
-  const url = `https://ws.audioscrobbler.com/2.0/?method=${method}&user=${user}&api_key=${apiKey}&format=json`;
-  const res = await fetch(url);
-  if (!res.ok) {
-    return null;
-  }
-  return await res.json();
-}
-
-async function fetchTrackInfo(track) {
-  const params = new URLSearchParams({ api_key: apiKey, format: 'json' });
-  if (track.mbid) {
-    params.append('mbid', track.mbid);
-  } else {
-    params.append('artist', track.artist?.name || track.artist);
-    params.append('track', track.name);
-  }
-  const url = `https://ws.audioscrobbler.com/2.0/?method=track.getInfo&${params.toString()}`;
-  const res = await fetch(url);
-  if (!res.ok) return null;
-  return await res.json();
-}
-
-async function fetchArtistInfo(artist) {
-  const params = new URLSearchParams({ api_key: apiKey, format: 'json' });
-  if (artist.mbid) {
-    params.append('mbid', artist.mbid);
-  } else {
-    params.append('artist', artist.name);
-  }
-  const url = `https://ws.audioscrobbler.com/2.0/?method=artist.getInfo&${params.toString()}`;
-  const res = await fetch(url);
-  if (!res.ok) return null;
-  return await res.json();
-}
-
-let recentData = null;
-if (user && apiKey) {
-  recentData = await fetchLastFm('user.getrecenttracks');
-}
-
-const recentTracks = (() => {
-  const seen = new Set();
-  const unique = [];
-  for (const t of recentData?.recenttracks?.track ?? []) {
-    if (!isMusic(t.name) || !isMusic(t?.artist?.['#text'])) continue;
-
-    const key = t.mbid || t.name.trim().toLowerCase();
-    if (!key || seen.has(key)) continue;
-    
-    seen.add(key);
-    unique.push(t);
-    if (unique.length >= 10) break;
-  }
-  return unique;
-})();
-
 ---
 
 <Layout title="Tunes">
@@ -86,36 +10,102 @@ const recentTracks = (() => {
   <section class="mb-8">
     <h2 class="text-2xl font-semibold mb-4">Recent Tracks</h2>
     <div id="player" class="border rounded p-4 max-w-md mx-auto">
-      {recentTracks.map((track, i) => (
-        <div class={`track ${i === 0 ? '' : 'hidden'}`} key={track.mbid || track.url}>
-          {getImage(track.image, 'extralarge') && (
-            <img src={getImage(track.image, 'extralarge')} alt={`Art for ${track.name}`} class="w-full h-64 object-cover rounded mb-4" loading="lazy" />
-          )}
-          <div class="text-center">
-            <p class="font-semibold">{track.name}</p>
-            <p class="text-sm text-gray-500">{track.artist['#text']}</p>
-          </div>
-        </div>
-      ))}
-      <div class="flex justify-between mt-4 text-2xl">
-        <button id="prev" class="px-3 py-1 border rounded" aria-label="Previous">&#x23EE;</button>
-        <button id="next" class="px-3 py-1 border rounded" aria-label="Next">&#x23ED;</button>
-      </div>
+      <p>Loading...</p>
     </div>
   </section>
 
   <script is:inline>
-    const tracks = Array.from(document.querySelectorAll('#player .track'));
-    let current = 0;
-    document.getElementById('prev').addEventListener('click', () => {
-      tracks[current].classList.add('hidden');
-      current = (current - 1 + tracks.length) % tracks.length;
-      tracks[current].classList.remove('hidden');
-    });
-    document.getElementById('next').addEventListener('click', () => {
-      tracks[current].classList.add('hidden');
-      current = (current + 1) % tracks.length;
-      tracks[current].classList.remove('hidden');
-    });
+    const user = ${JSON.stringify(user)};
+    const apiKey = ${JSON.stringify(apiKey)};
+    const ignoreNames = ['the magnus archives', 'the yard'];
+
+    function getImage(images, preferredSize = 'medium') {
+      if (!Array.isArray(images)) return null;
+      let img = images.find((i) => i.size === preferredSize && i['#text']);
+      if (img && img['#text']) return img['#text'];
+      img = images.find((i) => i['#text']);
+      return img ? img['#text'] : null;
+    }
+
+    function isMusic(name) {
+      const lower = (name || '').toLowerCase();
+      return !ignoreNames.some((bad) => lower.includes(bad));
+    }
+
+    async function fetchLastFm() {
+      const url = `https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=${user}&api_key=${apiKey}&format=json`;
+      const res = await fetch(url);
+      if (!res.ok) return null;
+      return await res.json();
+    }
+
+    function createTrackEl(track, first) {
+      const div = document.createElement('div');
+      div.className = `track ${first ? '' : 'hidden'}`;
+      const imgSrc = getImage(track.image, 'extralarge');
+      if (imgSrc) {
+        const img = document.createElement('img');
+        img.src = imgSrc;
+        img.alt = `Art for ${track.name}`;
+        img.loading = 'lazy';
+        img.className = 'w-full h-64 object-cover rounded mb-4';
+        div.appendChild(img);
+      }
+      const info = document.createElement('div');
+      info.className = 'text-center';
+      const name = document.createElement('p');
+      name.className = 'font-semibold';
+      name.textContent = track.name;
+      const artist = document.createElement('p');
+      artist.className = 'text-sm text-gray-500';
+      artist.textContent = track.artist['#text'];
+      info.appendChild(name);
+      info.appendChild(artist);
+      div.appendChild(info);
+      return div;
+    }
+
+    async function loadTracks() {
+      const data = await fetchLastFm();
+      const container = document.getElementById('player');
+      container.innerHTML = '';
+      if (!data) {
+        container.textContent = 'Failed to load tracks.';
+        return;
+      }
+      const seen = new Set();
+      const unique = [];
+      for (const t of data.recenttracks.track || []) {
+        if (!isMusic(t.name) || !isMusic(t?.artist?.['#text'])) continue;
+        const key = t.mbid || t.name.trim().toLowerCase();
+        if (!key || seen.has(key)) continue;
+        seen.add(key);
+        unique.push(t);
+        if (unique.length >= 10) break;
+      }
+      if (!unique.length) {
+        container.textContent = 'No recent tracks found.';
+        return;
+      }
+      unique.forEach((track, i) => container.appendChild(createTrackEl(track, i === 0)));
+      const controls = document.createElement('div');
+      controls.className = 'flex justify-between mt-4 text-2xl';
+      controls.innerHTML = '<button id="prev" class="px-3 py-1 border rounded" aria-label="Previous">\u23EE</button><button id="next" class="px-3 py-1 border rounded" aria-label="Next">\u23ED</button>';
+      container.appendChild(controls);
+      const tracks = Array.from(container.querySelectorAll('.track'));
+      let current = 0;
+      controls.querySelector('#prev').addEventListener('click', () => {
+        tracks[current].classList.add('hidden');
+        current = (current - 1 + tracks.length) % tracks.length;
+        tracks[current].classList.remove('hidden');
+      });
+      controls.querySelector('#next').addEventListener('click', () => {
+        tracks[current].classList.add('hidden');
+        current = (current + 1) % tracks.length;
+        tracks[current].classList.remove('hidden');
+      });
+    }
+
+    loadTracks();
   </script>
 </Layout>

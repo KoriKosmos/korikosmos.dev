@@ -47,7 +47,7 @@ npm run dev
 └── ...
 ```
 
-`src/pages/tunes.astro` fetches Last.fm data during build.
+`src/pages/tunes.astro` now fetches Last.fm data on each visit using client-side JavaScript.
 
 ## Commands
 
