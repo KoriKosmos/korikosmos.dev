@@ -23,6 +23,8 @@ This project contains the source for **korikosmos.dev**, a personal site built w
 ## Contributing
 
 - Follow the existing coding style (two‑space indentation, semicolons in JS/TS).
+- Whenever you make a change, add or modify this AGENTS.md file to enhance future updates, refactors and usability. Whether this is instructions, best habits, etc.
+- Whenever a change is made, keep a list of notes at the bottom of this AGENTS.md file that tracks the more "qualitative" wants of the user/client, such as themes, experiences, etc.
 - Keep commits focused and write a short imperative subject line (e.g. `Fix navbar links`).
 - Verify that `npm run build` succeeds; there are no automated tests.
 - New pages go in `src/pages`, and reusable pieces belong in `src/components`.
