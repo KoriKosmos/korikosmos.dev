@@ -60,3 +60,13 @@ Run these from the project root:
 | `npm run build`     | Build the production site to `./dist/`         |
 | `npm run preview`   | Preview the built site locally                 |
 | `npm run astro ...` | Run additional Astro CLI commands              |
+
+## Docker
+
+Use Docker to build and preview the site without installing Node locally:
+
+```sh
+docker compose up --build
+```
+
+The site will be available at http://localhost:8080. I can also set `GIT_REPO` to a GitHub URL so the container pulls the latest changes each time it starts. Optionally set `GIT_BRANCH` if I need a branch other than `main`.
