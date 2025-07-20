@@ -3,7 +3,7 @@ services:
   web:
     build: .
     ports:
-      - "8080:80"
+      - "8484:80"
     environment:
       - LASTFM_USER=${LASTFM_USER}
       - LASTFM_API_KEY=${LASTFM_API_KEY}
