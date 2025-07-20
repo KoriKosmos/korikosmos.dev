@@ -69,4 +69,5 @@ Use Docker to build and preview the site without installing Node locally:
 docker compose up --build
 ```
 
-The site will be available at http://localhost:8080. Remember to provide `LASTFM_USER` and `LASTFM_API_KEY` in your environment when building.
+The site will be available at http://localhost:8080. Can also set `GIT_REPO` to a GitHub URL so the container pulls the latest changes each time it starts. Optionally set `GIT_BRANCH` if a branch other than `main` is needed.
+Remember to provide `LASTFM_USER` and `LASTFM_API_KEY` in your environment when building.

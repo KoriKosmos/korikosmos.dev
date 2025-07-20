@@ -7,3 +7,5 @@ services:
     environment:
       - LASTFM_USER=${LASTFM_USER}
       - LASTFM_API_KEY=${LASTFM_API_KEY}
+      - GIT_REPO=${GIT_REPO}
+      - GIT_BRANCH=${GIT_BRANCH:-main}
