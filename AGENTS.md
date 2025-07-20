@@ -38,6 +38,7 @@ This project contains the source for **korikosmos.dev**, a personal site built w
 
 
 ## Notes
+- Tunes page loads Last.fm tracks client-side using an inline script with `define:vars` so credentials are inserted at build time.
 - Content is edited through Netlify CMS at `/admin`.
 - Keep the main `README.md` up to date. Avoid writing documentation changes only in `Astro-README.md`.
 - Use a first-person voice in docs. Write from my perspective.

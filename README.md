@@ -12,7 +12,7 @@ This repo contains the source for **korikosmos.dev**, my personal website built 
    ```sh
    cp .env.example .env
    ```
-   `LASTFM_USER` and `LASTFM_API_KEY` are read automatically by Astro. These values never reach the browser – they're only used server side. Astro loads variables from this file. Access them with `import.meta.env` during the build; `Astro.env` only works when using a server output.
+   `LASTFM_USER` and `LASTFM_API_KEY` are loaded from this file and then inlined into the tunes page. The script on `/tunes` fetches tracks in the browser whenever the page loads.
 
 ## Development
 
@@ -47,7 +47,7 @@ npm run dev
 └── ...
 ```
 
-`src/pages/tunes.astro` fetches Last.fm data during build.
+`src/pages/tunes.astro` now fetches Last.fm data on each visit using client-side JavaScript.
 
 ## Commands
 
