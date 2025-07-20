@@ -16,7 +16,7 @@ fi
 cd /app
 npm install
 npm run build
-rm -rf /usr/share/nginx/html/*
-cp -r dist/* /usr/share/nginx/html/
+rm -rf /var/www/html/*
+cp -r dist/* /var/www/html/
 
 nginx -g 'daemon off;'
