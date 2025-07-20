@@ -8,7 +8,9 @@ This repo contains the source for **korikosmos.dev**, my personal website built 
    ```sh
    npm install
    ```
-2. Copy `.env.example` to `.env` and add my Last.fm credentials
+2. Copy `.env.example` to `.env` and add my Last.fm credentials. I can
+   optionally set `GIT_REPO` and `GIT_BRANCH` here if the Docker container
+   should pull from a remote repo on startup.
    ```sh
    cp .env.example .env
    ```

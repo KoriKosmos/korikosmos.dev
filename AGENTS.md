@@ -45,3 +45,5 @@ This project contains the source for **korikosmos.dev**, a personal site built w
 - Sync useful content from Astro-README.md back to README.md when needed.
 - Dockerfile and docker-compose.yml allow containerized builds with `docker compose up --build`.
 - The container will run `git pull` on startup using `GIT_REPO` and rebuild the site automatically.
+- `.env.example` now includes optional `GIT_REPO` and `GIT_BRANCH` variables.
+
