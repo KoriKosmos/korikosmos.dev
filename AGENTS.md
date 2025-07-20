@@ -43,3 +43,4 @@ This project contains the source for **korikosmos.dev**, a personal site built w
 - Keep the main `README.md` up to date. Avoid writing documentation changes only in `Astro-README.md`.
 - Use a first-person voice in docs. Write from my perspective.
 - Sync useful content from Astro-README.md back to README.md when needed.
+- Dockerfile and docker-compose.yml allow containerized builds with `docker compose up --build`.
