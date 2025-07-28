@@ -27,7 +27,7 @@ npm run dev
 ## Features
 
 - Displays my most recently played tracks with album artwork
-- Toggle a little cursor-following cat from the corner button
+ - Toggle a little cursor-following cat from the corner button. Once enabled, it follows me across every page
 - Showcases my projects from `src/content/projects`
 - Manage posts and projects from Netlify CMS at `/admin`
 - Responsive Tailwind styling

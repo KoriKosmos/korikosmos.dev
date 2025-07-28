@@ -50,4 +50,5 @@ This project contains the source for **korikosmos.dev**, a personal site built w
   the default Nginx root.
 - Docker listens on port `8484` by default via `docker-compose.yml`.
 - About page now includes a short biography using the same card styling as other pages.
+- Cat toggle now persists across pages so Oneko can follow you site-wide.
 
