@@ -1,16 +1,17 @@
 ---
 import "../styles/global.css";
 import OnekoToggle from "../components/OnekoToggle.astro";
+import ThemeBar from "../components/ThemeBar.astro";
 const { title = 'KoriKosmos' } = Astro.props
 ---
 
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 	<meta charset="UTF-8" />
 	<title>{title}</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 </head>
-<body class="bg-gray-900 text-gray-100 font-sans">
+<body class="font-sans bg-base text-base">
 <header class="p-4 border-b">
 	<nav class="flex gap-4">
 		<a href="/" class="hover:underline">Home</a>
@@ -30,5 +31,6 @@ const { title = 'KoriKosmos' } = Astro.props
         © {new Date().getFullYear()} Maan – KoriKosmos
 </footer>
 <OnekoToggle />
+<ThemeBar />
 </body>
 </html>

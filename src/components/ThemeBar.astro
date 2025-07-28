@@ -1,0 +1,19 @@
+---
+---
+<div class="fixed top-4 right-4 z-50 flex gap-2">
+  <button class="w-6 h-6 rounded-full bg-accent border" data-theme="dark" aria-label="Dark theme"></button>
+  <button class="w-6 h-6 rounded-full bg-yellow-400 border" data-theme="light" aria-label="Light theme"></button>
+  <button class="w-6 h-6 rounded-full bg-green-600 border" data-theme="forest" aria-label="Forest theme"></button>
+</div>
+<script is:inline>
+const current = localStorage.getItem('theme') || 'dark';
+const root = document.documentElement;
+root.setAttribute('data-theme', current);
+for (const btn of document.querySelectorAll('[data-theme]')) {
+  btn.addEventListener('click', () => {
+    const theme = btn.getAttribute('data-theme');
+    root.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+  });
+}
+</script>

@@ -1,3 +1,32 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+:root {
+  --bg: 17 24 39; /* dark background */
+  --surface: 31 41 55; /* dark card */
+  --text: 243 244 246; /* light text */
+  --accent: 59 130 246; /* blue */
+  --accent-dark: 37 99 235;
+}
+
+[data-theme='light'] {
+  --bg: 243 244 246;
+  --surface: 229 231 235;
+  --text: 17 24 39;
+}
+
+[data-theme='forest'] {
+  --bg: 16 27 20;
+  --surface: 20 36 28;
+  --text: 229 255 234;
+  --accent: 74 222 128;
+  --accent-dark: 21 128 61;
+}
+
+.bg-base { background-color: rgb(var(--bg)); }
+.bg-surface { background-color: rgb(var(--surface)); }
+.bg-surface-60 { background-color: rgb(var(--surface) / 0.6); }
+.text-base { color: rgb(var(--text)); }
+.bg-accent { background-color: rgb(var(--accent)); }
+.text-accent { color: rgb(var(--accent)); }
+.hover\:bg-accent-dark:hover { background-color: rgb(var(--accent-dark)); }

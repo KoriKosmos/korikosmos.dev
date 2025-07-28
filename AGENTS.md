@@ -53,3 +53,4 @@ This project contains the source for **korikosmos.dev**, a personal site built w
 - About page now includes a short biography using the same card styling as other pages.
 - Tunes page now normalizes track names to filter out duplicates across different language credits.
 - Cat toggle now persists across pages so Oneko can follow you site-wide.
+- Theme bar allows switching between "dark", "light", and "forest" themes using a fixed selector on every page.

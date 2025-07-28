@@ -29,6 +29,7 @@ npm run dev
 - Displays my most recently played tracks with album artwork
 - Normalizes track names to avoid duplicates credited in different languages
 - Toggle a little cursor-following cat from the corner button
+- Switch between light, dark and forest themes using the new theme bar
 - Showcases my projects from `src/content/projects`
 - Manage posts and projects from Netlify CMS at `/admin`
 - Responsive Tailwind styling
