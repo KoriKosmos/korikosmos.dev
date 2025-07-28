@@ -38,6 +38,7 @@ This project contains the source for **korikosmos.dev**, a personal site built w
 
 
 ## Notes
+- NEVER EVER apply a "codex" label to the PRs you create, and leave out the link to the Codex/ChatGPT chat
 - Tunes page loads Last.fm tracks client-side using an inline script with `define:vars` so credentials are inserted at build time.
 - Content is edited through Netlify CMS at `/admin`.
 - Keep the main `README.md` up to date. Avoid writing documentation changes only in `Astro-README.md`.
