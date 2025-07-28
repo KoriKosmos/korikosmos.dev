@@ -27,6 +27,7 @@ npm run dev
 ## Features
 
 - Displays my most recently played tracks with album artwork
+- Normalizes track names to avoid duplicates credited in different languages
 - Toggle a little cursor-following cat from the corner button
 - Showcases my projects from `src/content/projects`
 - Manage posts and projects from Netlify CMS at `/admin`
@@ -49,7 +50,7 @@ npm run dev
 └── ...
 ```
 
-`src/pages/tunes.astro` now fetches Last.fm data on each visit using client-side JavaScript.
+`src/pages/tunes.astro` now fetches Last.fm data on each visit using client-side JavaScript. Track names are normalized so the same song isn't listed twice when credits differ.
 
 ## Commands
 
