@@ -30,6 +30,16 @@ const apiKey = import.meta.env.LASTFM_API_KEY;
       return !ignoreNames.some((bad) => lower.includes(bad));
     }
 
+    function normalize(name) {
+      return (name || '')
+        .toLowerCase()
+        .replace(/[\u3000]/g, ' ')
+        .replace(/\(.*?\)/g, '')
+        .replace(/feat\.?[^-]*$/i, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
     async function fetchLastFm() {
       const url = `https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=${user}&api_key=${apiKey}&format=json`;
       const res = await fetch(url);
@@ -75,7 +85,7 @@ const apiKey = import.meta.env.LASTFM_API_KEY;
       const unique = [];
       for (const t of data.recenttracks.track || []) {
         if (!isMusic(t.name) || !isMusic(t?.artist?.['#text'])) continue;
-        const key = t.mbid || t.name.trim().toLowerCase();
+        const key = t.mbid || normalize(t.name);
         if (!key || seen.has(key)) continue;
         seen.add(key);
         unique.push(t);
