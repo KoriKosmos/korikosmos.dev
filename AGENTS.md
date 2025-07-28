@@ -51,3 +51,4 @@ This project contains the source for **korikosmos.dev**, a personal site built w
 - Docker listens on port `8484` by default via `docker-compose.yml`.
 - About page now includes a short biography using the same card styling as other pages.
 
+- Theme bar allows switching between "dark", "light", and "forest" themes using a fixed selector on every page.
