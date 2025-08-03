@@ -33,6 +33,7 @@ npm run dev
 - Showcases my projects from `src/content/projects`
 - Manage posts and projects from Netlify CMS at `/admin`
 - Responsive Tailwind styling
+- Includes dedicated pages for my Final Year Project and Year 2 Java calculator
 
 ## Project Structure
 

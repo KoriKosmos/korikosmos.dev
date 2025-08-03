@@ -54,3 +54,4 @@ This project contains the source for **korikosmos.dev**, a personal site built w
 - Tunes page now normalizes track names to filter out duplicates across different language credits.
 - Cat toggle now persists across pages so Oneko can follow you site-wide.
 - Theme bar allows switching between "dark", "light", and "forest" themes using a fixed selector on every page.
+- Portfolio now includes pages for my Final Year Project and Year 2 Java calculator.
