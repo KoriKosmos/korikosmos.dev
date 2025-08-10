@@ -34,7 +34,7 @@ npm run dev
 - Manage posts and projects from Netlify CMS at `/admin`
 - Responsive Tailwind styling
 - Includes dedicated pages for my Final Year Project and Year 2 Java calculator
-- Placeholder games page linked from the navigation
+- Playable Tetris clone on the Games page
 
 ## Project Structure
 
