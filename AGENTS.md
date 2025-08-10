@@ -1,15 +1,16 @@
 # Development Guidelines
 
-This project contains the source for **korikosmos.dev**, a personal site built with [Astro](https://astro.build/). It serves as a portfolio hub, CV, blog and music showcase.
+This project contains the source for **korikosmos.dev**, a personal site built with [Astro](https://astro.build/). It serves as a portfolio hub, CV, blog, games page and music showcase.
 
 ## Site Structure & Objectives
 
 - `src/pages/index.astro` – Landing page with a short greeting and link to the portfolio.
-- `src/pages/about.astro` – Will provide a biography; currently uses the `UnderConstruction` component.
+- `src/pages/about.astro` – Short biography using card styling.
 - `src/pages/cv.astro` – Full curriculum vitae including education, skills and work history.
 - `src/pages/portfolio.astro` – Lists projects from `src/content/projects`.
 - `src/pages/blog/` – Blog posts generated from Markdown content.
 - `src/pages/tunes.astro` – Displays recent Last.fm tracks and requires `LASTFM_USER` and `LASTFM_API_KEY` in `.env`.
+- `src/pages/games.astro` – Placeholder for games page using `UnderConstruction`.
 - `src/layouts/Layout.astro` – Base layout used by pages; includes navigation links and the oneko cat toggle.
 - `src/components/UnderConstruction.astro` – Simple component indicating a page is unfinished.
 - `src/content/` – Markdown files managed by Netlify CMS at `/admin`.
@@ -55,3 +56,4 @@ This project contains the source for **korikosmos.dev**, a personal site built w
 - Cat toggle now persists across pages so Oneko can follow you site-wide.
 - Theme bar allows switching between "dark", "light", and "forest" themes using a fixed selector on every page.
 - Portfolio now includes pages for my Final Year Project and Year 2 Java calculator.
+- Navigation now links to a placeholder Games page.
