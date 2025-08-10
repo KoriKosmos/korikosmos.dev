@@ -1,6 +1,6 @@
 # korikosmos.dev
 
-This repo contains the source for **korikosmos.dev**, my personal website built with [Astro](https://astro.build) and Tailwind CSS. Here I share my projects, CV, blog posts and the music I'm currently listening to.
+This repo contains the source for **korikosmos.dev**, my personal website built with [Astro](https://astro.build) and Tailwind CSS. Here I share my projects, CV, blog posts, games and the music I'm currently listening to.
 
 ## Setup
 
@@ -34,6 +34,7 @@ npm run dev
 - Manage posts and projects from Netlify CMS at `/admin`
 - Responsive Tailwind styling
 - Includes dedicated pages for my Final Year Project and Year 2 Java calculator
+- Placeholder games page linked from the navigation
 
 ## Project Structure
 
