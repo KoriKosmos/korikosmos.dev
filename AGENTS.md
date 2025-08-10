@@ -56,4 +56,4 @@ This project contains the source for **korikosmos.dev**, a personal site built w
 - Cat toggle now persists across pages so Oneko can follow you site-wide.
 - Theme bar allows switching between "dark", "light", and "forest" themes using a fixed selector on every page.
 - Portfolio now includes pages for my Final Year Project and Year 2 Java calculator.
-- Navigation now links to a placeholder Games page.
+- Games page now lists a playable Tetris subpage.
