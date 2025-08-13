@@ -110,6 +110,45 @@ const SHAPES = {
   Z: [[7, 7, 0], [0, 7, 7]],
 };
 
+// SRS wall-kick data
+const JLSTZ_KICKS = {
+  0: {
+    1: [[0, 0], [-1, 0], [-1, 1], [0, -2], [-1, -2]],
+    "-1": [[0, 0], [1, 0], [1, 1], [0, -2], [1, -2]],
+  },
+  1: {
+    1: [[0, 0], [1, 0], [1, -1], [0, 2], [1, 2]],
+    "-1": [[0, 0], [1, 0], [1, -1], [0, 2], [1, 2]],
+  },
+  2: {
+    1: [[0, 0], [1, 0], [1, 1], [0, -2], [1, -2]],
+    "-1": [[0, 0], [-1, 0], [-1, 1], [0, -2], [-1, -2]],
+  },
+  3: {
+    1: [[0, 0], [-1, 0], [-1, -1], [0, 2], [-1, 2]],
+    "-1": [[0, 0], [-1, 0], [-1, -1], [0, 2], [-1, 2]],
+  },
+};
+
+const I_KICKS = {
+  0: {
+    1: [[0, 0], [-2, 0], [1, 0], [-2, -1], [1, 2]],
+    "-1": [[0, 0], [-1, 0], [2, 0], [-1, 2], [2, -1]],
+  },
+  1: {
+    1: [[0, 0], [-1, 0], [2, 0], [-1, 2], [2, -1]],
+    "-1": [[0, 0], [2, 0], [-1, 0], [2, 1], [-1, -2]],
+  },
+  2: {
+    1: [[0, 0], [2, 0], [-1, 0], [2, 1], [-1, -2]],
+    "-1": [[0, 0], [1, 0], [-2, 0], [1, -2], [-2, 1]],
+  },
+  3: {
+    1: [[0, 0], [1, 0], [-2, 0], [1, -2], [-2, 1]],
+    "-1": [[0, 0], [-2, 0], [1, 0], [-2, -1], [1, 2]],
+  },
+};
+
 // Rotate a matrix CW (dir=1) or CCW (dir=-1)
 function rotate(mat, dir = 1) {
   const h = mat.length, w = mat[0].length;
@@ -158,7 +197,9 @@ function spawn() {
   piece = {
     matrix: mat,
     x: Math.floor((COLS - mat[0].length) / 2),
-    y: -1,
+    y: -1, // start just above the board so tall pieces slide in
+    type: t,
+    rot: 0,
   };
 }
 
@@ -225,17 +266,20 @@ function tryMove(dx, dy) {
 }
 
 function tryRotate(dir = 1) {
+  if (piece.type === 'O') return true;
   const rotated = rotate(piece.matrix, dir);
-
-  // test center + a few side offsets
-  const kicks = [0, -1, 1, -2, 2];
-  for (const k of kicks) {
-    const nx = piece.x + k;
-    const ny = piece.y; // no vertical kick in this simple version
+  const oldRot = piece.rot;
+  const newRot = (oldRot + (dir === 1 ? 1 : 3)) % 4;
+  const table = piece.type === 'I' ? I_KICKS : JLSTZ_KICKS;
+  const kicks = table[oldRot][dir === 1 ? 1 : '-1'];
+  for (const [kx, ky] of kicks) {
+    const nx = piece.x + kx;
+    const ny = piece.y + ky;
     if (isValidPosition(rotated, nx, ny)) {
       piece.matrix = rotated;
       piece.x = nx;
       piece.y = ny;
+      piece.rot = newRot;
       return true;
     }
   }

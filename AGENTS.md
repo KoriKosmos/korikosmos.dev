@@ -58,3 +58,4 @@ This project contains the source for **korikosmos.dev**, a personal site built w
 - Portfolio now includes pages for my Final Year Project and Year 2 Java calculator.
 - Games page now lists a playable Tetris subpage.
 - Tetris game uses a standard seven-piece grab bag for spawning tetrominoes.
+- Tetris now uses the official Super Rotation System (SRS) for piece rotation
