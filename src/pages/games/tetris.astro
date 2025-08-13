@@ -162,8 +162,17 @@ function rotate(mat, dir = 1) {
   return res;
 }
 
-// Active piece state
+// Active piece state and 7-bag queue
 let piece = null;
+let bag = [];
+
+function refillBag() {
+  bag = Object.keys(SHAPES);
+  for (let i = bag.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [bag[i], bag[j]] = [bag[j], bag[i]];
+  }
+}
 
 // Draw any matrix onto the canvas at (offX, offY)
 function drawMatrix(mat, offX, offY) {
@@ -180,11 +189,11 @@ function drawMatrix(mat, offX, offY) {
   }
 }
 
-// Spawn a random tetromino centered at the top
+// Spawn the next tetromino from the bag
 function spawn() {
-  const types = Object.keys(SHAPES);
-  const t = types[Math.floor(Math.random() * types.length)];
-  const mat = SHAPES[t].map(row => row.slice()); // shallow clone
+  if (!bag.length) refillBag();
+  const t = bag.pop();
+  const mat = SHAPES[t].map(row => row.slice());
   piece = {
     matrix: mat,
     x: Math.floor((COLS - mat[0].length) / 2),

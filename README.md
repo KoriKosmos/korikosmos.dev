@@ -34,7 +34,7 @@ npm run dev
 - Manage posts and projects from Netlify CMS at `/admin`
 - Responsive Tailwind styling
 - Includes dedicated pages for my Final Year Project and Year 2 Java calculator
-- Playable Tetris clone with Super Rotation System (SRS) on the Games page
+- Playable Tetris clone on the Games page with a standard seven-piece grab bag randomizer andwith Super Rotation System (SRS) on the Games page
 
 ## Project Structure
 
