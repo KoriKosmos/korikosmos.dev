@@ -33,7 +33,10 @@ import Layout from '../../layouts/Layout.astro';
   </div>
   <div class="mt-6">
     <h2 class="font-bold">Leaderboard</h2>
-    <ol id="leaderboard" class="list-decimal ml-6"></ol>
+    <h3 class="font-semibold">Local</h3>
+    <ol id="leaderboard-local" class="list-decimal ml-6"></ol>
+    <h3 class="font-semibold mt-4">Global</h3>
+    <ol id="leaderboard-global" class="list-decimal ml-6"></ol>
   </div>
   <script>
 const COLS = 10;
@@ -83,7 +86,7 @@ localStorage.setItem('tetris_username', username);
 
 let highScore = parseInt(getCookie('tetris_highscore') || '0', 10);
 
-function loadLeaderboard() {
+function loadLocalLeaderboard() {
   try {
     return JSON.parse(localStorage.getItem('tetris_leaderboard')) || [];
   } catch {
@@ -91,17 +94,33 @@ function loadLeaderboard() {
   }
 }
 
-function saveLeaderboard(data) {
+function saveLocalLeaderboard(data) {
   localStorage.setItem('tetris_leaderboard', JSON.stringify(data));
 }
 
-function renderLeaderboard(data) {
-  const list = document.getElementById('leaderboard');
-  list.innerHTML = data.map((e, i) => `<li>${e.name}: ${e.score}</li>`).join('');
+function renderLocalLeaderboard(data) {
+  const list = document.getElementById('leaderboard-local');
+  list.innerHTML = data.map((e) => `<li>${e.name}: ${e.score}</li>`).join('');
 }
 
-let leaderboard = loadLeaderboard();
-renderLeaderboard(leaderboard);
+function renderGlobalLeaderboard(data) {
+  const list = document.getElementById('leaderboard-global');
+  list.innerHTML = data.map((e) => `<li>${e.name}: ${e.score}</li>`).join('');
+}
+
+async function fetchGlobalLeaderboard() {
+  try {
+    const res = await fetch('/api/tetris-scores');
+    const data = await res.json();
+    renderGlobalLeaderboard(data);
+  } catch (e) {
+    console.error('Failed to load global leaderboard', e);
+  }
+}
+
+let localLeaderboard = loadLocalLeaderboard();
+renderLocalLeaderboard(localLeaderboard);
+fetchGlobalLeaderboard();
 
 // --- Scoring ---
 let score = 0;
@@ -452,7 +471,7 @@ function render() {
 
 }
 
-function lockPiece() {
+async function lockPiece() {
   mergePiece();
   const cleared = clearLines();
   if (cleared) addScore(cleared);
@@ -462,11 +481,22 @@ function lockPiece() {
       highScore = score;
       setCookie('tetris_highscore', highScore, 365);
     }
-    leaderboard.push({ name: username, score });
-    leaderboard.sort((a, b) => b.score - a.score);
-    leaderboard = leaderboard.slice(0, 10);
-    saveLeaderboard(leaderboard);
-    renderLeaderboard(leaderboard);
+    localLeaderboard.push({ name: username, score });
+    localLeaderboard.sort((a, b) => b.score - a.score);
+    localLeaderboard = localLeaderboard.slice(0, 10);
+    saveLocalLeaderboard(localLeaderboard);
+    renderLocalLeaderboard(localLeaderboard);
+    try {
+      const res = await fetch('/api/tetris-scores', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: username, score }),
+      });
+      const data = await res.json();
+      renderGlobalLeaderboard(data);
+    } catch (e) {
+      console.error('Global leaderboard update failed', e);
+    }
     alert(`Game over, ${username}! Your score: ${score}`);
     for (let y = 0; y < ROWS; y++) board[y].fill(0);
     score = 0; lines = 0; level = 0;
