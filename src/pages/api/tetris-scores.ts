@@ -3,7 +3,7 @@ import type { APIRoute } from 'astro';
 
 const file = new URL('../../data/tetris-scores.json', import.meta.url);
 
-export const get: APIRoute = async () => {
+export const GET: APIRoute = async () => {
   try {
     const data = JSON.parse(await fs.readFile(file, 'utf-8'));
     data.sort((a, b) => b.score - a.score);
@@ -13,7 +13,7 @@ export const get: APIRoute = async () => {
   }
 };
 
-export const post: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request }) => {
   try {
     const { name, score } = await request.json();
     if (typeof name !== 'string' || typeof score !== 'number') {

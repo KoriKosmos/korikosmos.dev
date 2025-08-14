@@ -37,7 +37,7 @@ npm run dev
 - I built a playable Tetris clone for the Games page with touch controls (including hold and counter-clockwise rotation buttons), a next-piece preview that matches the seven-piece bag, level-based speed shown in the HUD, a lock delay so pieces can slide before settling, a hold function (press C, Shift or tap Hold), and the Super Rotation System (SRS)
 - The Tetris game now asks for a username, stores my best score in a cookie, keeps a local leaderboard of top runs, and submits scores to a global top ten board for everyone who visits
 
-The global board saves to `src/data/tetris-scores.json` through a simple API route, so I can reset it by editing that file.
+The global board saves to `src/data/tetris-scores.json` through a simple GET/POST API route at `/api/tetris-scores`, so I can reset it by editing that file.
 
 ## Project Structure
 

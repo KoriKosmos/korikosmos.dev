@@ -69,3 +69,4 @@ This project contains the source for **korikosmos.dev**, a personal site built w
 - Tetris now saves high scores in a cookie, prompts for a username and shows a local leaderboard of past runs
 - Tetris now posts scores to a simple API so there's a global top ten leaderboard across visitors
 - Docker entrypoint now copies `dist/client` to `/var/www/html` so Nginx serves `index.html` correctly after the Node adapter build
+- API route handlers must be exported in uppercase (e.g. `GET`, `POST`) to work with Astro
