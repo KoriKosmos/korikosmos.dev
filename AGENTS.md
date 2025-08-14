@@ -57,6 +57,7 @@ This project contains the source for **korikosmos.dev**, a personal site built w
 - Theme bar allows switching between "dark", "light", and "forest" themes using a fixed selector on every page.
 - Portfolio now includes pages for my Final Year Project and Year 2 Java calculator.
 - Games page now lists a playable Tetris subpage.
+- Tetris game now supports on-screen mobile controls for touch devices.
 - Tetris now shows the next piece and lets me hold one with C or Shift.
 - Tetris game uses a standard seven-piece grab bag for spawning tetrominoes.
 - Tetris now uses the official Super Rotation System (SRS) for piece rotation

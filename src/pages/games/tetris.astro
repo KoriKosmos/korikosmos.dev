@@ -22,6 +22,12 @@ import Layout from '../../layouts/Layout.astro';
       </div>
     </div>
   </div>
+  <div class="md:hidden mt-4 flex gap-2">
+    <button id="btn-left" class="px-4 py-2 bg-gray-700 text-white rounded">◀</button>
+    <button id="btn-rotate" class="px-4 py-2 bg-gray-700 text-white rounded">⟳</button>
+    <button id="btn-right" class="px-4 py-2 bg-gray-700 text-white rounded">▶</button>
+    <button id="btn-drop" class="px-4 py-2 bg-gray-700 text-white rounded">⬇</button>
+  </div>
   <script>
 const COLS = 10;
 const ROWS = 20;
@@ -531,6 +537,24 @@ window.addEventListener('keyup', (e) => {
     softTimer = 0;
   }
 });
+    
+const btnLeft = document.getElementById('btn-left');
+const btnRight = document.getElementById('btn-right');
+const btnRotate = document.getElementById('btn-rotate');
+const btnDrop = document.getElementById('btn-drop');
+
+if (btnLeft && btnRight && btnRotate && btnDrop) {
+  function bindButton(el, down, up) {
+    el.addEventListener('pointerdown', (e) => { e.preventDefault(); down(); });
+    el.addEventListener('pointerup', (e) => { e.preventDefault(); if (up) up(); });
+    el.addEventListener('pointerleave', () => { if (up) up(); });
+  }
+  bindButton(btnLeft, () => { keys.left = true; setHoriz(-1); }, () => { keys.left = false; setHoriz(keys.right ? 1 : 0); });
+  bindButton(btnRight, () => { keys.right = true; setHoriz(1); }, () => { keys.right = false; setHoriz(keys.left ? -1 : 0); });
+  btnRotate.addEventListener('pointerdown', (e) => { e.preventDefault(); tryRotate(1); });
+  btnDrop.addEventListener('pointerdown', (e) => { e.preventDefault(); hardDrop(); });
+}
+
 next = randomMatrix();
 spawn();
 updateHUD();
