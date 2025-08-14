@@ -192,10 +192,20 @@ let next = null;
 let hold = null;
 let holdUsed = false;
 
-function randomMatrix() {
-  const types = Object.keys(SHAPES);
-  const t = types[Math.floor(Math.random() * types.length)];
-  return SHAPES[t].map(row => row.slice());
+let bag = [];
+
+function refillBag() {
+  bag = Object.keys(SHAPES);
+  for (let i = bag.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [bag[i], bag[j]] = [bag[j], bag[i]];
+  }
+}
+
+function getNextPiece() {
+  if (!bag.length) refillBag();
+  const t = bag.pop();
+  return { matrix: SHAPES[t].map(row => row.slice()), type: t };
 }
 
 function renderPreview(context, mat, canvas) {
@@ -209,13 +219,6 @@ function renderPreview(context, mat, canvas) {
       if (!v) continue;
       drawCell(x + offsetX, y + offsetY, COLORS[v], context);
     }
-let bag = [];
-
-function refillBag() {
-  bag = Object.keys(SHAPES);
-  for (let i = bag.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [bag[i], bag[j]] = [bag[j], bag[i]];
   }
 }
 
@@ -234,37 +237,37 @@ function drawMatrix(mat, offX, offY) {
   }
 }
 
-
 // Spawn the next tetromino from the bag
 function spawn() {
-  if (!bag.length) refillBag();
-  const t = bag.pop();
-  const mat = SHAPES[t].map(row => row.slice());
+  const { matrix, type } = next;
   piece = {
-    matrix: mat,
-    x: Math.floor((COLS - mat[0].length) / 2),
+    matrix,
+    x: Math.floor((COLS - matrix[0].length) / 2),
     y: -1, // start just above the board so tall pieces slide in
-    type: t,
+    type,
     rot: 0,
   };
-  next = randomMatrix();
-  renderPreview(nextCtx, next, nextCanvas);
+  next = getNextPiece();
+  renderPreview(nextCtx, next.matrix, nextCanvas);
   holdUsed = false;
-  renderPreview(holdCtx, hold, holdCanvas);
+  renderPreview(holdCtx, hold ? hold.matrix : null, holdCanvas);
 }
 
 function holdPiece() {
   if (holdUsed) return;
   if (hold) {
-    [piece.matrix, hold] = [hold, piece.matrix];
+    const temp = { matrix: piece.matrix, type: piece.type };
+    piece.matrix = hold.matrix;
+    piece.type = hold.type;
     piece.x = Math.floor((COLS - piece.matrix[0].length) / 2);
     piece.y = -1;
+    hold = temp;
   } else {
-    hold = piece.matrix;
+    hold = { matrix: piece.matrix, type: piece.type };
     spawn();
   }
   holdUsed = true;
-  renderPreview(holdCtx, hold, holdCanvas);
+  renderPreview(holdCtx, hold.matrix, holdCanvas);
   render();
 }
 
@@ -555,7 +558,7 @@ if (btnLeft && btnRight && btnRotate && btnDrop) {
   btnDrop.addEventListener('pointerdown', (e) => { e.preventDefault(); hardDrop(); });
 }
 
-next = randomMatrix();
+next = getNextPiece();
 spawn();
 updateHUD();
 requestAnimationFrame(update);
