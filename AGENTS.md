@@ -61,3 +61,4 @@ This project contains the source for **korikosmos.dev**, a personal site built w
 - Tetris now shows the next piece and lets me hold one with C or Shift.
 - Tetris game uses a standard seven-piece grab bag for spawning tetrominoes.
 - Tetris now uses the official Super Rotation System (SRS) for piece rotation
+- Tetris next-piece preview now reflects the grab bag and held pieces keep their type so they rotate correctly
