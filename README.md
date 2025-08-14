@@ -35,6 +35,7 @@ npm run dev
 - Responsive Tailwind styling
 - Includes dedicated pages for my Final Year Project and Year 2 Java calculator
 - I built a playable Tetris clone for the Games page with touch controls (including hold and counter-clockwise rotation buttons), a next-piece preview that matches the seven-piece bag, level-based speed shown in the HUD, a lock delay so pieces can slide before settling, a hold function (press C, Shift or tap Hold), and the Super Rotation System (SRS)
+- The Tetris game now asks for a username, stores my best score in a cookie and keeps a local leaderboard of top runs
 
 ## Project Structure
 
