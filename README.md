@@ -80,3 +80,4 @@ docker compose up --build
 
 The site will be available at http://localhost:8484. Can also set `GIT_REPO` to a GitHub URL so the container pulls the latest changes each time it starts. Optionally set `GIT_BRANCH` if a branch other than `main` is needed.
 Remember to provide `LASTFM_USER` and `LASTFM_API_KEY` in your environment when building.
+After the build finishes, the entrypoint copies the contents of `dist/client` to `/var/www/html` so Nginx serves the generated `index.html` instead of returning a 403.

@@ -17,6 +17,7 @@ cd /app
 npm install
 npm run build
 rm -rf /var/www/html/*
-cp -r dist/* /var/www/html/
+# Astro's Node adapter outputs the static site to dist/client, so copy that to nginx's root
+cp -r dist/client/* /var/www/html/
 
 nginx -g 'daemon off;'
