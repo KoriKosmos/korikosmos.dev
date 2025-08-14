@@ -62,3 +62,6 @@ This project contains the source for **korikosmos.dev**, a personal site built w
 - Tetris game uses a standard seven-piece grab bag for spawning tetrominoes.
 - Tetris now uses the official Super Rotation System (SRS) for piece rotation
 - Tetris next-piece preview now reflects the grab bag and held pieces keep their type so they rotate correctly
+- Tetris mobile controls now include hold and counter-clockwise rotation buttons
+- Piece speed now scales with level and the HUD shows the current level
+- Pieces have a lock delay so I can slide them before they settle
