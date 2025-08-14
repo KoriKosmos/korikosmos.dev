@@ -48,7 +48,7 @@ This project contains the source for **korikosmos.dev**, a personal site built w
 - Dockerfile and docker-compose.yml allow containerized builds with `docker compose up --build`.
 - The container will run `git pull` on startup using `GIT_REPO` and rebuild the site automatically.
 - `.env.example` now includes optional `GIT_REPO` and `GIT_BRANCH` variables.
-- Docker entrypoint should copy the build output to `/var/www/html` since that's
+- Docker entrypoint should copy the built client output to `/var/www/html` since that's
   the default Nginx root.
 - Docker listens on port `8484` by default via `docker-compose.yml`.
 - Astro now uses the Node adapter so API routes can save data server-side.
@@ -68,3 +68,4 @@ This project contains the source for **korikosmos.dev**, a personal site built w
 - Pieces have a lock delay so I can slide them before they settle
 - Tetris now saves high scores in a cookie, prompts for a username and shows a local leaderboard of past runs
 - Tetris now posts scores to a simple API so there's a global top ten leaderboard across visitors
+- Docker entrypoint now copies `dist/client` to `/var/www/html` so Nginx serves `index.html` correctly after the Node adapter build
