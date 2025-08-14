@@ -22,11 +22,13 @@ import Layout from '../../layouts/Layout.astro';
       </div>
     </div>
   </div>
-  <div class="md:hidden mt-4 flex gap-2">
+  <div class="md:hidden mt-4 flex flex-wrap gap-2">
     <button id="btn-left" class="px-4 py-2 bg-gray-700 text-white rounded">◀</button>
+    <button id="btn-rotate-ccw" class="px-4 py-2 bg-gray-700 text-white rounded">⟲</button>
     <button id="btn-rotate" class="px-4 py-2 bg-gray-700 text-white rounded">⟳</button>
     <button id="btn-right" class="px-4 py-2 bg-gray-700 text-white rounded">▶</button>
     <button id="btn-drop" class="px-4 py-2 bg-gray-700 text-white rounded">⬇</button>
+    <button id="btn-hold" class="px-4 py-2 bg-gray-700 text-white rounded">H</button>
   </div>
   <script>
 const COLS = 10;
@@ -60,6 +62,11 @@ scaleForHiDPI(holdCanvas, holdCtx);
 let score = 0;
 let lines = 0;
 let level = 0;
+let dropInterval = 800; // ms per row at level 0
+
+function updateSpeed() {
+  dropInterval = Math.max(100, 800 - level * 80);
+}
 
 const $score = document.getElementById('score');
 const $lines = document.getElementById('lines');
@@ -81,8 +88,7 @@ function addScore(cleared) {
   const target = (level + 1) * 10;
   if (lines >= target) {
     level++;
-    // speed up a bit each level, min 100ms
-    dropInterval = Math.max(100, dropInterval - 80);
+    updateSpeed();
   }
   updateHUD();
 }
@@ -106,7 +112,8 @@ const COLORS = [
 // --- Gravity timing ---
 let lastTime = 0;
 let dropCounter = 0;
-let dropInterval = 800; // ms per row at start (we can speed up later)
+let lockTimer = 0;
+const LOCK_DELAY = 500; // ms before a grounded piece locks
 
 
 // Draw one cell
@@ -251,6 +258,8 @@ function spawn() {
   renderPreview(nextCtx, next.matrix, nextCanvas);
   holdUsed = false;
   renderPreview(holdCtx, hold ? hold.matrix : null, holdCanvas);
+  lockTimer = 0;
+  dropCounter = 0;
 }
 
 function holdPiece() {
@@ -267,6 +276,8 @@ function holdPiece() {
     spawn();
   }
   holdUsed = true;
+  lockTimer = 0;
+  dropCounter = 0;
   renderPreview(holdCtx, hold.matrix, holdCanvas);
   render();
 }
@@ -328,6 +339,7 @@ function tryMove(dx, dy) {
   if (isValidPosition(piece.matrix, nx, ny)) {
     piece.x = nx;
     piece.y = ny;
+    lockTimer = 0;
     return true;
   }
   return false;
@@ -348,6 +360,7 @@ function tryRotate(dir = 1) {
       piece.x = nx;
       piece.y = ny;
       piece.rot = newRot;
+      lockTimer = 0;
       return true;
     }
   }
@@ -392,55 +405,38 @@ function render() {
 
 }
 
-function drop() {
-  if (!tryMove(0, 1)) {
-    // Can't go down: lock and spawn next
-    mergePiece();
-    const cleared = clearLines();
-    if (cleared) addScore(cleared);
+function lockPiece() {
+  mergePiece();
+  const cleared = clearLines();
+  if (cleared) addScore(cleared);
+  spawn();
+  if (!isValidPosition(piece.matrix, piece.x, piece.y)) {
+    for (let y = 0; y < ROWS; y++) board[y].fill(0);
+    score = 0; lines = 0; level = 0;
+    updateSpeed();
+    updateHUD();
     spawn();
-
-    // If new piece is invalid immediately, it's game over (temp handling)
-    if (!isValidPosition(piece.matrix, piece.x, piece.y)) {
-      // simple reset for now
-      for (let y = 0; y < ROWS; y++) board[y].fill(0);
-      spawn();
-    }
-    render();
   }
   dropCounter = 0;
+  lockTimer = 0;
+  render();
+}
+
+function drop() {
+  tryMove(0, 1);
 }
 
 function hardDrop() {
-  // fall until the next step would collide
   let distance = 0;
   while (isValidPosition(piece.matrix, piece.x, piece.y + 1)) {
     piece.y++;
     distance++;
   }
-
-  // lock, score, clear, spawn next
-  mergePiece();
-  const cleared = clearLines();
-  if (cleared) addScore(cleared);
-
-  // hard-drop bonus: +2 per cell, scaled by (level+1)
   if (distance > 0) {
     score += distance * 2 * (level + 1);
     updateHUD();
   }
-
-  spawn();
-  if (!isValidPosition(piece.matrix, piece.x, piece.y)) {
-    // simple reset for now (same as drop())
-    for (let y = 0; y < ROWS; y++) board[y].fill(0);
-    score = 0; lines = 0; level = 0;
-    updateHUD();
-    spawn();
-  }
-
-  dropCounter = 0;
-  render();
+  lockPiece();
 }
 
 
@@ -452,6 +448,7 @@ function update(time = 0) {
   dropCounter += dt;
   if (dropCounter >= dropInterval) {
     drop();
+    dropCounter = 0;
   }
 
   // Horizontal movement with DAS/ARR
@@ -476,6 +473,17 @@ function update(time = 0) {
     }
   } else {
     softTimer = 0;
+  }
+
+  // Lock delay
+  const grounded = !isValidPosition(piece.matrix, piece.x, piece.y + 1);
+  if (grounded) {
+    lockTimer += dt;
+    if (lockTimer >= LOCK_DELAY) {
+      lockPiece();
+    }
+  } else {
+    lockTimer = 0;
   }
 
   render();
@@ -544,9 +552,11 @@ window.addEventListener('keyup', (e) => {
 const btnLeft = document.getElementById('btn-left');
 const btnRight = document.getElementById('btn-right');
 const btnRotate = document.getElementById('btn-rotate');
+const btnRotateCCW = document.getElementById('btn-rotate-ccw');
 const btnDrop = document.getElementById('btn-drop');
+const btnHold = document.getElementById('btn-hold');
 
-if (btnLeft && btnRight && btnRotate && btnDrop) {
+if (btnLeft && btnRight && btnRotate && btnRotateCCW && btnDrop && btnHold) {
   function bindButton(el, down, up) {
     el.addEventListener('pointerdown', (e) => { e.preventDefault(); down(); });
     el.addEventListener('pointerup', (e) => { e.preventDefault(); if (up) up(); });
@@ -555,10 +565,13 @@ if (btnLeft && btnRight && btnRotate && btnDrop) {
   bindButton(btnLeft, () => { keys.left = true; setHoriz(-1); }, () => { keys.left = false; setHoriz(keys.right ? 1 : 0); });
   bindButton(btnRight, () => { keys.right = true; setHoriz(1); }, () => { keys.right = false; setHoriz(keys.left ? -1 : 0); });
   btnRotate.addEventListener('pointerdown', (e) => { e.preventDefault(); tryRotate(1); });
+  btnRotateCCW.addEventListener('pointerdown', (e) => { e.preventDefault(); tryRotate(-1); });
   btnDrop.addEventListener('pointerdown', (e) => { e.preventDefault(); hardDrop(); });
+  btnHold.addEventListener('pointerdown', (e) => { e.preventDefault(); holdPiece(); });
 }
 
 next = getNextPiece();
+updateSpeed();
 spawn();
 updateHUD();
 requestAnimationFrame(update);

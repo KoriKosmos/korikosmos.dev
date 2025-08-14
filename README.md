@@ -34,7 +34,7 @@ npm run dev
 - Manage posts and projects from Netlify CMS at `/admin`
 - Responsive Tailwind styling
 - Includes dedicated pages for my Final Year Project and Year 2 Java calculator
-- I built a playable Tetris clone for the Games page with touch controls, a next-piece preview that matches the seven-piece bag, a hold function (press C or Shift), and the Super Rotation System (SRS)
+- I built a playable Tetris clone for the Games page with touch controls (including hold and counter-clockwise rotation buttons), a next-piece preview that matches the seven-piece bag, level-based speed shown in the HUD, a lock delay so pieces can slide before settling, a hold function (press C, Shift or tap Hold), and the Super Rotation System (SRS)
 
 ## Project Structure
 
