@@ -19,6 +19,7 @@ import Layout from '../../layouts/Layout.astro';
         <p>Score: <span id="score">0</span></p>
         <p>Lines: <span id="lines">0</span></p>
         <p>Level: <span id="level">0</span></p>
+        <p>High Score: <span id="highscore">0</span></p>
       </div>
     </div>
   </div>
@@ -29,6 +30,10 @@ import Layout from '../../layouts/Layout.astro';
     <button id="btn-right" class="px-4 py-2 bg-gray-700 text-white rounded">▶</button>
     <button id="btn-drop" class="px-4 py-2 bg-gray-700 text-white rounded">⬇</button>
     <button id="btn-hold" class="px-4 py-2 bg-gray-700 text-white rounded">H</button>
+  </div>
+  <div class="mt-6">
+    <h2 class="font-bold">Leaderboard</h2>
+    <ol id="leaderboard" class="list-decimal ml-6"></ol>
   </div>
   <script>
 const COLS = 10;
@@ -58,6 +63,46 @@ scaleForHiDPI(canvas, ctx);
 scaleForHiDPI(nextCanvas, nextCtx);
 scaleForHiDPI(holdCanvas, holdCtx);
 
+// --- User & High Score ---
+function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+}
+
+function setCookie(name, value, days) {
+  const expires = new Date(Date.now() + days * 864e5).toUTCString();
+  document.cookie = `${name}=${value}; expires=${expires}; path=/`;
+}
+
+let username = localStorage.getItem('tetris_username');
+while (!username) {
+  username = prompt('Enter a username:')?.trim();
+}
+localStorage.setItem('tetris_username', username);
+
+let highScore = parseInt(getCookie('tetris_highscore') || '0', 10);
+
+function loadLeaderboard() {
+  try {
+    return JSON.parse(localStorage.getItem('tetris_leaderboard')) || [];
+  } catch {
+    return [];
+  }
+}
+
+function saveLeaderboard(data) {
+  localStorage.setItem('tetris_leaderboard', JSON.stringify(data));
+}
+
+function renderLeaderboard(data) {
+  const list = document.getElementById('leaderboard');
+  list.innerHTML = data.map((e, i) => `<li>${e.name}: ${e.score}</li>`).join('');
+}
+
+let leaderboard = loadLeaderboard();
+renderLeaderboard(leaderboard);
+
 // --- Scoring ---
 let score = 0;
 let lines = 0;
@@ -71,11 +116,13 @@ function updateSpeed() {
 const $score = document.getElementById('score');
 const $lines = document.getElementById('lines');
 const $level = document.getElementById('level');
+const $high = document.getElementById('highscore');
 
 function updateHUD() {
   $score.textContent = score;
   $lines.textContent = lines;
   $level.textContent = level;
+  $high.textContent = highScore;
 }
 
 function addScore(cleared) {
@@ -411,6 +458,16 @@ function lockPiece() {
   if (cleared) addScore(cleared);
   spawn();
   if (!isValidPosition(piece.matrix, piece.x, piece.y)) {
+    if (score > highScore) {
+      highScore = score;
+      setCookie('tetris_highscore', highScore, 365);
+    }
+    leaderboard.push({ name: username, score });
+    leaderboard.sort((a, b) => b.score - a.score);
+    leaderboard = leaderboard.slice(0, 10);
+    saveLeaderboard(leaderboard);
+    renderLeaderboard(leaderboard);
+    alert(`Game over, ${username}! Your score: ${score}`);
     for (let y = 0; y < ROWS; y++) board[y].fill(0);
     score = 0; lines = 0; level = 0;
     updateSpeed();

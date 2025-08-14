@@ -65,3 +65,4 @@ This project contains the source for **korikosmos.dev**, a personal site built w
 - Tetris mobile controls now include hold and counter-clockwise rotation buttons
 - Piece speed now scales with level and the HUD shows the current level
 - Pieces have a lock delay so I can slide them before they settle
+- Tetris now saves high scores in a cookie, prompts for a username and shows a local leaderboard of past runs
