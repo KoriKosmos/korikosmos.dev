@@ -66,7 +66,5 @@ This project contains the source for **korikosmos.dev**, a personal site built w
 - Piece speed now scales with level and the HUD shows the current level
 - Pieces have a lock delay so I can slide them before they settle
 - Tetris now saves high scores in localStorage, prompts for a username and shows a local leaderboard of past runs
-- Tetris now posts scores to a simple API so there's a global top ten leaderboard across visitors
 - Tetris scoring now follows the official guidelines with soft and hard drop bonuses
 - Games page now includes a Rock Paper Scissors game with scores saved to localStorage
-- Tetris now saves high scores in a cookie, prompts for a username and shows a local leaderboard of past runs
