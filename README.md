@@ -36,7 +36,7 @@ npm run dev
 - Includes dedicated pages for my Final Year Project and Year 2 Java calculator
 - I built a playable Tetris clone for the Games page with touch controls (including hold and counter-clockwise rotation buttons), a next-piece preview that matches the seven-piece bag, level-based speed shown in the HUD, a lock delay so pieces can slide before settling, a hold function (press C, Shift or tap Hold), and the Super Rotation System (SRS)
 - I also added a simple Rock Paper Scissors game that saves scores in `localStorage`
-- The Tetris game now asks for a username, stores my best score in a cookie, keeps a local leaderboard of top runs, and submits scores to a global top ten board for everyone who visits
+- The Tetris game now asks for a username, stores my best score in localStorage, keeps a local leaderboard of top runs, and submits scores to a global top ten board for everyone who visits
 - My Tetris clone now uses official scoring, including soft and hard drop bonuses
 
 The global board saves to `src/data/tetris-scores.json` through a simple API route, so I can reset it by editing that file.
