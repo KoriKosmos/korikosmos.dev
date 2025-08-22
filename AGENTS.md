@@ -68,3 +68,4 @@ This project contains the source for **korikosmos.dev**, a personal site built w
 - Tetris now saves high scores in localStorage, prompts for a username and shows a local leaderboard of past runs
 - Tetris scoring now follows the official guidelines with soft and hard drop bonuses
 - Games page now includes a Rock Paper Scissors game with scores saved to localStorage
+- Rock Paper Scissors logic now lives in /js/rock-paper-scissors.js so it works when CSP blocks inline scripts
