@@ -145,7 +145,7 @@ function updateHUD() {
 }
 
 function addScore(cleared) {
-  // classic-ish: 1=100, 2=300, 3=500, 4=800; scaled by (level+1)
+  // official: single=100, double=300, triple=500, tetris=800; scaled by (level+1)
   const table = [0, 100, 300, 500, 800];
   score += table[cleared] * (level + 1);
   lines += cleared;
@@ -509,8 +509,11 @@ async function lockPiece() {
   render();
 }
 
-function drop() {
-  tryMove(0, 1);
+function drop(manual = false) {
+  if (tryMove(0, 1) && manual) {
+    score += 1;
+    updateHUD();
+  }
 }
 
 function hardDrop() {
@@ -520,7 +523,7 @@ function hardDrop() {
     distance++;
   }
   if (distance > 0) {
-    score += distance * 2 * (level + 1);
+    score += distance * 2;
     updateHUD();
   }
   lockPiece();
@@ -555,7 +558,7 @@ function update(time = 0) {
   if (keys.down) {
     softTimer += dt;
     if (softTimer >= SOFT) {
-      drop();
+      drop(true);
       softTimer = 0;
     }
   } else {
