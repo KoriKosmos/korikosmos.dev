@@ -40,6 +40,7 @@ npm run dev
 - My Tetris clone now uses official scoring, including soft and hard drop bonuses
 
 The global board saves to `src/data/tetris-scores.json` through a simple API route, so I can reset it by editing that file.
+- The Tetris game now asks for a username, stores my best score in a cookie and keeps a local leaderboard of top runs
 
 ## Project Structure
 

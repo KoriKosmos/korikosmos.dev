@@ -51,7 +51,6 @@ This project contains the source for **korikosmos.dev**, a personal site built w
 - Docker entrypoint should copy the build output to `/var/www/html` since that's
   the default Nginx root.
 - Docker listens on port `8484` by default via `docker-compose.yml`.
-- Astro now uses the Node adapter so API routes can save data server-side.
 - About page now includes a short biography using the same card styling as other pages.
 - Tunes page now normalizes track names to filter out duplicates across different language credits.
 - Cat toggle now persists across pages so Oneko can follow you site-wide.
@@ -70,3 +69,4 @@ This project contains the source for **korikosmos.dev**, a personal site built w
 - Tetris now posts scores to a simple API so there's a global top ten leaderboard across visitors
 - Tetris scoring now follows the official guidelines with soft and hard drop bonuses
 - Games page now includes a Rock Paper Scissors game with scores saved to localStorage
+- Tetris now saves high scores in a cookie, prompts for a username and shows a local leaderboard of past runs
