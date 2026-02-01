@@ -8,6 +8,27 @@
   <title>Content Manager</title>
   <link href="/admin/config.yml" type="text/yaml" rel="cms-config-url">
   <script src="https://unpkg.com/decap-cms@3.10.0/dist/decap-cms.js"></script>
+  <style is:global>
+    /* Fix Decap CMS Login Layout */
+    [class*="AuthenticationPage"] {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #f3f4f6; /* simple gray bg */
+    }
+    [class*="LoginContainer"] {
+      margin-top: 20px;
+      z-index: 10;
+      position: relative;
+    }
+    /* Ensure logo doesn't overlap weirdly */
+    img[class*="Logo"] {
+      margin-bottom: 2rem;
+      max-width: 200px;
+    }
+  </style>
 </head>
 <body>
 </body>
