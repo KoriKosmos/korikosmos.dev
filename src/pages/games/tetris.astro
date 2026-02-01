@@ -92,7 +92,17 @@ import Layout from '../../layouts/Layout.astro';
     /* parse/save local are removed in favor of API */
 
     function renderLeaderboard(data) {
-      $leaderboard.innerHTML = data.map((e) => `<li>${e.name}: ${e.score}</li>`).join('');
+      // Clear existing leaderboard entries
+      while ($leaderboard.firstChild) {
+        $leaderboard.removeChild($leaderboard.firstChild);
+      }
+
+      // Safely add entries using textContent to avoid XSS
+      data.forEach((e) => {
+        const li = document.createElement('li');
+        li.textContent = `${e.name}: ${e.score}`;
+        $leaderboard.appendChild(li);
+      });
     }
 
     syncAndLoadLeaderboard();
