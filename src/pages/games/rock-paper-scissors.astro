@@ -16,8 +16,16 @@ import Layout from '../../layouts/Layout.astro';
       <p>Player Wins: <span id="playerWins">0</span></p>
       <p>CPU Wins: <span id="cpuWins">0</span></p>
       <p>Ties: <span id="ties">0</span></p>
+      <p class="font-bold">Net Score: <span id="netScore">0</span></p>
+      <p>High Score (Net): <span id="highscore">0</span></p>
     </div>
     <button id="resetScores" class="px-4 py-2 bg-gray-700 text-white rounded">Reset Scores</button>
   </div>
+
+  <div class="mt-8">
+    <h2 class="text-xl font-bold mb-2">Global Leaderboard</h2>
+    <ol id="leaderboard" class="list-decimal ml-6 space-y-1"></ol>
+  </div>
+
   <script type="module" src="/js/rock-paper-scissors.js"></script>
 </Layout>

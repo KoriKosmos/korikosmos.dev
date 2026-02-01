@@ -14,9 +14,6 @@ This repo contains the source for **korikosmos.dev**, my personal website built 
    ```sh
    cp .env.example .env
    ```
-   ```sh
-   cp .env.example .env
-   ```
    `LASTFM_USER` and `LASTFM_API_KEY` are loaded from this file and used by the server-side proxy at `/api/lastfm`. The tunes page fetches data from this internal API, keeping your keys secure.
 
 ## Development
@@ -27,22 +24,36 @@ Start a local server at `http://localhost:4321`:
 npm run dev
 ```
 
+### CMS (Local Development)
+
+To edit content locally with Decap CMS:
+
+1.  Run the proxy server in a separate terminal:
+    ```sh
+    npx decap-server
+    ```
+2.  Navigate to `http://localhost:4321/admin`.
+3.  Click "Login with Local Backend".
+
+_Note: In production, the CMS authenticates via GitHub._
+
 ## Features
 
 - **Refactored Architecture**:
   - **CV Page**: Fully data-driven using `src/data/cv.json` and reusable `CvSection` components.
   - **Tetris**: Game logic decoupled into a dedicated `src/lib/tetris.js` engine, separating `update()`/`draw()` loops from the UI component.
   - **Tunes Page**: Last.fm integration now uses a server-side proxy (`src/pages/api/lastfm.ts`) to prevent API key exposure.
+  - **High Scores**: Global leaderboard implemented via server-side API (`src/pages/api/scores/[game].ts`, accessed as `/api/scores/:game`) and persistent JSON storage.
   - **Config**: Centralized navigation and site settings in `src/config.ts`.
 - Displays my most recently played tracks with album artwork
 - Normalizes track names to avoid duplicates credited in different languages
 - Toggle a little cursor-following cat from the corner button
 - Switch between light, dark and forest themes using the new theme bar
 - Showcases my projects from `src/content/projects`
-- Manage posts and projects from Netlify CMS at `/admin`
+- Manage posts, projects, and CV via **Decap CMS** at `/admin`.
 - Responsive Tailwind styling
 - Includes dedicated pages for my Final Year Project and Year 2 Java calculator
-- I built a playable Tetris clone for the Games page with touch controls (including hold and counter-clockwise rotation buttons), a next-piece preview that matches the seven-piece bag, level-based speed shown in the HUD, a lock delay so pieces can slide before settling, a hold function, and the Super Rotation System (SRS).
+- I built a playable Tetris clone for the Games page with touch controls, SRS rotation, and a **global leaderboard** that persists scores across devices.
 - I also added a simple Rock Paper Scissors game that saves scores in `localStorage`.
 
 ## Project Structure
@@ -50,7 +61,7 @@ npm run dev
 ```
 /
 ├── public/
-│   └── admin/           # Netlify CMS
+│   └── admin/           # Decap CMS
 ├── src/
 │   ├── assets/
 │   ├── components/
@@ -82,11 +93,26 @@ Run these from the project root:
 
 ## Docker
 
-Use Docker to build and preview the site without installing Node locally:
+Build and run the containerized application (using Node.js adapter):
 
 ```sh
 docker compose up --build
 ```
 
-The site will be available at http://localhost:8484. Can also set `GIT_REPO` to a GitHub URL so the container pulls the latest changes each time it starts. Optionally set `GIT_BRANCH` if a branch other than `main` is needed.
-Remember to provide `LASTFM_USER` and `LASTFM_API_KEY` in your environment when building.
+The site will be available at http://localhost:8484.
+
+**Note**: This uses a multi-stage `Dockerfile` that builds the Astro project into a standalone Node.js app. The "pull-on-boot" feature has been removed for stability.
+
+### Updating the site
+
+To update the site with the latest changes from git, run:
+
+```sh
+./update-deploy.sh
+```
+
+This script will:
+
+1. Pull the latest code (`git pull`).
+2. Rebuild the Docker image.
+3. Restart the container with the new version.

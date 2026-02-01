@@ -2,27 +2,113 @@ backend:
   name: git-gateway
   branch: main
 
+local_backend: true
 media_folder: "public/uploads"
 public_folder: "/uploads"
 
 collections:
+  - name: cv
+    label: CV
+    files:
+      - name: cv
+        label: CV Data
+        file: "src/data/cv.json"
+        fields:
+          - label: Personal Info
+            name: personal
+            widget: object
+            fields:
+              - { label: Name, name: name, widget: string }
+              - { label: Title, name: title, widget: string }
+              - { label: Location, name: location, widget: string }
+              - { label: Email, name: email, widget: string }
+              - { label: Website, name: website, widget: string }
+              - { label: LinkedIn, name: linkedin, widget: string }
+          - label: Sections
+            name: sections
+            widget: list
+            fields:
+              - { label: Title, name: title, widget: string }
+              - { label: Content, name: content, widget: list, required: false }
+              - label: Items
+                name: items
+                widget: list
+                required: false
+                fields:
+                  - { label: Main Text, name: main, widget: string }
+                  - {
+                      label: Description,
+                      name: description,
+                      widget: text,
+                      required: false,
+                    }
+                  - {
+                      label: Sub Items,
+                      name: subItems,
+                      widget: list,
+                      required: false,
+                    }
   - name: blog
     label: Blog
     folder: src/content/blog
     create: true
     slug: "{{slug}}"
     fields:
-      - {label: Title, name: title, widget: string}
-      - {label: Publish Date, name: pubDate, widget: datetime}
-      - {label: Description, name: description, widget: string}
-      - {label: Body, name: body, widget: markdown}
+      - { label: Title, name: title, widget: string }
+      - { label: Publish Date, name: pubDate, widget: datetime }
+      - { label: Description, name: description, widget: string }
+      - { label: Body, name: body, widget: markdown }
   - name: projects
     label: Projects
     folder: src/content/projects
     create: true
     slug: "{{slug}}"
     fields:
-      - {label: Title, name: title, widget: string}
-      - {label: Summary, name: summary, widget: string}
-      - {label: Description, name: description, widget: text}
-      - {label: GitHub URL, name: github, widget: string, required: false}
+      - { label: Title, name: title, widget: string }
+      - { label: Summary, name: summary, widget: string }
+      - { label: Description, name: description, widget: text }
+      - { label: GitHub URL, name: github, widget: string, required: false }
+  - name: tetris_scores
+    label: Tetris Scores
+    files:
+      - name: global_leaderboard
+        label: Global Leaderboard
+        file: "data/scores/tetris.json"
+        fields:
+          - label: Scores
+            name: scores
+            widget: list
+            fields:
+              - { label: Name, name: name, widget: string }
+              - { label: Score, name: score, widget: number, value_type: int }
+  - name: rps_scores
+    label: RPS Scores
+    files:
+      - name: global_leaderboard
+        label: Global Leaderboard
+        file: "data/scores/rps.json"
+        fields:
+          - label: Scores
+            name: scores
+            widget: list
+            fields:
+              - { label: Name, name: name, widget: string }
+              - {
+                  label: Net Score,
+                  name: netScore,
+                  widget: number,
+                  value_type: int,
+                }
+              - {
+                  label: Player Wins,
+                  name: playerWins,
+                  widget: number,
+                  value_type: int,
+                }
+              - {
+                  label: CPU Wins,
+                  name: cpuWins,
+                  widget: number,
+                  value_type: int,
+                }
+              - { label: Ties, name: ties, widget: number, value_type: int }

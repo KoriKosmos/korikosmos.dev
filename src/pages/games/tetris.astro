@@ -55,24 +55,66 @@ import Layout from '../../layouts/Layout.astro';
     let highScore = parseInt(localStorage.getItem('tetris_highscore') || '0', 10);
     $high.textContent = highScore.toString();
 
-    function loadLeaderboard() {
+    let isSyncing = false;
+    async function syncAndLoadLeaderboard() {
+      if (isSyncing) return;
+      isSyncing = true;
+      let serverData = [];
       try {
-        return JSON.parse(localStorage.getItem('tetris_leaderboard')) || [];
-      } catch {
-        return [];
+        const res = await fetch('/api/scores/tetris');
+        if (res.ok) {
+            serverData = await res.json();
+        }
+      } catch (e) {
+        console.error('Failed to load leaderboard', e);
+      } finally {
+        isSyncing = false;
       }
-    }
 
-    function saveLeaderboard(data) {
-      localStorage.setItem('tetris_leaderboard', JSON.stringify(data));
+      // Check if we need to sync local high score
+      if (username && highScore > 0) {
+        const serverEntry = serverData.find(e => e.name === username);
+        if (!serverEntry || serverEntry.score < highScore) {
+           console.log('Syncing local high score to server...', highScore);
+           try {
+             const res = await fetch('/api/scores/tetris', {
+                 method: 'POST',
+                 headers: { 'Content-Type': 'application/json' },
+                 body: JSON.stringify({ name: username, score: highScore })
+             });
+             if (res.ok) {
+                 serverData = await res.json();
+             }
+           } catch (e) {
+               console.error('Failed to sync score', e);
+           }
+        }
+      }
+      
+      renderLeaderboard(serverData);
+      isSyncing = false;
     }
+    
+    /* parse/save local are removed in favor of API */
 
     function renderLeaderboard(data) {
-      $leaderboard.innerHTML = data.map((e) => `<li>${e.name}: ${e.score}</li>`).join('');
+      // Clear existing leaderboard entries
+      while ($leaderboard.firstChild) {
+        $leaderboard.removeChild($leaderboard.firstChild);
+      }
+
+      // Safely add entries using textContent to avoid XSS
+      data.forEach((e) => {
+        const li = document.createElement('li');
+        li.textContent = `${e.name}: ${e.score}`;
+        $leaderboard.appendChild(li);
+      });
     }
 
-    let leaderboard = loadLeaderboard();
-    renderLeaderboard(leaderboard);
+    syncAndLoadLeaderboard();
+
+    // Poll for leaderboard updates every 15 seconds
+    setInterval(syncAndLoadLeaderboard, 15000);
 
     // Game Instantiation
     const game = new TetrisGame(
@@ -90,14 +132,16 @@ import Layout from '../../layouts/Layout.astro';
             $high.textContent = highScore.toString();
           }
         },
-        onGameOver: (finalScore) => {
-          leaderboard.push({ name: username, score: finalScore });
-          leaderboard.sort((a, b) => b.score - a.score);
-          leaderboard = leaderboard.slice(0, 10);
-          saveLeaderboard(leaderboard);
-          renderLeaderboard(leaderboard);
-          alert(`Game over, ${username}! Your score: ${finalScore}`);
-          game.reset();
+        onGameOver: async (finalScore) => {
+          // Sync score to server (will submit if it's a new high score) and update leaderboard
+          await syncAndLoadLeaderboard();
+          
+          // Use setTimeout to ensure the DOM updates (Leaderboard repaint) before the alert blocks
+          setTimeout(() => {
+              alert(`Game over, ${username}! Your score: ${finalScore}`);
+              game.reset();
+              game.start();
+          }, 50);
         }
       }
     );

@@ -1,22 +1,29 @@
-FROM node:18
+FROM node:20.19-alpine AS base
 
-# Install git and nginx
-RUN apt-get update \
- && apt-get install -y git nginx \
- && rm -rf /var/lib/apt/lists/*
+# 1. Install dependencies only when needed
+FROM base AS deps
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
 
+# 2. Rebuild the source code only when needed
+FROM base AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+RUN npm run build
+
+# 3. Production image, copy all the files and run next
+FROM base AS runner
 WORKDIR /app
 
-# Install dependencies separately so they can be cached
-COPY package*.json ./
-RUN npm install
+ENV NODE_ENV=production
+ENV HOST=0.0.0.0
+ENV PORT=4321
 
-# Copy the rest of the repo
-COPY . .
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
 
-# Include entrypoint script
-COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+EXPOSE 4321
 
-EXPOSE 8484
-CMD ["/usr/local/bin/docker-entrypoint.sh"]
+CMD ["node", "./dist/server/entry.mjs"]
