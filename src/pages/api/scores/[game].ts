@@ -76,7 +76,10 @@ async function saveScore(game: string, newScore: any) {
 export const GET: APIRoute = async ({ params }) => {
   const game = params.game;
   if (!game || !['tetris', 'rps'].includes(game)) {
-      return new Response(JSON.stringify({ error: 'Game not found' }), { status: 404 });
+      return new Response(JSON.stringify({ error: 'Game not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' }
+      });
   }
 
   try {
@@ -86,20 +89,29 @@ export const GET: APIRoute = async ({ params }) => {
       headers: { 'Content-Type': 'application/json' }
     });
   } catch (e) {
-    return new Response(JSON.stringify({ error: 'Failed to fetch scores' }), { status: 500 });
+    return new Response(JSON.stringify({ error: 'Failed to fetch scores' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 }
 
 export const POST: APIRoute = async ({ request, params }) => {
   const game = params.game;
   if (!game || !['tetris', 'rps'].includes(game)) {
-      return new Response(JSON.stringify({ error: 'Game not found' }), { status: 404 });
+      return new Response(JSON.stringify({ error: 'Game not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' }
+      });
   }
 
   try {
     const body = await request.json();
     if (!body.name) {
-        return new Response(JSON.stringify({ error: 'Invalid score data' }), { status: 400 });
+        return new Response(JSON.stringify({ error: 'Invalid score data' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        });
     }
     
     // Validate payload shape? For now, trust the client types for speed
@@ -110,6 +122,9 @@ export const POST: APIRoute = async ({ request, params }) => {
       headers: { 'Content-Type': 'application/json' }
     });
   } catch (e) {
-    return new Response(JSON.stringify({ error: 'Failed to save score' }), { status: 500 });
+    return new Response(JSON.stringify({ error: 'Failed to save score' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 }
