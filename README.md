@@ -44,7 +44,7 @@ _Note: In production, the CMS authenticates via GitHub._
   - **CV Page**: Fully data-driven using `src/data/cv.json` and reusable `CvSection` components.
   - **Tetris**: Game logic decoupled into a dedicated `src/lib/tetris.js` engine, separating `update()`/`draw()` loops from the UI component.
   - **Tunes Page**: Last.fm integration now uses a server-side proxy (`src/pages/api/lastfm.ts`) to prevent API key exposure.
-  - **High Scores**: Global leaderboard implemented via server-side API (`src/pages/api/scores.ts`) and persistent JSON storage.
+  - **High Scores**: Global leaderboard implemented via server-side API (`src/pages/api/scores/[game].ts`, accessed as `/api/scores/:game`) and persistent JSON storage.
   - **Config**: Centralized navigation and site settings in `src/config.ts`.
 - Displays my most recently played tracks with album artwork
 - Normalizes track names to avoid duplicates credited in different languages
