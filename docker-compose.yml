@@ -1,9 +1,9 @@
-version: "3.9"
 services:
   web:
     build: .
     ports:
       - "8484:4321"
+      - "8081:8081"
     environment:
       - LASTFM_USER=${LASTFM_USER}
       - LASTFM_API_KEY=${LASTFM_API_KEY}
