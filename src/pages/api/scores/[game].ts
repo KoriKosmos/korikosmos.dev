@@ -21,6 +21,8 @@ interface RPSScore {
   ties: number;
 }
 
+type ValidationResult<T> = { valid: boolean; data?: T; error?: string };
+
 function isFiniteNumber(value: any): boolean {
   return typeof value === 'number' && Number.isFinite(value);
 }
@@ -32,7 +34,7 @@ function validateBounds(value: number, min: number, max: number, fieldName: stri
   return { valid: true };
 }
 
-function validateTetrisScore(body: any): { valid: boolean; data?: TetrisScore; error?: string } {
+function validateTetrisScore(body: any): ValidationResult<TetrisScore> {
   if (!body.name || typeof body.name !== 'string' || body.name.trim().length === 0) {
     return { valid: false, error: 'Name is required and must be a non-empty string' };
   }
@@ -55,7 +57,7 @@ function validateTetrisScore(body: any): { valid: boolean; data?: TetrisScore; e
   };
 }
 
-function validateRPSScore(body: any): { valid: boolean; data?: RPSScore; error?: string } {
+function validateRPSScore(body: any): ValidationResult<RPSScore> {
   if (!body.name || typeof body.name !== 'string' || body.name.trim().length === 0) {
     return { valid: false, error: 'Name is required and must be a non-empty string' };
   }
@@ -204,7 +206,7 @@ export const POST: APIRoute = async ({ request, params }) => {
     const body = await request.json();
     
     // Validate based on game type
-    let validationResult;
+    let validationResult: ValidationResult<TetrisScore | RPSScore>;
     if (game === 'tetris') {
       validationResult = validateTetrisScore(body);
     } else if (game === 'rps') {
@@ -221,7 +223,8 @@ export const POST: APIRoute = async ({ request, params }) => {
       });
     }
     
-    const updatedScores = await saveScore(game, validationResult.data);
+    // At this point, validationResult.valid is true, so data must exist
+    const updatedScores = await saveScore(game, validationResult.data!);
     
     return new Response(JSON.stringify(updatedScores), {
       status: 200,
