@@ -55,24 +55,27 @@ import Layout from '../../layouts/Layout.astro';
     let highScore = parseInt(localStorage.getItem('tetris_highscore') || '0', 10);
     $high.textContent = highScore.toString();
 
-    function loadLeaderboard() {
+    async function loadLeaderboard() {
       try {
-        return JSON.parse(localStorage.getItem('tetris_leaderboard')) || [];
-      } catch {
-        return [];
+        const res = await fetch('/api/scores');
+        if (res.ok) {
+            const data = await res.json();
+            renderLeaderboard(data);
+            return data;
+        }
+      } catch (e) {
+        console.error('Failed to load leaderboard', e);
       }
+      return [];
     }
 
-    function saveLeaderboard(data) {
-      localStorage.setItem('tetris_leaderboard', JSON.stringify(data));
-    }
+    /* parse/save local are removed in favor of API */
 
     function renderLeaderboard(data) {
       $leaderboard.innerHTML = data.map((e) => `<li>${e.name}: ${e.score}</li>`).join('');
     }
 
-    let leaderboard = loadLeaderboard();
-    renderLeaderboard(leaderboard);
+    loadLeaderboard();
 
     // Game Instantiation
     const game = new TetrisGame(
@@ -90,12 +93,21 @@ import Layout from '../../layouts/Layout.astro';
             $high.textContent = highScore.toString();
           }
         },
-        onGameOver: (finalScore) => {
-          leaderboard.push({ name: username, score: finalScore });
-          leaderboard.sort((a, b) => b.score - a.score);
-          leaderboard = leaderboard.slice(0, 10);
-          saveLeaderboard(leaderboard);
-          renderLeaderboard(leaderboard);
+        onGameOver: async (finalScore) => {
+          try {
+             const res = await fetch('/api/scores', {
+                 method: 'POST',
+                 headers: { 'Content-Type': 'application/json' },
+                 body: JSON.stringify({ name: username, score: finalScore })
+             });
+             if (res.ok) {
+                 const data = await res.json();
+                 renderLeaderboard(data);
+             }
+          } catch (e) {
+              console.error('Failed to submit score', e);
+          }
+          
           alert(`Game over, ${username}! Your score: ${finalScore}`);
           game.reset();
         }

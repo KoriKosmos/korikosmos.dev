@@ -30,6 +30,7 @@ npm run dev
   - **CV Page**: Fully data-driven using `src/data/cv.json` and reusable `CvSection` components.
   - **Tetris**: Game logic decoupled into a dedicated `src/lib/tetris.js` engine, separating `update()`/`draw()` loops from the UI component.
   - **Tunes Page**: Last.fm integration now uses a server-side proxy (`src/pages/api/lastfm.ts`) to prevent API key exposure.
+  - **High Scores**: Global leaderboard implemented via server-side API (`src/pages/api/scores.ts`) and persistent JSON storage.
   - **Config**: Centralized navigation and site settings in `src/config.ts`.
 - Displays my most recently played tracks with album artwork
 - Normalizes track names to avoid duplicates credited in different languages
@@ -39,7 +40,7 @@ npm run dev
 - Manage posts, projects, and CV via **Decap CMS** at `/admin`.
 - Responsive Tailwind styling
 - Includes dedicated pages for my Final Year Project and Year 2 Java calculator
-- I built a playable Tetris clone for the Games page with touch controls (including hold and counter-clockwise rotation buttons), a next-piece preview that matches the seven-piece bag, level-based speed shown in the HUD, a lock delay so pieces can slide before settling, a hold function, and the Super Rotation System (SRS).
+- I built a playable Tetris clone for the Games page with touch controls, SRS rotation, and a **global leaderboard** that persists scores across devices.
 - I also added a simple Rock Paper Scissors game that saves scores in `localStorage`.
 
 ## Project Structure
