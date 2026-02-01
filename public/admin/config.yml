@@ -68,3 +68,16 @@ collections:
       - { label: Summary, name: summary, widget: string }
       - { label: Description, name: description, widget: text }
       - { label: GitHub URL, name: github, widget: string, required: false }
+  - name: scores
+    label: High Scores
+    files:
+      - name: global_leaderboard
+        label: Global Leaderboard
+        file: "data/highscores.json"
+        fields:
+          - label: Scores
+            name: scores
+            widget: list
+            fields:
+              - { label: Name, name: name, widget: string }
+              - { label: Score, name: score, widget: number, value_type: int }
