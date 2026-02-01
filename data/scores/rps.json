@@ -6,6 +6,13 @@
       "playerWins": 36,
       "cpuWins": 18,
       "ties": 24
+    },
+    {
+      "name": "ReviewBot",
+      "netScore": 1,
+      "playerWins": 1,
+      "cpuWins": 0,
+      "ties": 0
     }
   ]
 }
