@@ -4,6 +4,86 @@ import path from 'node:path';
 
 const DATA_DIR = path.resolve('./data/scores');
 
+// Validation schemas
+interface TetrisScore {
+  name: string;
+  score: number;
+}
+
+interface RPSScore {
+  name: string;
+  playerWins: number;
+  cpuWins: number;
+  ties: number;
+}
+
+function isFiniteNumber(value: any): boolean {
+  return typeof value === 'number' && Number.isFinite(value);
+}
+
+function validateTetrisScore(body: any): { valid: boolean; data?: TetrisScore; error?: string } {
+  if (!body.name || typeof body.name !== 'string' || body.name.trim().length === 0) {
+    return { valid: false, error: 'Name is required and must be a non-empty string' };
+  }
+  
+  if (!isFiniteNumber(body.score)) {
+    return { valid: false, error: 'Score must be a finite number' };
+  }
+  
+  if (body.score < 0 || body.score > 10000000) {
+    return { valid: false, error: 'Score must be between 0 and 10,000,000' };
+  }
+  
+  return {
+    valid: true,
+    data: {
+      name: body.name.trim().slice(0, 20),
+      score: Math.floor(body.score)
+    }
+  };
+}
+
+function validateRPSScore(body: any): { valid: boolean; data?: RPSScore; error?: string } {
+  if (!body.name || typeof body.name !== 'string' || body.name.trim().length === 0) {
+    return { valid: false, error: 'Name is required and must be a non-empty string' };
+  }
+  
+  if (!isFiniteNumber(body.playerWins)) {
+    return { valid: false, error: 'playerWins must be a finite number' };
+  }
+  
+  if (!isFiniteNumber(body.cpuWins)) {
+    return { valid: false, error: 'cpuWins must be a finite number' };
+  }
+  
+  if (!isFiniteNumber(body.ties)) {
+    return { valid: false, error: 'ties must be a finite number' };
+  }
+  
+  // Reasonable bounds: each field should be non-negative and not exceed 1 million
+  if (body.playerWins < 0 || body.playerWins > 1000000) {
+    return { valid: false, error: 'playerWins must be between 0 and 1,000,000' };
+  }
+  
+  if (body.cpuWins < 0 || body.cpuWins > 1000000) {
+    return { valid: false, error: 'cpuWins must be between 0 and 1,000,000' };
+  }
+  
+  if (body.ties < 0 || body.ties > 1000000) {
+    return { valid: false, error: 'ties must be between 0 and 1,000,000' };
+  }
+  
+  return {
+    valid: true,
+    data: {
+      name: body.name.trim().slice(0, 20),
+      playerWins: Math.floor(body.playerWins),
+      cpuWins: Math.floor(body.cpuWins),
+      ties: Math.floor(body.ties)
+    }
+  };
+}
+
 // Ensure DB file and structure exists
 async function getScoresData(game: string) {
   const dbPath = path.join(DATA_DIR, `${game}.json`);
@@ -107,15 +187,23 @@ export const POST: APIRoute = async ({ request, params }) => {
 
   try {
     const body = await request.json();
-    if (!body.name) {
-        return new Response(JSON.stringify({ error: 'Invalid score data' }), {
-          status: 400,
-          headers: { 'Content-Type': 'application/json' }
-        });
+    
+    // Validate based on game type
+    let validationResult;
+    if (game === 'tetris') {
+      validationResult = validateTetrisScore(body);
+    } else if (game === 'rps') {
+      validationResult = validateRPSScore(body);
     }
     
-    // Validate payload shape? For now, trust the client types for speed
-    const updatedScores = await saveScore(game, { ...body, name: body.name.trim().slice(0, 20) });
+    if (!validationResult || !validationResult.valid) {
+      return new Response(JSON.stringify({ error: validationResult?.error || 'Invalid score data' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+    
+    const updatedScores = await saveScore(game, validationResult.data);
     
     return new Response(JSON.stringify(updatedScores), {
       status: 200,
