@@ -1,8 +1,28 @@
 import type { APIRoute } from 'astro';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { Mutex } from 'async-mutex';
 
 const DATA_DIR = path.resolve('./data/scores');
+
+// Mutex map for per-game locking
+const locks = new Map<string, Mutex>();
+
+function getLock(game: string) {
+  if (!locks.has(game)) {
+    locks.set(game, new Mutex());
+  }
+  return locks.get(game)!;
+}
+
+// Validation Helpers
+function isValidScore(n: any): boolean {
+  return typeof n === 'number' && Number.isFinite(n);
+}
+
+function isValidGame(game: any): game is 'tetris' | 'rps' {
+  return typeof game === 'string' && ['tetris', 'rps'].includes(game);
+}
 
 // Ensure DB file and structure exists
 async function getScoresData(game: string) {
@@ -18,6 +38,8 @@ async function getScoresData(game: string) {
     if ((error as any).code === 'ENOENT') {
       await fs.mkdir(DATA_DIR, { recursive: true });
       const initial = { scores: [] };
+      // No lock needed here as this is just initialization, but ideally wrapped too.
+      // For now, atomic write in saveScore covers the race mostly.
       await fs.writeFile(dbPath, JSON.stringify(initial));
       return initial;
     }
@@ -26,56 +48,60 @@ async function getScoresData(game: string) {
 }
 
 async function saveScore(game: string, newScore: any) {
-  const db = await getScoresData(game);
-  const scores = db.scores;
-  const dbPath = path.join(DATA_DIR, `${game}.json`);
+  const lock = getLock(game);
   
-  // Find existing user
-  const existingIndex = scores.findIndex((s: any) => s.name === newScore.name);
-  
-  if (game === 'tetris') {
-      // Tetris: Simple High Score
-      if (existingIndex !== -1) {
-        if (newScore.score > scores[existingIndex].score) {
-          scores[existingIndex].score = newScore.score;
-        }
-      } else {
-        scores.push(newScore);
-      }
-      scores.sort((a: any, b: any) => b.score - a.score);
+  return await lock.runExclusive(async () => {
+      const dbPath = path.join(DATA_DIR, `${game}.json`);
+      const db = await getScoresData(game);
+      const scores = db.scores;
       
-  } else if (game === 'rps') {
-      // RPS: Net Score (Player Wins - CPU Wins)
-      // Payload: { name, playerWins, cpuWins, ties }
-      const netScore = newScore.playerWins - newScore.cpuWins;
-      const entry = {
-          name: newScore.name,
-          netScore: netScore,
-          playerWins: newScore.playerWins,
-          cpuWins: newScore.cpuWins,
-          ties: newScore.ties
-      };
+      const existingIndex = scores.findIndex((s: any) => s.name === newScore.name);
+      
+      if (game === 'tetris') {
+          if (existingIndex !== -1) {
+            if (newScore.score > scores[existingIndex].score) {
+              scores[existingIndex].score = newScore.score;
+            }
+          } else {
+            scores.push(newScore);
+          }
+          scores.sort((a: any, b: any) => b.score - a.score);
+          
+      } else if (game === 'rps') {
+          const netScore = newScore.playerWins - newScore.cpuWins;
+          const entry = {
+              name: newScore.name,
+              netScore: netScore,
+              playerWins: newScore.playerWins,
+              cpuWins: newScore.cpuWins,
+              ties: newScore.ties
+          };
 
-      if (existingIndex !== -1) {
-        // Only update if current net score > stored net score
-        if (netScore > (scores[existingIndex].netScore || -Infinity)) {
-          scores[existingIndex] = entry;
-        }
-      } else {
-        scores.push(entry);
+          if (existingIndex !== -1) {
+            if (netScore > (scores[existingIndex].netScore || -Infinity)) {
+              scores[existingIndex] = entry;
+            }
+          } else {
+            scores.push(entry);
+          }
+          scores.sort((a: any, b: any) => b.netScore - a.netScore);
       }
-      scores.sort((a: any, b: any) => b.netScore - a.netScore);
-  }
 
-  const topScores = scores.slice(0, 10); // Keep top 10
-  db.scores = topScores;
-  await fs.writeFile(dbPath, JSON.stringify(db, null, 2));
-  return topScores;
+      const topScores = scores.slice(0, 10);
+      db.scores = topScores;
+      
+      // Atomic Write: Write to temp file then rename
+      const tempPath = `${dbPath}.tmp`;
+      await fs.writeFile(tempPath, JSON.stringify(db, null, 2));
+      await fs.rename(tempPath, dbPath);
+      
+      return topScores;
+  });
 }
 
 export const GET: APIRoute = async ({ params }) => {
   const game = params.game;
-  if (!game || !['tetris', 'rps'].includes(game)) {
+  if (!isValidGame(game)) {
       return new Response(JSON.stringify({ error: 'Game not found' }), {
         status: 404,
         headers: { 'Content-Type': 'application/json' }
@@ -83,7 +109,10 @@ export const GET: APIRoute = async ({ params }) => {
   }
 
   try {
-    const db = await getScoresData(game);
+    // Read lock? strict consistency might require it, but for high scores dirty read is ok.
+    // However, concurrent write might corrupt a read. Let's use the lock for consistency.
+    const lock = getLock(game);
+    const db = await lock.runExclusive(() => getScoresData(game));
     return new Response(JSON.stringify(db.scores), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
@@ -98,7 +127,7 @@ export const GET: APIRoute = async ({ params }) => {
 
 export const POST: APIRoute = async ({ request, params }) => {
   const game = params.game;
-  if (!game || !['tetris', 'rps'].includes(game)) {
+  if (!isValidGame(game)) {
       return new Response(JSON.stringify({ error: 'Game not found' }), {
         status: 404,
         headers: { 'Content-Type': 'application/json' }
@@ -107,24 +136,38 @@ export const POST: APIRoute = async ({ request, params }) => {
 
   try {
     const body = await request.json();
-    if (!body.name) {
-        return new Response(JSON.stringify({ error: 'Invalid score data' }), {
-          status: 400,
-          headers: { 'Content-Type': 'application/json' }
-        });
-    }
     
-    // Validate payload shape? For now, trust the client types for speed
-    const updatedScores = await saveScore(game, { ...body, name: body.name.trim().slice(0, 20) });
+    // Strict Input Validation
+    if (!body.name || typeof body.name !== 'string' || body.name.trim().length === 0) {
+        return new Response(JSON.stringify({ error: 'Invalid name' }), { status: 400 });
+    }
+
+    const sanitizedName = body.name.trim().slice(0, 20);
+
+    let payload: any = { name: sanitizedName };
+
+    if (game === 'tetris') {
+        if (!isValidScore(body.score)) {
+            return new Response(JSON.stringify({ error: 'Invalid score' }), { status: 400 });
+        }
+        payload.score = body.score;
+    } else if (game === 'rps') {
+        if (!isValidScore(body.playerWins) || !isValidScore(body.cpuWins) || !isValidScore(body.ties)) {
+             return new Response(JSON.stringify({ error: 'Invalid RPS stats' }), { status: 400 });
+        }
+        payload.playerWins = body.playerWins;
+        payload.cpuWins = body.cpuWins;
+        payload.ties = body.ties;
+    }
+
+    const updatedScores = await saveScore(game, payload);
     
     return new Response(JSON.stringify(updatedScores), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
     });
   } catch (e) {
-    return new Response(JSON.stringify({ error: 'Failed to save score' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    console.error(e);
+    return new Response(JSON.stringify({ error: 'Failed to save score' }), { status: 500 });
   }
 }
