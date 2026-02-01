@@ -22,7 +22,6 @@ Start a local server at `http://localhost:4321`:
 
 ```sh
 npm run dev
-npm run dev
 ```
 
 ### CMS (Local Development)
