@@ -57,8 +57,7 @@ async function submitScore() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
-                    name: username, 
-                    score: 0, // Unused by RPS backend logic but required by typings maybe?
+                    name: username,
                     playerWins: scores.playerWins,
                     cpuWins: scores.cpuWins,
                     ties: scores.ties
