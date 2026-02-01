@@ -8,7 +8,7 @@ echo "📥 Pulling from git..."
 git pull
 
 # 2. Rebuild and restart containers
-echo "Example: 🐳 Rebuilding and restarting Docker containers..."
+echo "🐳 Rebuilding and restarting Docker containers..."
 docker compose up -d --build --remove-orphans
 
 # 3. Prune old images (optional, keeps disk space clean)

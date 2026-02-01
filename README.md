@@ -99,7 +99,7 @@ Build and run the containerized application (using Node.js adapter):
 docker compose up --build
 ```
 
-The site will be available at http://localhost:8484 (or port 4321 depending on mapping).
+The site will be available at http://localhost:8484.
 
 **Note**: This uses a multi-stage `Dockerfile` that builds the Astro project into a standalone Node.js app. The "pull-on-boot" feature has been removed for stability.
 
