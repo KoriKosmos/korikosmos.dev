@@ -14,9 +14,6 @@ This repo contains the source for **korikosmos.dev**, my personal website built 
    ```sh
    cp .env.example .env
    ```
-   ```sh
-   cp .env.example .env
-   ```
    `LASTFM_USER` and `LASTFM_API_KEY` are loaded from this file and used by the server-side proxy at `/api/lastfm`. The tunes page fetches data from this internal API, keeping your keys secure.
 
 ## Development
@@ -39,7 +36,7 @@ npm run dev
 - Toggle a little cursor-following cat from the corner button
 - Switch between light, dark and forest themes using the new theme bar
 - Showcases my projects from `src/content/projects`
-- Manage posts and projects from Netlify CMS at `/admin`
+- Manage posts, projects, and CV via **Decap CMS** at `/admin`.
 - Responsive Tailwind styling
 - Includes dedicated pages for my Final Year Project and Year 2 Java calculator
 - I built a playable Tetris clone for the Games page with touch controls (including hold and counter-clockwise rotation buttons), a next-piece preview that matches the seven-piece bag, level-based speed shown in the HUD, a lock delay so pieces can slide before settling, a hold function, and the Super Rotation System (SRS).
@@ -50,7 +47,7 @@ npm run dev
 ```
 /
 ├── public/
-│   └── admin/           # Netlify CMS
+│   └── admin/           # Decap CMS
 ├── src/
 │   ├── assets/
 │   ├── components/
