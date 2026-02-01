@@ -41,9 +41,27 @@ async function loadLeaderboard() {
 
 function renderLeaderboard(data) {
   if (!$leaderboard) return;
-  $leaderboard.innerHTML = data.map((e) => 
-      `<li><b>${e.name}</b>: ${e.netScore} (W:${e.playerWins} L:${e.cpuWins} T:${e.ties})</li>`
-  ).join('');
+
+  // Clear existing leaderboard entries
+  $leaderboard.innerHTML = '';
+
+  // Safely render each leaderboard entry using DOM nodes
+  data.forEach((e) => {
+    const li = document.createElement('li');
+    const nameBold = document.createElement('b');
+
+    // Use textContent to avoid interpreting any HTML in the name
+    nameBold.textContent = e.name;
+
+    li.appendChild(nameBold);
+    li.appendChild(
+      document.createTextNode(
+        `: ${e.netScore} (W:${e.playerWins} L:${e.cpuWins} T:${e.ties})`
+      )
+    );
+
+    $leaderboard.appendChild(li);
+  });
 }
 
 async function submitScore() {
