@@ -4,6 +4,10 @@ import path from 'node:path';
 
 const DATA_DIR = path.resolve('./data/scores');
 
+// Validation constants
+const MAX_TETRIS_SCORE = 10000000;
+const MAX_RPS_FIELD_VALUE = 1000000;
+
 // Validation schemas
 interface TetrisScore {
   name: string;
@@ -21,6 +25,13 @@ function isFiniteNumber(value: any): boolean {
   return typeof value === 'number' && Number.isFinite(value);
 }
 
+function validateBounds(value: number, min: number, max: number, fieldName: string): { valid: boolean; error?: string } {
+  if (value < min || value > max) {
+    return { valid: false, error: `${fieldName} must be between ${min} and ${max.toLocaleString()}` };
+  }
+  return { valid: true };
+}
+
 function validateTetrisScore(body: any): { valid: boolean; data?: TetrisScore; error?: string } {
   if (!body.name || typeof body.name !== 'string' || body.name.trim().length === 0) {
     return { valid: false, error: 'Name is required and must be a non-empty string' };
@@ -30,8 +41,9 @@ function validateTetrisScore(body: any): { valid: boolean; data?: TetrisScore; e
     return { valid: false, error: 'Score must be a finite number' };
   }
   
-  if (body.score < 0 || body.score > 10000000) {
-    return { valid: false, error: 'Score must be between 0 and 10,000,000' };
+  const boundsCheck = validateBounds(body.score, 0, MAX_TETRIS_SCORE, 'Score');
+  if (!boundsCheck.valid) {
+    return boundsCheck;
   }
   
   return {
@@ -60,17 +72,20 @@ function validateRPSScore(body: any): { valid: boolean; data?: RPSScore; error?:
     return { valid: false, error: 'ties must be a finite number' };
   }
   
-  // Reasonable bounds: each field should be non-negative and not exceed 1 million
-  if (body.playerWins < 0 || body.playerWins > 1000000) {
-    return { valid: false, error: 'playerWins must be between 0 and 1,000,000' };
+  // Validate bounds for all numeric fields
+  const playerWinsBounds = validateBounds(body.playerWins, 0, MAX_RPS_FIELD_VALUE, 'playerWins');
+  if (!playerWinsBounds.valid) {
+    return playerWinsBounds;
   }
   
-  if (body.cpuWins < 0 || body.cpuWins > 1000000) {
-    return { valid: false, error: 'cpuWins must be between 0 and 1,000,000' };
+  const cpuWinsBounds = validateBounds(body.cpuWins, 0, MAX_RPS_FIELD_VALUE, 'cpuWins');
+  if (!cpuWinsBounds.valid) {
+    return cpuWinsBounds;
   }
   
-  if (body.ties < 0 || body.ties > 1000000) {
-    return { valid: false, error: 'ties must be between 0 and 1,000,000' };
+  const tiesBounds = validateBounds(body.ties, 0, MAX_RPS_FIELD_VALUE, 'ties');
+  if (!tiesBounds.valid) {
+    return tiesBounds;
   }
   
   return {
@@ -194,10 +209,13 @@ export const POST: APIRoute = async ({ request, params }) => {
       validationResult = validateTetrisScore(body);
     } else if (game === 'rps') {
       validationResult = validateRPSScore(body);
+    } else {
+      // This should never happen due to the check above, but handle defensively
+      validationResult = { valid: false, error: 'Unsupported game type' };
     }
     
-    if (!validationResult || !validationResult.valid) {
-      return new Response(JSON.stringify({ error: validationResult?.error || 'Invalid score data' }), {
+    if (!validationResult.valid) {
+      return new Response(JSON.stringify({ error: validationResult.error || 'Invalid score data' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
       });
