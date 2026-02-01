@@ -164,3 +164,7 @@ pnpm-debug.log*
 .idea/
 /idea/
 ./idea
+
+
+pnpm-lock.yaml
+pnpm-workspace.yaml

@@ -1,0 +1,158 @@
+{
+  "personal": {
+    "name": "Kori Kosmos",
+    "title": "MSci Computer Science Graduate",
+    "location": "WD23 3FH, United Kingdom",
+    "email": "kori@korikosmos.dev",
+    "website": "https://korikosmos.dev",
+    "linkedin": "https://linkedin.com/in/maan-meher-449094a0"
+  },
+  "sections": [
+    {
+      "title": "Summary",
+      "content": [
+        "With a strong foundation in computer science and particular interests in artificial intelligence, systems, and design-focused technologies, I approach challenges with curiosity, structure, and a systems mindset. My experience spans low-level programming, cybersecurity, and application development, shaped by academic study and personal exploration.",
+        "I’m especially comfortable learning on the go and adapting quickly to new tools, environments, and workflows. I thrive in spaces that challenge me or align with my interests, especially those that value independent thought and flexibility over rigid structure.",
+        "Inspired early by building PCs and modding devices, I’ve always found energy in the hands-on nature of computing. My long-term goals include contributing to impactful software and AI projects while building toward a future in game development — a field where design, interactivity, and problem-solving intersect.",
+        "Having lived in Pakistan, Indonesia, Wales, and England, I bring a global outlook and confidence working in multicultural environments. Outside of computing, I draw creative inspiration from comics and narrative media, often carrying those influences into my design thinking."
+      ]
+    },
+    {
+      "title": "Education",
+      "items": [
+        {
+          "main": "2021–2025: MSci Computer Science (Integrated Masters), Royal Holloway, University of London – Classification: Second Class Honours (Upper Division)"
+        },
+        {
+          "main": "2019–2021: A-Levels, Claremont High School Academy Trust, London, UK",
+          "subItems": [
+            "A in Mathematics",
+            "B in Further Mathematics",
+            "B in Physics"
+          ]
+        },
+        {
+          "main": "2016–2019: GCSEs, Claremont High School Academy Trust, London, UK",
+          "subItems": [
+            "9 in Physics; 8 in Mathematics, Chemistry, English Literature",
+            "A in Further Mathematics AQA Certificate",
+            "Gold UK Biology Challenge; Silver & Bronze UK Maths Challenge"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Technical Skills",
+      "items": [
+        { "main": "Languages: Java, Python, C++, Haskell, Prolog, SQL, Bash" },
+        { "main": "Technologies: Linux, Git, VS Code, IntelliJ, MySQL, Overleaf" },
+        { "main": "Focus Areas: Artificial Intelligence, NLP, Machine Learning, Cybersecurity, Functional Programming, Software Engineering" },
+        { "main": "Other Areas: Game Development, Web Development, UI/UX Design" }
+      ]
+    },
+    {
+      "title": "Key Modules",
+      "items": [
+        {
+          "main": "AI & ML: Machine Learning, Deep Learning, Symbolic AI, Natural Language Processing, Reinforcement Learning",
+          "description": "Covered core AI concepts and applications. Gained practical experience in building models, understanding data biases, and applying algorithms to real-world scenarios."
+        },
+        {
+          "main": "Software Engineering: Software Engineering, Object-Oriented Programming I & II, Programming Lab, Software Design, IT Project Management, Functional Programming",
+          "description": "Studied Agile methodologies, software design patterns, testing, and team collaboration. Developed production-grade software and led planning through project-based modules."
+        },
+        {
+          "main": "Systems & Security: Operating Systems, Internet Services, Digital Forensics, Information Security, Security Management",
+          "description": "Built low-level systems understanding and explored vulnerabilities, digital evidence handling, and cyber-risk mitigation through practical labs and security simulations."
+        },
+        {
+          "main": "Maths & Theory: Mathematical Structures, Algorithms & Complexity, Advanced Algorithms, Computational Optimisation",
+          "description": "Developed a foundation in logical reasoning, graph theory, computational bounds, and optimisation techniques for real-world problem-solving."
+        },
+        {
+          "main": "Data & UX: Databases, Multi-dimensional Data Processing, Data Analysis, User-Centred Design",
+          "description": "Worked with structured data using SQL and processing pipelines. Applied UX principles in projects with usability testing and interface prototyping."
+        }
+      ]
+    },
+    {
+      "title": "Projects",
+      "items": [
+        {
+          "main": "Tales of Zelmore (Year 1 Team Game): Developed a complete 2D top-down arcade shooter using Python and SimpleGUI. The game includes custom sprite animations, AI-driven enemy behavior, item drops with varied effects, and an interactive GUI system. Implemented robust collision detection, real-time input handling, and multiple gameplay states."
+        },
+        {
+          "main": "Year 2 Scrum Group Project: Working in a 5-person Agile team to develop a full-stack restaurant order management system using Flask and MongoDB. Designed and refactored the kitchen UI and backend for order processing and cancellation. Emphasised maintainability through code refactoring and enhanced team coordination via daily stand-ups and sprint reviews."
+        },
+        {
+          "main": "Year 2 Dual-Mode Calculator: Developed a calculator in Java supporting both infix and reverse Polish notation. Implemented expression parsing, stack-based evaluation, and Dijkstra's Shunting Yard algorithm. Extended the project with a JavaFX GUI for input mode toggling and real-time feedback."
+        },
+        {
+          "main": "Sustainable RHUL (Year 3 Team UX Project): Co-led a group project designing a VR interface to promote environmental awareness on campus. Built a prototype featuring spatial navigation, interactive building overlays, TTS accessibility, and window pinning. Conducted A/B testing on sound and layout design and led the final presentation."
+        },
+        {
+          "main": "MSci Final Year Project: Engineered a secure anti-cheat prototype using Intel SGX enclaves, with encrypted inter-process communication integrated into the ioquake3 game engine. Designed cryptographic protocols for data integrity, enclave-host interactions, and shot validation."
+        },
+        {
+          "main": "Personal Portfolio: Actively developing [korikosmos.dev](https://korikosmos.dev), a dynamic personal portfolio and blog site with GitHub integration. Self-hosted via Debian using CasaOS and nginx, with automated deployment pipelines and plans for interactive visual elements."
+        },
+        {
+          "main": "Pokédex Classifier (ongoing): Designing a custom image classifier to recognise Pokémon species across varied visual styles. Built a data labelling pipeline and training workflow using self-curated datasets. Current focus includes model evaluation and UI design for real-time inference."
+        }
+      ]
+    },
+    {
+      "title": "Work Experience",
+      "items": [
+        {
+          "main": "Jun 2025 – Present: Sales Assistant, CeX (Webuy Entertainment), Watford, UK",
+          "subItems": [
+            "Responsible for merchandising, restocking, relabelling, and visually arranging tech and media products.",
+            "Conduct visual inspections and assist in hardware testing of devices; currently training in e-commerce and advanced repair workflows.",
+            "Provide in-depth technical support for console, phone, and PC issues.",
+            "Handle customer escalations, complaints, and returns through calm, empathetic communication.",
+            "Collaborate with team members to maintain stock accuracy and ensure a clean and secure sales floor."
+          ]
+        },
+        {
+          "main": "Jul 2023 – Sep 2023: Colleague (Night Shift), Tesco UK",
+          "subItems": [
+            "Handled stock replenishment, product rotation, and shelf organisation.",
+            "Verified date labels, pricing, and packaging, relabelling stock where necessary.",
+            "Supported customer enquiries and checkout operation during overnight openings."
+          ]
+        },
+        {
+          "main": "Jul 2022 – Sep 2022: Team Member, McDonald's UK",
+          "subItems": [
+            "Delivered high-speed, high-accuracy service in drive-thru and front-counter environments.",
+            "Maintained cleanliness and hygiene across kitchen, dining, and service zones.",
+            "Took initiative in preparing orders efficiently while contributing to a positive shift atmosphere."
+          ]
+        },
+        {
+          "main": "Mar 2018: Nursery Assistant, Christchurch Kindergarten",
+          "subItems": [
+            "Assisted with educational games, storytelling, and activities for children aged 3–6.",
+            "Maintained safety and cleanliness standards, including cleaning toys and learning spaces.",
+            "Communicated regularly with staff to ensure a smooth routine for both children and carers."
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Languages",
+      "items": [
+        { "main": "Fluent: English, Urdu" },
+        { "main": "Working Knowledge: Punjabi" },
+        { "main": "Beginner: Japanese" }
+      ]
+    },
+    {
+      "title": "Interests",
+      "content": [
+        "Video games, comics/manga, game design, world-building, interactive storytelling"
+      ]
+    }
+  ]
+}

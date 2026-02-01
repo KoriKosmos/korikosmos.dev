@@ -1,8 +1,5 @@
 ---
 import Layout from '../layouts/Layout.astro';
-
-const user = import.meta.env.LASTFM_USER;
-const apiKey = import.meta.env.LASTFM_API_KEY;
 ---
 
 <Layout title="Tunes">
@@ -14,7 +11,7 @@ const apiKey = import.meta.env.LASTFM_API_KEY;
     </div>
   </section>
 
-  <script define:vars={{ user, apiKey }} is:inline>
+  <script is:inline>
     const ignoreNames = ['the magnus archives', 'the yard', 'knifepoint horror'];
 
     function getImage(images, preferredSize = 'medium') {
@@ -41,8 +38,8 @@ const apiKey = import.meta.env.LASTFM_API_KEY;
     }
 
     async function fetchLastFm() {
-      const url = `https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=${user}&api_key=${apiKey}&format=json`;
-      const res = await fetch(url);
+      // Fetch from our local API proxy
+      const res = await fetch('/api/lastfm');
       if (!res.ok) return null;
       return await res.json();
     }
@@ -77,7 +74,7 @@ const apiKey = import.meta.env.LASTFM_API_KEY;
       const data = await fetchLastFm();
       const container = document.getElementById('player');
       container.innerHTML = '';
-      if (!data) {
+      if (!data || !data.recenttracks) {
         container.textContent = 'Failed to load tracks.';
         return;
       }
@@ -96,22 +93,25 @@ const apiKey = import.meta.env.LASTFM_API_KEY;
         return;
       }
       unique.forEach((track, i) => container.appendChild(createTrackEl(track, i === 0)));
-      const controls = document.createElement('div');
-      controls.className = 'flex justify-between mt-4 text-2xl';
-      controls.innerHTML = '<button id="prev" class="px-3 py-1 border rounded" aria-label="Previous">\u23EE</button><button id="next" class="px-3 py-1 border rounded" aria-label="Next">\u23ED</button>';
-      container.appendChild(controls);
-      const tracks = Array.from(container.querySelectorAll('.track'));
-      let current = 0;
-      controls.querySelector('#prev').addEventListener('click', () => {
-        tracks[current].classList.add('hidden');
-        current = (current - 1 + tracks.length) % tracks.length;
-        tracks[current].classList.remove('hidden');
-      });
-      controls.querySelector('#next').addEventListener('click', () => {
-        tracks[current].classList.add('hidden');
-        current = (current + 1) % tracks.length;
-        tracks[current].classList.remove('hidden');
-      });
+      
+      if (unique.length > 1) {
+        const controls = document.createElement('div');
+        controls.className = 'flex justify-between mt-4 text-2xl';
+        controls.innerHTML = '<button id="prev" class="px-3 py-1 border rounded" aria-label="Previous">\u23EE</button><button id="next" class="px-3 py-1 border rounded" aria-label="Next">\u23ED</button>';
+        container.appendChild(controls);
+        const tracks = Array.from(container.querySelectorAll('.track'));
+        let current = 0;
+        controls.querySelector('#prev').addEventListener('click', () => {
+          tracks[current].classList.add('hidden');
+          current = (current - 1 + tracks.length) % tracks.length;
+          tracks[current].classList.remove('hidden');
+        });
+        controls.querySelector('#next').addEventListener('click', () => {
+          tracks[current].classList.add('hidden');
+          current = (current + 1) % tracks.length;
+          tracks[current].classList.remove('hidden');
+        });
+      }
     }
 
     loadTracks();

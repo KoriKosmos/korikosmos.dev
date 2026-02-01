@@ -14,7 +14,10 @@ This repo contains the source for **korikosmos.dev**, my personal website built 
    ```sh
    cp .env.example .env
    ```
-   `LASTFM_USER` and `LASTFM_API_KEY` are loaded from this file and then inlined into the tunes page. The script on `/tunes` fetches tracks in the browser whenever the page loads.
+   ```sh
+   cp .env.example .env
+   ```
+   `LASTFM_USER` and `LASTFM_API_KEY` are loaded from this file and used by the server-side proxy at `/api/lastfm`. The tunes page fetches data from this internal API, keeping your keys secure.
 
 ## Development
 
@@ -26,6 +29,11 @@ npm run dev
 
 ## Features
 
+- **Refactored Architecture**:
+  - **CV Page**: Fully data-driven using `src/data/cv.json` and reusable `CvSection` components.
+  - **Tetris**: Game logic decoupled into a dedicated `src/lib/tetris.js` engine, separating `update()`/`draw()` loops from the UI component.
+  - **Tunes Page**: Last.fm integration now uses a server-side proxy (`src/pages/api/lastfm.ts`) to prevent API key exposure.
+  - **Config**: Centralized navigation and site settings in `src/config.ts`.
 - Displays my most recently played tracks with album artwork
 - Normalizes track names to avoid duplicates credited in different languages
 - Toggle a little cursor-following cat from the corner button
@@ -34,12 +42,8 @@ npm run dev
 - Manage posts and projects from Netlify CMS at `/admin`
 - Responsive Tailwind styling
 - Includes dedicated pages for my Final Year Project and Year 2 Java calculator
-- I built a playable Tetris clone for the Games page with touch controls (including hold and counter-clockwise rotation buttons), a next-piece preview that matches the seven-piece bag, level-based speed shown in the HUD, a lock delay so pieces can slide before settling, a hold function (press C, Shift or tap Hold), and the Super Rotation System (SRS)
-- I also added a simple Rock Paper Scissors game that saves scores in `localStorage`
-- Its logic now lives in an external `/js/rock-paper-scissors.js` file so it works on hosts that block inline scripts
-- The Tetris game now asks for a username, stores my best score in localStorage, keeps a local leaderboard of top runs, and submits scores to a global top ten board for everyone who visits
-- My Tetris clone now uses official scoring, including soft and hard drop bonuses
-- The Tetris game now asks for a username, stores my best score in a cookie and keeps a local leaderboard of top runs
+- I built a playable Tetris clone for the Games page with touch controls (including hold and counter-clockwise rotation buttons), a next-piece preview that matches the seven-piece bag, level-based speed shown in the HUD, a lock delay so pieces can slide before settling, a hold function, and the Super Rotation System (SRS).
+- I also added a simple Rock Paper Scissors game that saves scores in `localStorage`.
 
 ## Project Structure
 
@@ -50,27 +54,31 @@ npm run dev
 ├── src/
 │   ├── assets/
 │   ├── components/
+│   ├── config.ts        # Site configuration & navigation
+│   ├── data/            # Static data (e.g., CV)
+│   ├── env.d.ts         # Type definitions
 │   ├── layouts/
+│   ├── lib/             # Game engines & shared logic
 │   ├── pages/
+│   │   ├── api/         # Server-side API endpoints
+│   │   └── ...
 │   └── content/
 │       ├── blog/
 │       └── projects/
 └── ...
 ```
 
-`src/pages/tunes.astro` now fetches Last.fm data on each visit using client-side JavaScript. Track names are normalized so the same song isn't listed twice when credits differ.
-
 ## Commands
 
 Run these from the project root:
 
-| Command             | Action                                        |
-| :------------------ | :--------------------------------------------- |
-| `npm install`       | Install dependencies                           |
-| `npm run dev`       | Start the dev server                           |
-| `npm run build`     | Build the production site to `./dist/`         |
-| `npm run preview`   | Preview the built site locally                 |
-| `npm run astro ...` | Run additional Astro CLI commands              |
+| Command             | Action                                 |
+| :------------------ | :------------------------------------- |
+| `npm install`       | Install dependencies                   |
+| `npm run dev`       | Start the dev server                   |
+| `npm run build`     | Build the production site to `./dist/` |
+| `npm run preview`   | Preview the built site locally         |
+| `npm run astro ...` | Run additional Astro CLI commands      |
 
 ## Docker
 

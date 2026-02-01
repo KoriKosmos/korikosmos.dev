@@ -1,137 +1,74 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import CvSection from '../components/CvSection.astro';
+import cvData from '../data/cv.json';
+
+const { personal, sections } = cvData;
 ---
 
 <Layout title="CV">
   <section class="my-8 text-center">
     <div class="bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl p-8 shadow-lg">
-      <h1 class="text-5xl font-extrabold mb-2">Kori Kosmos</h1>
-      <p class="text-xl mb-2">MSci Computer Science Graduate</p>
-      <p>WD23 3FH, United Kingdom</p>
+      <h1 class="text-5xl font-extrabold mb-2">{personal.name}</h1>
+      <p class="text-xl mb-2">{personal.title}</p>
+      <p>{personal.location}</p>
       <p class="mt-4 flex flex-wrap justify-center gap-4">
-        <a href="mailto:kori@korikosmos.dev" class="text-white underline hover:text-gray-200">kori@korikosmos.dev</a>
+        <a href={`mailto:${personal.email}`} class="text-white underline hover:text-gray-200">{personal.email}</a>
         <span class="text-white">&bull;</span>
-        <a href="https://korikosmos.dev" class="text-white underline hover:text-gray-200">korikosmos.dev</a>
+        <a href={personal.website} class="text-white underline hover:text-gray-200">korikosmos.dev</a>
         <span class="text-white">&bull;</span>
-        <a href="https://linkedin.com/in/maan-meher-449094a0" class="text-white underline hover:text-gray-200">LinkedIn</a>
+        <a href={personal.linkedin} class="text-white underline hover:text-gray-200">LinkedIn</a>
       </p>
     </div>
   </section>
 
   <div class="space-y-8">
+    {sections.map((section) => (
+      <CvSection title={section.title}>
+        {section.content && (
+          <div class="space-y-2">
+            {section.content.map(p => <p class="mb-2">{p}</p>)}
+          </div>
+        )}
 
-  <section class="bg-surface-60 rounded-lg p-6 shadow">
-    <h2 class="text-2xl font-semibold mb-2">Summary</h2>
-    <p class="mb-2">With a strong foundation in computer science and particular interests in artificial intelligence, systems, and design-focused technologies, I approach challenges with curiosity, structure, and a systems mindset. My experience spans low-level programming, cybersecurity, and application development, shaped by academic study and personal exploration.</p>
-    <p class="mb-2">I’m especially comfortable learning on the go and adapting quickly to new tools, environments, and workflows. I thrive in spaces that challenge me or align with my interests, especially those that value independent thought and flexibility over rigid structure.</p>
-    <p class="mb-2">Inspired early by building PCs and modding devices, I’ve always found energy in the hands-on nature of computing. My long-term goals include contributing to impactful software and AI projects while building toward a future in game development — a field where design, interactivity, and problem-solving intersect.</p>
-    <p>Having lived in Pakistan, Indonesia, Wales, and England, I bring a global outlook and confidence working in multicultural environments. Outside of computing, I draw creative inspiration from comics and narrative media, often carrying those influences into my design thinking.</p>
-  </section>
+        {section.items && (
+          <ul class="list-disc pl-5 space-y-2">
+            {section.items.map((item) => (
+              <li>
+                 {/* Simple bolding strategy: if string has a colon, bold before it.
+                     For links (markdown style [text](url)), we'd need a parser, but for now we'll do basic regex replacement or just text.
+                     Given the time, we'll render innerHTML for descriptions if they exist, or just text.
+                     For the main item, we can try to split by the first colon.
+                 */}
+                {(() => {
+                  const colonIndex = item.main.indexOf(':');
+                  if (colonIndex > -1 && colonIndex < 50) { // Limit bold key length to avoid huge paragraphs being bold
+                     const key = item.main.substring(0, colonIndex + 1);
+                     const rest = item.main.substring(colonIndex + 1);
+                     // Check for markdown link in rest
+                     const linkMatch = rest.match(/\[(.*?)\]\((.*?)\)/);
+                     if (linkMatch) {
+                       const [_, text, url] = linkMatch;
+                       const pre = rest.substring(0, linkMatch.index);
+                       const post = rest.substring(linkMatch.index + linkMatch[0].length);
+                       return <span><strong>{key}</strong>{pre}<a href={url} class="text-blue-400 hover:underline">{text}</a>{post}</span>;
+                     }
+                     return <span><strong>{key}</strong>{rest}</span>;
+                  }
+                  return <span>{item.main}</span>;
+                })()}
 
-  <section class="bg-surface-60 rounded-lg p-6 shadow">
-    <h2 class="text-2xl font-semibold mb-2">Education</h2>
-    <ul class="list-disc pl-5 space-y-2">
-      <li><strong>2021–2025:</strong> MSci Computer Science (Integrated Masters), Royal Holloway, University of London – <em>Classification: Second Class Honours (Upper Division)</em></li>
-      <li><strong>2019–2021:</strong> A-Levels, Claremont High School Academy Trust, London, UK
-        <ul class="list-disc pl-5">
-          <li>A in Mathematics</li>
-          <li>B in Further Mathematics</li>
-          <li>B in Physics</li>
-        </ul>
-      </li>
-      <li><strong>2016–2019:</strong> GCSEs, Claremont High School Academy Trust, London, UK
-        <ul class="list-disc pl-5">
-          <li>9 in Physics; 8 in Mathematics, Chemistry, English Literature</li>
-          <li>A in Further Mathematics AQA Certificate</li>
-          <li>Gold UK Biology Challenge; Silver &amp; Bronze UK Maths Challenge</li>
-        </ul>
-      </li>
-    </ul>
-  </section>
-
-  <section class="bg-surface-60 rounded-lg p-6 shadow">
-    <h2 class="text-2xl font-semibold mb-2">Technical Skills</h2>
-    <ul class="list-disc pl-5 space-y-1">
-      <li><strong>Languages:</strong> Java, Python, C++, Haskell, Prolog, SQL, Bash</li>
-      <li><strong>Technologies:</strong> Linux, Git, VS Code, IntelliJ, MySQL, Overleaf</li>
-      <li><strong>Focus Areas:</strong> Artificial Intelligence, NLP, Machine Learning, Cybersecurity, Functional Programming, Software Engineering</li>
-      <li><strong>Other Areas:</strong> Game Development, Web Development, UI/UX Design</li>
-    </ul>
-  </section>
-
-  <section class="bg-surface-60 rounded-lg p-6 shadow">
-    <h2 class="text-2xl font-semibold mb-2">Key Modules</h2>
-    <ul class="list-disc pl-5 space-y-2">
-      <li><strong>AI &amp; ML:</strong> Machine Learning, Deep Learning, Symbolic AI, Natural Language Processing, Reinforcement Learning<br/>Covered core AI concepts and applications. Gained practical experience in building models, understanding data biases, and applying algorithms to real-world scenarios.</li>
-      <li><strong>Software Engineering:</strong> Software Engineering, Object-Oriented Programming I &amp; II, Programming Lab, Software Design, IT Project Management, Functional Programming<br/>Studied Agile methodologies, software design patterns, testing, and team collaboration. Developed production-grade software and led planning through project-based modules.</li>
-      <li><strong>Systems &amp; Security:</strong> Operating Systems, Internet Services, Digital Forensics, Information Security, Security Management<br/>Built low-level systems understanding and explored vulnerabilities, digital evidence handling, and cyber-risk mitigation through practical labs and security simulations.</li>
-      <li><strong>Maths &amp; Theory:</strong> Mathematical Structures, Algorithms &amp; Complexity, Advanced Algorithms, Computational Optimisation<br/>Developed a foundation in logical reasoning, graph theory, computational bounds, and optimisation techniques for real-world problem-solving.</li>
-      <li><strong>Data &amp; UX:</strong> Databases, Multi-dimensional Data Processing, Data Analysis, User-Centred Design<br/>Worked with structured data using SQL and processing pipelines. Applied UX principles in projects with usability testing and interface prototyping.</li>
-    </ul>
-  </section>
-
-  <section class="bg-surface-60 rounded-lg p-6 shadow">
-    <h2 class="text-2xl font-semibold mb-2">Projects</h2>
-    <ul class="list-disc pl-5 space-y-2">
-      <li><strong>Tales of Zelmore (Year 1 Team Game):</strong> Developed a complete 2D top-down arcade shooter using Python and SimpleGUI. The game includes custom sprite animations, AI-driven enemy behavior, item drops with varied effects, and an interactive GUI system. Implemented robust collision detection, real-time input handling, and multiple gameplay states.</li>
-      <li><strong>Year 2 Scrum Group Project:</strong> Worked in a 5-person Agile team to develop a full-stack restaurant order management system using Flask and MongoDB. Designed and refactored the kitchen UI and backend for order processing and cancellation. Emphasised maintainability through code refactoring and enhanced team coordination via daily stand-ups and sprint reviews.</li>
-      <li><strong>Year 2 Dual-Mode Calculator:</strong> Developed a calculator in Java supporting both infix and reverse Polish notation. Implemented expression parsing, stack-based evaluation, and Dijkstra's Shunting Yard algorithm. Extended the project with a JavaFX GUI for input mode toggling and real-time feedback.</li>
-      <li><strong>Sustainable RHUL (Year 3 Team UX Project):</strong> Co-led a group project designing a VR interface to promote environmental awareness on campus. Built a prototype featuring spatial navigation, interactive building overlays, TTS accessibility, and window pinning. Conducted A/B testing on sound and layout design and led the final presentation.</li>
-      <li><strong>MSci Final Year Project:</strong> Engineered a secure anti-cheat prototype using Intel SGX enclaves, with encrypted inter-process communication integrated into the ioquake3 game engine. Designed cryptographic protocols for data integrity, enclave-host interactions, and shot validation.</li>
-      <li><strong>Personal Portfolio:</strong> Actively developing <a href="https://korikosmos.dev" class="text-blue-400 hover:underline">korikosmos.dev</a>, a dynamic personal portfolio and blog site with GitHub integration. Self-hosted via Debian using CasaOS and nginx, with automated deployment pipelines and plans for interactive visual elements.</li>
-      <li><strong>Pokédex Classifier (ongoing):</strong> Designing a custom image classifier to recognise Pokémon species across varied visual styles. Built a data labelling pipeline and training workflow using self-curated datasets. Current focus includes model evaluation and UI design for real-time inference.</li>
-    </ul>
-  </section>
-
-  <section class="bg-surface-60 rounded-lg p-6 shadow">
-    <h2 class="text-2xl font-semibold mb-2">Work Experience</h2>
-    <ul class="list-disc pl-5 space-y-2">
-      <li><strong>Jun 2025 – Present:</strong> Sales Assistant, CeX (Webuy Entertainment), Watford, UK
-        <ul class="list-disc pl-5">
-          <li>Responsible for merchandising, restocking, relabelling, and visually arranging tech and media products.</li>
-          <li>Conduct visual inspections and assist in hardware testing of devices; currently training in e-commerce and advanced repair workflows.</li>
-          <li>Provide in-depth technical support for console, phone, and PC issues.</li>
-          <li>Handle customer escalations, complaints, and returns through calm, empathetic communication.</li>
-          <li>Collaborate with team members to maintain stock accuracy and ensure a clean and secure sales floor.</li>
-        </ul>
-      </li>
-      <li><strong>Jul 2023 – Sep 2023:</strong> Colleague (Night Shift), Tesco UK
-        <ul class="list-disc pl-5">
-          <li>Handled stock replenishment, product rotation, and shelf organisation.</li>
-          <li>Verified date labels, pricing, and packaging, relabelling stock where necessary.</li>
-          <li>Supported customer enquiries and checkout operation during overnight openings.</li>
-        </ul>
-      </li>
-      <li><strong>Jul 2022 – Sep 2022:</strong> Team Member, McDonald's UK
-        <ul class="list-disc pl-5">
-          <li>Delivered high-speed, high-accuracy service in drive-thru and front-counter environments.</li>
-          <li>Maintained cleanliness and hygiene across kitchen, dining, and service zones.</li>
-          <li>Took initiative in preparing orders efficiently while contributing to a positive shift atmosphere.</li>
-        </ul>
-      </li>
-      <li><strong>Mar 2018:</strong> Nursery Assistant, Christchurch Kindergarten
-        <ul class="list-disc pl-5">
-          <li>Assisted with educational games, storytelling, and activities for children aged 3–6.</li>
-          <li>Maintained safety and cleanliness standards, including cleaning toys and learning spaces.</li>
-          <li>Communicated regularly with staff to ensure a smooth routine for both children and carers.</li>
-        </ul>
-      </li>
-    </ul>
-  </section>
-
-  <section class="bg-surface-60 rounded-lg p-6 shadow">
-    <h2 class="text-2xl font-semibold mb-2">Languages</h2>
-    <ul class="list-disc pl-5">
-      <li><strong>Fluent:</strong> English, Urdu</li>
-      <li><strong>Working Knowledge:</strong> Punjabi</li>
-      <li><strong>Beginner:</strong> Japanese</li>
-    </ul>
-  </section>
-
-  <section class="bg-surface-60 rounded-lg p-6 shadow">
-    <h2 class="text-2xl font-semibold mb-2">Interests</h2>
-    <p>Video games, comics/manga, game design, world-building, interactive storytelling</p>
-  </section>
-
+                {item.subItems && (
+                  <ul class="list-disc pl-5 mt-1">
+                    {item.subItems.map(sub => <li>{sub}</li>)}
+                  </ul>
+                )}
+                {item.description && <p class="mt-1 text-sm text-gray-300">{item.description}</p>}
+              </li>
+            ))}
+          </ul>
+        )}
+      </CvSection>
+    ))}
   </div>
 </Layout>
