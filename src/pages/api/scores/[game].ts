@@ -17,11 +17,80 @@ function getLock(game: string) {
 
 // Validation Helpers
 function isValidScore(n: any): boolean {
-  return typeof n === 'number' && Number.isFinite(n);
+  return typeof n === 'number' && Number.isInteger(n) && n >= 0;
 }
 
 function isValidGame(game: any): game is 'tetris' | 'rps' {
   return typeof game === 'string' && ['tetris', 'rps'].includes(game);
+}
+
+// ... (existing getScoresData and saveScore functions) ...
+
+export const POST: APIRoute = async ({ request, params }) => {
+  const game = params.game;
+  if (!isValidGame(game)) {
+      return new Response(JSON.stringify({ error: 'Game not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' }
+      });
+  }
+
+  try {
+    let body;
+    try {
+      body = await request.json();
+    } catch (e) {
+      return new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Strict Input Validation
+    if (!body.name || typeof body.name !== 'string' || body.name.trim().length === 0) {
+        return new Response(JSON.stringify({ error: 'Invalid name' }), { 
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        });
+    }
+
+    const sanitizedName = body.name.trim().slice(0, 20);
+
+    let payload: any = { name: sanitizedName };
+
+    if (game === 'tetris') {
+        if (!isValidScore(body.score)) {
+            return new Response(JSON.stringify({ error: 'Invalid score: must be a non-negative integer' }), { 
+              status: 400,
+              headers: { 'Content-Type': 'application/json' } 
+            });
+        }
+        payload.score = body.score;
+    } else if (game === 'rps') {
+        if (!isValidScore(body.playerWins) || !isValidScore(body.cpuWins) || !isValidScore(body.ties)) {
+             return new Response(JSON.stringify({ error: 'Invalid RPS stats: must be non-negative integers' }), { 
+               status: 400,
+               headers: { 'Content-Type': 'application/json' }
+             });
+        }
+        payload.playerWins = body.playerWins;
+        payload.cpuWins = body.cpuWins;
+        payload.ties = body.ties;
+    }
+
+    const updatedScores = await saveScore(game, payload);
+    
+    return new Response(JSON.stringify(updatedScores), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  } catch (e) {
+    console.error(e);
+    return new Response(JSON.stringify({ error: 'Failed to save score' }), { 
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
 }
 
 // Ensure DB file and structure exists
@@ -125,49 +194,3 @@ export const GET: APIRoute = async ({ params }) => {
   }
 }
 
-export const POST: APIRoute = async ({ request, params }) => {
-  const game = params.game;
-  if (!isValidGame(game)) {
-      return new Response(JSON.stringify({ error: 'Game not found' }), {
-        status: 404,
-        headers: { 'Content-Type': 'application/json' }
-      });
-  }
-
-  try {
-    const body = await request.json();
-    
-    // Strict Input Validation
-    if (!body.name || typeof body.name !== 'string' || body.name.trim().length === 0) {
-        return new Response(JSON.stringify({ error: 'Invalid name' }), { status: 400 });
-    }
-
-    const sanitizedName = body.name.trim().slice(0, 20);
-
-    let payload: any = { name: sanitizedName };
-
-    if (game === 'tetris') {
-        if (!isValidScore(body.score)) {
-            return new Response(JSON.stringify({ error: 'Invalid score' }), { status: 400 });
-        }
-        payload.score = body.score;
-    } else if (game === 'rps') {
-        if (!isValidScore(body.playerWins) || !isValidScore(body.cpuWins) || !isValidScore(body.ties)) {
-             return new Response(JSON.stringify({ error: 'Invalid RPS stats' }), { status: 400 });
-        }
-        payload.playerWins = body.playerWins;
-        payload.cpuWins = body.cpuWins;
-        payload.ties = body.ties;
-    }
-
-    const updatedScores = await saveScore(game, payload);
-    
-    return new Response(JSON.stringify(updatedScores), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
-  } catch (e) {
-    console.error(e);
-    return new Response(JSON.stringify({ error: 'Failed to save score' }), { status: 500 });
-  }
-}

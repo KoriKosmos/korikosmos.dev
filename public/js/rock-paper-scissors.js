@@ -64,12 +64,16 @@ function renderLeaderboard(data) {
   });
 }
 
+let isSubmitting = false;
+
 async function submitScore() {
+    if (isSubmitting) return;
     const currentNet = scores.playerWins - scores.cpuWins;
     
     // Logic: Only submit if we have beaten our lifetime max
     // OR if we don't have a lifetime max yet.
     if (currentNet > lifetimeMaxNet) {
+        isSubmitting = true;
         try {
             const res = await fetch('/api/scores/rps', {
                 method: 'POST',
@@ -91,6 +95,8 @@ async function submitScore() {
             }
         } catch (e) {
             console.error('Failed to submit score', e);
+        } finally {
+            isSubmitting = false;
         }
     }
 }

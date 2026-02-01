@@ -55,7 +55,10 @@ import Layout from '../../layouts/Layout.astro';
     let highScore = parseInt(localStorage.getItem('tetris_highscore') || '0', 10);
     $high.textContent = highScore.toString();
 
+    let isSyncing = false;
     async function syncAndLoadLeaderboard() {
+      if (isSyncing) return;
+      isSyncing = true;
       let serverData = [];
       try {
         const res = await fetch('/api/scores/tetris');
@@ -64,6 +67,8 @@ import Layout from '../../layouts/Layout.astro';
         }
       } catch (e) {
         console.error('Failed to load leaderboard', e);
+      } finally {
+        isSyncing = false;
       }
 
       // Check if we need to sync local high score
@@ -87,6 +92,7 @@ import Layout from '../../layouts/Layout.astro';
       }
       
       renderLeaderboard(serverData);
+      isSyncing = false;
     }
     
     /* parse/save local are removed in favor of API */
