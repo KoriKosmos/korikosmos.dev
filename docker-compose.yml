@@ -3,10 +3,7 @@ services:
     build: .
     ports:
       - "8484:4321"
-      - "8081:8081"
     environment:
-      - ADMIN_USER=${ADMIN_USER}
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
       - LASTFM_USER=${LASTFM_USER}
       - LASTFM_API_KEY=${LASTFM_API_KEY}
     volumes:

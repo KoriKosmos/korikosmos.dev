@@ -11,9 +11,7 @@
   "dependencies": {
     "@astrojs/node": "^9.5.2",
     "astro": "^5.11.0",
-    "async-mutex": "^0.5.0",
-    "concurrently": "^9.2.1",
-    "decap-server": "^3.5.0"
+    "async-mutex": "^0.5.0"
   },
   "devDependencies": {
     "@astrojs/tailwind": "^6.0.2",
