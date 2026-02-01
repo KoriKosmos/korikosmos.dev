@@ -26,4 +26,4 @@ COPY --from=builder /app/node_modules ./node_modules
 
 EXPOSE 4321
 
-CMD ["npx", "concurrently", "-k", "-n", "APP,CMS", "\"node ./dist/server/entry.mjs\"", "\"npx decap-server\""]
+CMD ["npx", "concurrently", "-k", "-n", "APP,CMS", "\"node ./dist/server/entry.mjs\"", "\"HOST=0.0.0.0 PORT=8081 npx decap-server\""]

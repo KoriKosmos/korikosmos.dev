@@ -1,8 +1,8 @@
 import type { APIRoute } from 'astro';
 
 export const GET: APIRoute = async ({ request }) => {
-  const user = import.meta.env.LASTFM_USER;
-  const apiKey = import.meta.env.LASTFM_API_KEY;
+  const user = import.meta.env.LASTFM_USER || process.env.LASTFM_USER;
+  const apiKey = import.meta.env.LASTFM_API_KEY || process.env.LASTFM_API_KEY;
 
   if (!user || !apiKey) {
     return new Response(JSON.stringify({ error: 'Configuration missing' }), {
