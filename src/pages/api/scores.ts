@@ -21,7 +21,19 @@ async function getScores() {
 
 async function saveScore(newScore: { name: string; score: number }) {
   const scores = await getScores();
-  scores.push(newScore);
+  
+  // Find existing user
+  const existingIndex = scores.findIndex((s: any) => s.name === newScore.name);
+  
+  if (existingIndex !== -1) {
+    // Only update if new score is higher
+    if (newScore.score > scores[existingIndex].score) {
+      scores[existingIndex].score = newScore.score;
+    }
+  } else {
+    scores.push(newScore);
+  }
+
   scores.sort((a: any, b: any) => b.score - a.score);
   const topScores = scores.slice(0, 10); // Keep top 10
   await fs.writeFile(DB_PATH, JSON.stringify(topScores, null, 2));

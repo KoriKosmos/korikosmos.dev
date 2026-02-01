@@ -94,18 +94,21 @@ import Layout from '../../layouts/Layout.astro';
           }
         },
         onGameOver: async (finalScore) => {
-          try {
-             const res = await fetch('/api/scores', {
-                 method: 'POST',
-                 headers: { 'Content-Type': 'application/json' },
-                 body: JSON.stringify({ name: username, score: finalScore })
-             });
-             if (res.ok) {
-                 const data = await res.json();
-                 renderLeaderboard(data);
+          // Only submit if it's a new personal high score (or matching)
+          if (finalScore >= highScore) {
+             try {
+                const res = await fetch('/api/scores', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: username, score: finalScore })
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    renderLeaderboard(data);
+                }
+             } catch (e) {
+                 console.error('Failed to submit score', e);
              }
-          } catch (e) {
-              console.error('Failed to submit score', e);
           }
           
           alert(`Game over, ${username}! Your score: ${finalScore}`);

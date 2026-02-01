@@ -22,7 +22,21 @@ Start a local server at `http://localhost:4321`:
 
 ```sh
 npm run dev
+npm run dev
 ```
+
+### CMS (Local Development)
+
+To edit content locally with Decap CMS:
+
+1.  Run the proxy server in a separate terminal:
+    ```sh
+    npx decap-server
+    ```
+2.  Navigate to `http://localhost:4321/admin`.
+3.  Click "Login with Local Backend".
+
+_Note: In production, the CMS authenticates via GitHub._
 
 ## Features
 
@@ -80,11 +94,26 @@ Run these from the project root:
 
 ## Docker
 
-Use Docker to build and preview the site without installing Node locally:
+Build and run the containerized application (using Node.js adapter):
 
 ```sh
 docker compose up --build
 ```
 
-The site will be available at http://localhost:8484. Can also set `GIT_REPO` to a GitHub URL so the container pulls the latest changes each time it starts. Optionally set `GIT_BRANCH` if a branch other than `main` is needed.
-Remember to provide `LASTFM_USER` and `LASTFM_API_KEY` in your environment when building.
+The site will be available at http://localhost:8484 (or port 4321 depending on mapping).
+
+**Note**: This uses a multi-stage `Dockerfile` that builds the Astro project into a standalone Node.js app. The "pull-on-boot" feature has been removed for stability.
+
+### Updating the site
+
+To update the site with the latest changes from git, run:
+
+```sh
+./update-deploy.sh
+```
+
+This script will:
+
+1. Pull the latest code (`git pull`).
+2. Rebuild the Docker image.
+3. Restart the container with the new version.
