@@ -1,6 +1,9 @@
 backend:
-  name: git-gateway
+  name: github
+  repo: KoriKosmos/korikosmos.dev
   branch: main
+  base_url: /api/oauth
+  auth_endpoint: authorize
 
 local_backend: true
 media_folder: "public/uploads"

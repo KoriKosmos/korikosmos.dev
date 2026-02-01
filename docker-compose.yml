@@ -4,6 +4,8 @@ services:
     ports:
       - "8484:4321"
     environment:
+      - OAUTH_CLIENT_ID=${OAUTH_CLIENT_ID}
+      - OAUTH_CLIENT_SECRET=${OAUTH_CLIENT_SECRET}
       - LASTFM_USER=${LASTFM_USER}
       - LASTFM_API_KEY=${LASTFM_API_KEY}
     volumes:
