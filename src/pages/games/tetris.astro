@@ -58,7 +58,7 @@ import Layout from '../../layouts/Layout.astro';
     async function syncAndLoadLeaderboard() {
       let serverData = [];
       try {
-        const res = await fetch('/api/scores');
+        const res = await fetch('/api/scores/tetris');
         if (res.ok) {
             serverData = await res.json();
         }
@@ -72,7 +72,7 @@ import Layout from '../../layouts/Layout.astro';
         if (!serverEntry || serverEntry.score < highScore) {
            console.log('Syncing local high score to server...', highScore);
            try {
-             const res = await fetch('/api/scores', {
+             const res = await fetch('/api/scores/tetris', {
                  method: 'POST',
                  headers: { 'Content-Type': 'application/json' },
                  body: JSON.stringify({ name: username, score: highScore })

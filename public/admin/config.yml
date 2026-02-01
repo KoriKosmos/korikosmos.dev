@@ -68,12 +68,12 @@ collections:
       - { label: Summary, name: summary, widget: string }
       - { label: Description, name: description, widget: text }
       - { label: GitHub URL, name: github, widget: string, required: false }
-  - name: scores
-    label: High Scores
+  - name: tetris_scores
+    label: Tetris Scores
     files:
       - name: global_leaderboard
         label: Global Leaderboard
-        file: "data/highscores.json"
+        file: "data/scores/tetris.json"
         fields:
           - label: Scores
             name: scores
@@ -81,3 +81,34 @@ collections:
             fields:
               - { label: Name, name: name, widget: string }
               - { label: Score, name: score, widget: number, value_type: int }
+  - name: rps_scores
+    label: RPS Scores
+    files:
+      - name: global_leaderboard
+        label: Global Leaderboard
+        file: "data/scores/rps.json"
+        fields:
+          - label: Scores
+            name: scores
+            widget: list
+            fields:
+              - { label: Name, name: name, widget: string }
+              - {
+                  label: Net Score,
+                  name: netScore,
+                  widget: number,
+                  value_type: int,
+                }
+              - {
+                  label: Player Wins,
+                  name: playerWins,
+                  widget: number,
+                  value_type: int,
+                }
+              - {
+                  label: CPU Wins,
+                  name: cpuWins,
+                  widget: number,
+                  value_type: int,
+                }
+              - { label: Ties, name: ties, widget: number, value_type: int }
