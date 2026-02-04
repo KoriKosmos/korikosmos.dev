@@ -69,3 +69,4 @@ This project contains the source for **korikosmos.dev**, a personal site built w
 - Tetris scoring now follows the official guidelines with soft and hard drop bonuses
 - Games page now includes a Rock Paper Scissors game with scores saved to localStorage
 - Rock Paper Scissors logic now lives in /js/rock-paper-scissors.js so it works when CSP blocks inline scripts
+- GitHub Copilot instructions are configured in `.github/copilot-instructions.md` to provide context about the project architecture, code style, and development workflow
