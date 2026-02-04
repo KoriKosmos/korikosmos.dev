@@ -1,40 +1,46 @@
 ---
 ---
 <div class="fixed bottom-4 right-4 z-50">
-  <button id="oneko-toggle" class="px-3 py-2 text-sm bg-surface text-base rounded">Toggle Cat</button>
+  <button id="oneko-toggle" class="px-3 py-2 text-sm bg-surface text-base rounded" style="visibility: hidden">Toggle Cat</button>
 </div>
 <script is:inline>
-const STORAGE_KEY = 'oneko-enabled';
-const toggleBtn = document.getElementById('oneko-toggle');
-function enable() {
-  if (document.getElementById('oneko-script')) return;
-  const script = document.createElement('script');
-  script.id = 'oneko-script';
-  script.src = '/oneko.js';
-  document.body.appendChild(script);
-  localStorage.setItem(STORAGE_KEY, 'true');
-  toggleBtn.textContent = 'Hide Cat';
-}
-function disable() {
-  document.getElementById('oneko')?.remove();
-  document.getElementById('oneko-script')?.remove();
-  localStorage.setItem(STORAGE_KEY, 'false');
-  toggleBtn.textContent = 'Show Cat';
-}
-function updateFromStorage() {
-  if (localStorage.getItem(STORAGE_KEY) === 'true') {
-    enable();
-  } else {
-    disable();
+  const STORAGE_KEY = 'oneko-enabled';
+  const toggleBtn = document.getElementById('oneko-toggle');
+
+  function enable() {
+    if (document.getElementById('oneko-script')) return;
+    const script = document.createElement('script');
+    script.id = 'oneko-script';
+    script.src = '/oneko.js';
+    document.body.appendChild(script);
+    localStorage.setItem(STORAGE_KEY, 'true');
+    toggleBtn.textContent = 'Hide Cat';
   }
-}
-toggleBtn.addEventListener('click', () => {
-  if (localStorage.getItem(STORAGE_KEY) === 'true') {
-    disable();
-  } else {
-    enable();
+
+  function disable() {
+    document.getElementById('oneko')?.remove();
+    document.getElementById('oneko-script')?.remove();
+    localStorage.setItem(STORAGE_KEY, 'false');
+    toggleBtn.textContent = 'Show Cat';
   }
-});
-updateFromStorage();
-window.addEventListener('load', updateFromStorage);
+
+  function updateFromStorage() {
+    if (localStorage.getItem(STORAGE_KEY) === 'true') {
+      enable();
+    } else {
+      disable();
+    }
+    toggleBtn.style.visibility = 'visible';
+  }
+
+  toggleBtn.addEventListener('click', () => {
+    if (localStorage.getItem(STORAGE_KEY) === 'true') {
+      disable();
+    } else {
+      enable();
+    }
+  });
+
+  updateFromStorage();
+  window.addEventListener('load', updateFromStorage);
 </script>
