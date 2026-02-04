@@ -4,7 +4,14 @@ export default {
     "./src/**/*.{astro,html,js,jsx,ts,tsx,md,mdx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        bg: 'rgb(var(--bg) / <alpha-value>)',
+        surface: 'rgb(var(--surface) / <alpha-value>)',
+        accent: 'rgb(var(--accent) / <alpha-value>)',
+        'accent-dark': 'rgb(var(--accent-dark) / <alpha-value>)',
+      }
+    },
   },
   plugins: [],
 };

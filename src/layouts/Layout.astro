@@ -12,8 +12,8 @@ const { title = 'KoriKosmos' } = Astro.props
 	<title>{title}</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 </head>
-<body class="font-sans bg-base text-base">
-<header class="p-4 border-b">
+<body class="font-sans bg-base text-base min-h-screen flex flex-col">
+<header class="p-4 border-b shrink-0">
 	<nav class="flex gap-4">
 		{
 			NAV_LINKS.map(link => (
@@ -23,11 +23,11 @@ const { title = 'KoriKosmos' } = Astro.props
 	</nav>
 </header>
 
-<main class="max-w-3xl mx-auto px-4">
+<main class="max-w-3xl mx-auto px-4 flex-grow flex flex-col justify-center w-full pb-32">
 	<slot />
 </main>
 
-<footer class="text-center text-sm text-gray-500 p-6">
+<footer class="text-center text-sm text-gray-500 p-6 shrink-0">
         © {new Date().getFullYear()} Maan – KoriKosmos
 </footer>
 <OnekoToggle />

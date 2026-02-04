@@ -6,13 +6,15 @@ const posts = await getCollection('blog');
 ---
 
 <Layout title="Blog">
-  <h1 class="text-3xl font-bold my-6">Blog</h1>
-  <ul class="space-y-4">
+  <div class="grid gap-6 md:grid-cols-2">
     {posts.map(post => (
-      <li>
-        <a href={`/blog/${post.slug}/`} class="text-xl text-blue-400 hover:underline">{post.data.title}</a>
-        <p class="text-gray-400">{post.data.description}</p>
-      </li>
+      <a href={`/blog/${post.slug}/`} class="block p-6 rounded-xl bg-gradient-to-br from-accent to-accent-dark shadow-lg hover:scale-105 focus:scale-105 focus:outline-none focus:ring-2 focus:ring-white transition-transform text-white">
+        <h2 class="text-2xl font-bold mb-2">{post.data.title}</h2>
+        <p class="opacity-90">{post.data.description}</p>
+        <div class="mt-4 text-sm opacity-90">
+          {new Date(post.data.pubDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+        </div>
+      </a>
     ))}
-  </ul>
+  </div>
 </Layout>
