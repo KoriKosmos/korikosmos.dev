@@ -4,8 +4,15 @@ import Layout from '../../layouts/Layout.astro';
 
 <Layout title="Games">
   <h1 class="text-3xl font-bold my-6">Games</h1>
-  <ul class="list-disc pl-5 space-y-2">
-    <li><a href="/games/tetris/" class="text-blue-400 hover:underline">Tetris</a></li>
-    <li><a href="/games/rock-paper-scissors/" class="text-blue-400 hover:underline">Rock Paper Scissors</a></li>
-  </ul>
+  <div class="grid gap-6 md:grid-cols-2">
+    <a href="/games/tetris/" class="block p-6 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 shadow-lg hover:scale-105 transition-transform text-white">
+      <h2 class="text-2xl font-bold mb-2">Tetris</h2>
+      <p class="opacity-90">The classic block-stacking puzzle game.</p>
+    </a>
+    
+    <a href="/games/rock-paper-scissors/" class="block p-6 rounded-xl bg-gradient-to-br from-orange-500 to-red-500 shadow-lg hover:scale-105 transition-transform text-white">
+      <h2 class="text-2xl font-bold mb-2">Rock Paper Scissors</h2>
+      <p class="opacity-90">Challenge the CPU in this timeless hand game.</p>
+    </a>
+  </div>
 </Layout>
