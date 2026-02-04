@@ -1,119 +1,152 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { getRecentTracks, getTopArtists, getTopAlbums, getBestImage } from '../lib/lastfm';
+
+const recentTracks = await getRecentTracks(10);
+const topArtists = await getTopArtists('7day', 5);
+const topAlbums = await getTopAlbums('7day', 5);
+
+const currentTrack = recentTracks[0];
+const isPlaying = currentTrack?.['@attr']?.nowplaying === 'true';
 ---
 
-<Layout title="Tunes">
-  <h1 class="text-3xl font-bold my-6">Tunes</h1>
-  <section class="mb-8">
-    <h2 class="text-2xl font-semibold mb-4">Recent Tracks</h2>
-    <div id="player" class="border rounded p-4 max-w-md mx-auto">
-      <p>Loading...</p>
+<Layout title="Tunes | KoriKosmos">
+  <div class="space-y-12 animate-fade-in">
+    <!-- Hero Section: Now Playing / Most Recent -->
+    <section class="relative overflow-hidden rounded-3xl bg-base-200 shadow-xl min-h-[400px] flex items-center justify-center">
+        <!-- Background Blur -->
+        <div class="absolute inset-0 z-0">
+             <img 
+                src={getBestImage(currentTrack?.image) || '/placeholder-music.png'} 
+                alt="" 
+                class="w-full h-full object-cover opacity-30 blur-3xl scale-110"
+            />
+             <div class="absolute inset-0 bg-base-100/50"></div>
+        </div>
+
+        <div class="relative z-10 flex flex-col md:flex-row items-center gap-8 p-8 w-full max-w-4xl mx-auto">
+            <div class="relative group">
+                 <img 
+                    src={getBestImage(currentTrack?.image) || '/placeholder-music.png'} 
+                    alt={currentTrack?.name} 
+                    class="w-64 h-64 rounded-2xl shadow-2xl object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+                {isPlaying && (
+                    <div class="absolute -top-4 -right-4 bg-accent text-accent-content text-xs font-bold px-3 py-1 rounded-full shadow-lg animate-bounce">
+                        NOW PLAYING
+                    </div>
+                )}
+            </div>
+            
+            <div class="text-center md:text-left space-y-4 flex-1">
+                <h2 class="text-sm uppercase tracking-widest text-secondary font-semibold">
+                    {isPlaying ? 'Currently Vibing To' : 'Last Listened'}
+                </h2>
+                <h1 class="text-4xl md:text-6xl font-black leading-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">
+                    {currentTrack?.name || 'Nothing playing'}
+                </h1>
+                <p class="text-xl md:text-2xl text-base-content/80 font-medium">
+                    {currentTrack?.artist['#text']}
+                </p>
+                <div class="text-sm text-base-content/60">
+                    {currentTrack?.album['#text']}
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Detailed Stats Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- Recent History -->
+        <section class="bg-base-200/50 backdrop-blur-sm p-6 rounded-2xl border border-base-content/5">
+            <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
+                <span class="text-primary">scrobbles</span>
+                <span class="text-base-content/40 text-sm font-normal">History</span>
+            </h2>
+            <div class="space-y-4" id="recent-list">
+                {recentTracks.slice(1, 6).map((track) => (
+                    <div class="flex items-center gap-4 group p-2 rounded-xl hover:bg-base-100/50 transition-colors">
+                        <img 
+                            src={getBestImage(track.image)} 
+                            alt={track.name}
+                            class="w-12 h-12 rounded-md object-cover shadow-sm group-hover:scale-105 transition-transform"
+                        />
+                        <div class="min-w-0 flex-1">
+                            <h3 class="font-bold truncate group-hover:text-primary transition-colors">{track.name}</h3>
+                            <p class="text-sm text-base-content/60 truncate">{track.artist['#text']}</p>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </section>
+
+        <!-- Top Charts -->
+        <div class="space-y-8">
+            <!-- Top Artists -->
+            <section class="bg-base-200/50 backdrop-blur-sm p-6 rounded-2xl border border-base-content/5">
+                <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
+                    <span class="text-secondary">artists</span>
+                    <span class="text-base-content/40 text-sm font-normal">Top 7 Days</span>
+                </h2>
+                <div class="flex flex-wrap gap-2">
+                    {topArtists.map((artist, i) => (
+                        <a href={artist.url} target="_blank" rel="noopener noreferrer" 
+                           class="flex items-center gap-2 px-3 py-1.5 bg-base-100 rounded-full border border-base-content/5 hover:border-secondary hover:text-secondary transition-all text-sm">
+                            <span class="text-secondary font-bold text-xs">#{i + 1}</span>
+                            {artist.name}
+                        </a>
+                    ))}
+                </div>
+            </section>
+
+            <!-- Top Albums -->
+            <section class="bg-base-200/50 backdrop-blur-sm p-6 rounded-2xl border border-base-content/5">
+                <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
+                    <span class="text-accent">albums</span>
+                    <span class="text-base-content/40 text-sm font-normal">Top 7 Days</span>
+                </h2>
+                <div class="grid grid-cols-5 gap-2">
+                    {topAlbums.map((album) => (
+                        <a href={album.url} target="_blank" rel="noopener noreferrer" class="group relative aspect-square">
+                            <img 
+                                src={getBestImage(album.image)} 
+                                alt={album.name}
+                                class="w-full h-full rounded-lg object-cover shadow-md group-hover:shadow-xl group-hover:scale-105 transition-all duration-300"
+                                title={`${album.name} by ${album.artist.name}`}
+                            />
+                        </a>
+                    ))}
+                </div>
+            </section>
+        </div>
     </div>
-  </section>
+  </div>
 
-  <script is:inline>
-    const ignoreNames = ['the magnus archives', 'the yard', 'knifepoint horror'];
-
-    function getImage(images, preferredSize = 'medium') {
-      if (!Array.isArray(images)) return null;
-      let img = images.find((i) => i.size === preferredSize && i['#text']);
-      if (img && img['#text']) return img['#text'];
-      img = images.find((i) => i['#text']);
-      return img ? img['#text'] : null;
+  <script>
+    // Simple client-side polling for "Now Playing" updates
+    async function updateNowPlaying() {
+        try {
+            const res = await fetch('/api/lastfm?limit=1');
+            const data = await res.json();
+            const track = data[0];
+            
+            // This is a basic implementation. Ideally, we would diff and update the DOM 
+            // only if changed. For now, we rely on SSR for the initial load and could 
+            // enhance this with VDOM or just manual DOM updates if needed for a "live" feel.
+            // Given the complexity, full client-side hydration or specific DOM targeting 
+            // would be better for a production app with heavy traffic.
+            
+            if (track && track['@attr']?.nowplaying === 'true') {
+               // Logic to update hero section if needed
+               // For this static site, we might just let users refresh or
+               // implement a more complex specific DOM updater here.
+            }
+        } catch (e) {
+            console.error('Failed to update now playing', e);
+        }
     }
-
-    function isMusic(name) {
-      const lower = (name || '').toLowerCase();
-      return !ignoreNames.some((bad) => lower.includes(bad));
-    }
-
-    function normalize(name) {
-      return (name || '')
-        .toLowerCase()
-        .replace(/[\u3000]/g, ' ')
-        .replace(/\(.*?\)/g, '')
-        .replace(/feat\.?[^-]*$/i, '')
-        .replace(/\s+/g, ' ')
-        .trim();
-    }
-
-    async function fetchLastFm() {
-      // Fetch from our local API proxy
-      const res = await fetch('/api/lastfm');
-      if (!res.ok) return null;
-      return await res.json();
-    }
-
-    function createTrackEl(track, first) {
-      const div = document.createElement('div');
-      div.className = `track ${first ? '' : 'hidden'}`;
-      const imgSrc = getImage(track.image, 'extralarge');
-      if (imgSrc) {
-        const img = document.createElement('img');
-        img.src = imgSrc;
-        img.alt = `Art for ${track.name}`;
-        img.loading = 'lazy';
-        img.className = 'w-full h-64 object-cover rounded mb-4';
-        div.appendChild(img);
-      }
-      const info = document.createElement('div');
-      info.className = 'text-center';
-      const name = document.createElement('p');
-      name.className = 'font-semibold';
-      name.textContent = track.name;
-      const artist = document.createElement('p');
-      artist.className = 'text-sm text-gray-500';
-      artist.textContent = track.artist['#text'];
-      info.appendChild(name);
-      info.appendChild(artist);
-      div.appendChild(info);
-      return div;
-    }
-
-    async function loadTracks() {
-      const data = await fetchLastFm();
-      const container = document.getElementById('player');
-      container.innerHTML = '';
-      if (!data || !data.recenttracks) {
-        container.textContent = 'Failed to load tracks.';
-        return;
-      }
-      const seen = new Set();
-      const unique = [];
-      for (const t of data.recenttracks.track || []) {
-        if (!isMusic(t.name) || !isMusic(t?.artist?.['#text'])) continue;
-        const key = t.mbid || normalize(t.name);
-        if (!key || seen.has(key)) continue;
-        seen.add(key);
-        unique.push(t);
-        if (unique.length >= 10) break;
-      }
-      if (!unique.length) {
-        container.textContent = 'No recent tracks found.';
-        return;
-      }
-      unique.forEach((track, i) => container.appendChild(createTrackEl(track, i === 0)));
-      
-      if (unique.length > 1) {
-        const controls = document.createElement('div');
-        controls.className = 'flex justify-between mt-4 text-2xl';
-        controls.innerHTML = '<button id="prev" class="px-3 py-1 border rounded" aria-label="Previous">\u23EE</button><button id="next" class="px-3 py-1 border rounded" aria-label="Next">\u23ED</button>';
-        container.appendChild(controls);
-        const tracks = Array.from(container.querySelectorAll('.track'));
-        let current = 0;
-        controls.querySelector('#prev').addEventListener('click', () => {
-          tracks[current].classList.add('hidden');
-          current = (current - 1 + tracks.length) % tracks.length;
-          tracks[current].classList.remove('hidden');
-        });
-        controls.querySelector('#next').addEventListener('click', () => {
-          tracks[current].classList.add('hidden');
-          current = (current + 1) % tracks.length;
-          tracks[current].classList.remove('hidden');
-        });
-      }
-    }
-
-    loadTracks();
+    
+    // Poll every 30 seconds
+    setInterval(updateNowPlaying, 30000);
   </script>
 </Layout>
