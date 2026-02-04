@@ -48,11 +48,14 @@ export async function getRecentTracks(limit = 10) {
   return uniqueTracks.slice(0, limit);
 }
 
+const BLOCKED_ITEMS = ['The Magnus Archives'];
+
 const CACHE = new Map<string, { data: any, timestamp: number }>();
 const CACHE_TTL = 1000 * 60 * 15; // 15 minutes
+const CACHE_VERSION = 'v1';
 
 export async function getTopArtists(period = '7day', limit = 5, enrich = true) {
-  const cacheKey = `artist-${period}-${limit}-${enrich}`;
+  const cacheKey = `artist-${period}-${limit}-${enrich}-${CACHE_VERSION}`;
   const now = Date.now();
   
   if (CACHE.has(cacheKey)) {
@@ -62,11 +65,15 @@ export async function getTopArtists(period = '7day', limit = 5, enrich = true) {
     }
   }
 
-  const data = await fetchLastFm('user.gettopartists', { period, limit });
-  const artists = data?.topartists?.artist || [];
+  // Fetch extra to account for filtering
+  const data = await fetchLastFm('user.gettopartists', { period, limit: limit + 5 });
+  const rawArtists = data?.topartists?.artist || [];
+  
+  // Filter blocked items
+  const artists = rawArtists.filter((a: any) => !BLOCKED_ITEMS.includes(a.name));
 
   if (!enrich) {
-     return artists;
+     return artists.slice(0, limit);
   }
 
   // Parallel fetch to enrich with proper images from artist.getinfo
@@ -94,8 +101,16 @@ export async function getTopArtists(period = '7day', limit = 5, enrich = true) {
 }
 
 export async function getTopAlbums(period = '7day', limit = 5) {
-  const data = await fetchLastFm('user.gettopalbums', { period, limit });
-  return data?.topalbums?.album || [];
+  // Fetch extra to account for filtering
+  const data = await fetchLastFm('user.gettopalbums', { period, limit: limit + 5 });
+  const albums = data?.topalbums?.album || [];
+  
+  const filtered = albums.filter((album: any) => 
+    !BLOCKED_ITEMS.includes(album.name) && 
+    !BLOCKED_ITEMS.includes(album.artist.name)
+  );
+
+  return filtered.slice(0, limit);
 }
 
 // Helper to get the best image from Last.fm array

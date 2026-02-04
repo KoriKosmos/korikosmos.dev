@@ -222,14 +222,16 @@ const isPlaying = currentTrack?.['@attr']?.nowplaying === 'true';
 
     // Client-side Cache
     const dataCache = new Map();
+    const BLOCKED_ITEMS = ['The Magnus Archives'];
 
     async function fetchData(period) {
         if (dataCache.has(period)) return dataCache.get(period);
 
         try {
+            // Fetch more items to safely filter client-side
             const [artistsRes, albumsRes] = await Promise.all([
-                fetch(`/api/lastfm?method=artists&period=${period}&limit=5`),
-                fetch(`/api/lastfm?method=albums&period=${period}&limit=5`)
+                fetch(`/api/lastfm?method=artists&period=${period}&limit=10`),
+                fetch(`/api/lastfm?method=albums&period=${period}&limit=10`)
             ]);
             
             const artists = await artistsRes.json();
@@ -254,7 +256,11 @@ const isPlaying = currentTrack?.['@attr']?.nowplaying === 'true';
 
     // Helper for rendering
     function renderArtists(artists) {
-        return artists.map((artist, i) => {
+        const filtered = artists.filter(artist => 
+            !BLOCKED_ITEMS.some(blocked => artist.name.toLowerCase().includes(blocked.toLowerCase()))
+        ).slice(0, 5);
+
+        return filtered.map((artist, i) => {
             const imgUrl = getBestImage(artist.image);
             return `
             <a href="${artist.url}" target="_blank" rel="noopener noreferrer" 
@@ -278,7 +284,14 @@ const isPlaying = currentTrack?.['@attr']?.nowplaying === 'true';
     }
 
     function renderAlbums(albums) {
-        return albums.map((album, i) => `
+        const filtered = albums.filter(album => 
+            !BLOCKED_ITEMS.some(blocked => 
+                album.name.toLowerCase().includes(blocked.toLowerCase()) || 
+                album.artist.name.toLowerCase().includes(blocked.toLowerCase())
+            )
+        ).slice(0, 5);
+
+        return filtered.map((album, i) => `
             <a href="${album.url}" target="_blank" rel="noopener noreferrer" class="group relative aspect-square perspective-1000">
                 <div class="w-full h-full relative preserve-3d group-hover:rotate-y-12 transition-transform duration-500">
                     <img 
