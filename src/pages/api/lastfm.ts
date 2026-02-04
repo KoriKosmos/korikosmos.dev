@@ -10,16 +10,22 @@ export const GET: APIRoute = async ({ request }) => {
   let data;
 
   try {
+    let cacheControl = 'public, max-age=60, stale-while-revalidate=30';
+    
     switch (method) {
       case 'artists':
         data = await getTopArtists(period, limit);
+        cacheControl = 'public, max-age=3600, stale-while-revalidate=1800';
         break;
       case 'albums':
         data = await getTopAlbums(period, limit);
+        cacheControl = 'public, max-age=3600, stale-while-revalidate=1800';
         break;
       case 'recent':
       default:
         data = await getRecentTracks(limit);
+        // Short cache for recent tracks to allow near-realtime updates
+        cacheControl = 'public, max-age=30, stale-while-revalidate=15';
         break;
     }
 
@@ -27,7 +33,7 @@ export const GET: APIRoute = async ({ request }) => {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
-        'Cache-Control': 'public, max-age=60, stale-while-revalidate=30'
+        'Cache-Control': cacheControl
       }
     });
   } catch (error) {

@@ -17,6 +17,7 @@ const isPlaying = currentTrack?.['@attr']?.nowplaying === 'true';
         <!-- Background Blur -->
         <div class="absolute inset-0 z-0">
              <img 
+                id="hero-bg-img"
                 src={getBestImage(currentTrack?.image) || '/placeholder-music.png'} 
                 alt="" 
                 class="w-full h-full object-cover opacity-30 blur-3xl scale-110"
@@ -27,28 +28,27 @@ const isPlaying = currentTrack?.['@attr']?.nowplaying === 'true';
         <div class="relative z-10 flex flex-col md:flex-row items-center gap-8 p-8 w-full max-w-4xl mx-auto">
             <div class="relative group">
                  <img 
+                    id="hero-fg-img"
                     src={getBestImage(currentTrack?.image) || '/placeholder-music.png'} 
                     alt={currentTrack?.name} 
                     class="w-64 h-64 rounded-2xl shadow-2xl object-cover transition-transform duration-500 group-hover:scale-105"
                 />
-                {isPlaying && (
-                    <div class="absolute -top-4 -right-4 bg-accent text-accent-content text-xs font-bold px-3 py-1 rounded-full shadow-lg animate-bounce">
-                        NOW PLAYING
-                    </div>
-                )}
+                <div id="now-playing-badge" class={`absolute -top-4 -right-4 bg-accent text-accent-content text-xs font-bold px-3 py-1 rounded-full shadow-lg animate-bounce ${isPlaying ? '' : 'hidden'}`}>
+                    NOW PLAYING
+                </div>
             </div>
             
             <div class="text-center md:text-left space-y-4 flex-1">
-                <h2 class="text-sm uppercase tracking-widest text-secondary font-semibold">
+                <h2 id="hero-status-text" class="text-sm uppercase tracking-widest text-secondary font-semibold">
                     {isPlaying ? 'Currently Vibing To' : 'Last Listened'}
                 </h2>
-                <h1 class="text-4xl md:text-6xl font-black leading-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">
+                <h1 id="hero-track-name" class="text-4xl md:text-6xl font-black leading-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">
                     {currentTrack?.name || 'Nothing playing'}
                 </h1>
-                <p class="text-xl md:text-2xl text-base-content/80 font-medium">
+                <p id="hero-artist-name" class="text-xl md:text-2xl text-base-content/80 font-medium">
                     {currentTrack?.artist['#text']}
                 </p>
-                <div class="text-sm text-base-content/60">
+                <div id="hero-album-name" class="text-sm text-base-content/60">
                     {currentTrack?.album['#text']}
                 </div>
             </div>
@@ -234,17 +234,56 @@ const isPlaying = currentTrack?.['@attr']?.nowplaying === 'true';
         });
     });
 
-    // Simple client-side polling for "Now Playing" updates (existing logic)
+    // Client-side Polling for Hero Section
     async function updateNowPlaying() {
         try {
             const res = await fetch('/api/lastfm?limit=1');
             const data = await res.json();
             const track = data[0];
-            // ... (keep existing simple check or expand)
+            
+            if (!track) return;
+
+            // Elements
+            const bgImg = document.getElementById('hero-bg-img');
+            const fgImg = document.getElementById('hero-fg-img');
+            const statusText = document.getElementById('hero-status-text');
+            const trackName = document.getElementById('hero-track-name');
+            const artistName = document.getElementById('hero-artist-name');
+            const albumName = document.getElementById('hero-album-name');
+            const badge = document.getElementById('now-playing-badge');
+
+            // Diff check (using track name + artist as key)
+            const currentKey = `${trackName.textContent.trim()}-${artistName.textContent.trim()}`;
+            const newKey = `${track.name}-${track.artist['#text']}`;
+
+            if (currentKey !== newKey) {
+                // Update text
+                trackName.textContent = track.name;
+                artistName.textContent = track.artist['#text'];
+                albumName.textContent = track.album['#text'];
+                
+                // Update images
+                const imgUrl = getBestImage(track.image) || '/placeholder-music.png';
+                bgImg.src = imgUrl;
+                fgImg.src = imgUrl;
+                fgImg.alt = track.name;
+                
+                // Update status and badge
+                const isPlaying = track['@attr']?.nowplaying === 'true';
+                statusText.textContent = isPlaying ? 'Currently Vibing To' : 'Last Listened';
+                
+                if (isPlaying) {
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
+                }
+            }
         } catch (e) {
             console.error('Failed to update now playing', e);
         }
     }
+    
+    // Poll every 30 seconds
     setInterval(updateNowPlaying, 30000);
   </script>
 </Layout>
