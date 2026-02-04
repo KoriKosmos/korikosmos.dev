@@ -5,16 +5,17 @@ export const GET: APIRoute = async ({ request }) => {
   const url = new URL(request.url);
   const method = url.searchParams.get('method') || 'recent';
   const limit = parseInt(url.searchParams.get('limit') || '10', 10);
+  const period = url.searchParams.get('period') || 'overall';
   
   let data;
 
   try {
     switch (method) {
       case 'artists':
-        data = await getTopArtists('7day', limit);
+        data = await getTopArtists(period, limit);
         break;
       case 'albums':
-        data = await getTopAlbums('7day', limit);
+        data = await getTopAlbums(period, limit);
         break;
       case 'recent':
       default:

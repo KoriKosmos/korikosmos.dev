@@ -3,8 +3,8 @@ import Layout from '../layouts/Layout.astro';
 import { getRecentTracks, getTopArtists, getTopAlbums, getBestImage } from '../lib/lastfm';
 
 const recentTracks = await getRecentTracks(10);
-const topArtists = await getTopArtists('7day', 5);
-const topAlbums = await getTopAlbums('7day', 5);
+const topArtists = await getTopArtists('overall', 5);
+const topAlbums = await getTopAlbums('overall', 5);
 
 const currentTrack = recentTracks[0];
 const isPlaying = currentTrack?.['@attr']?.nowplaying === 'true';
@@ -55,10 +55,10 @@ const isPlaying = currentTrack?.['@attr']?.nowplaying === 'true';
         </div>
     </section>
 
-    <!-- Detailed Stats Grid -->
+    <!-- History & Charts Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <!-- Recent History -->
-        <section class="bg-base-200/50 backdrop-blur-sm p-6 rounded-2xl border border-base-content/5">
+        <!-- Recent History (Fixed) -->
+        <section class="bg-base-200/50 backdrop-blur-sm p-6 rounded-2xl border border-base-content/5 h-fit">
             <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
                 <span class="text-primary">scrobbles</span>
                 <span class="text-base-content/40 text-sm font-normal">History</span>
@@ -80,15 +80,27 @@ const isPlaying = currentTrack?.['@attr']?.nowplaying === 'true';
             </div>
         </section>
 
-        <!-- Top Charts -->
+        <!-- Top Charts (Variable) -->
         <div class="space-y-8">
+            <!-- Controls -->
+            <div class="flex justify-end">
+                <div class="flex gap-2 bg-base-100 p-1 rounded-lg border border-base-content/10">
+                    <button class="btn btn-sm btn-ghost period-btn active rounded-md" data-period="overall">All Time</button>
+                    <button class="btn btn-sm btn-ghost period-btn rounded-md" data-period="12month">Last Year</button>
+                    <button class="btn btn-sm btn-ghost period-btn rounded-md" data-period="7day">Last Week</button>
+                </div>
+            </div>
+
             <!-- Top Artists -->
-            <section class="bg-base-200/50 backdrop-blur-sm p-6 rounded-2xl border border-base-content/5">
+            <section class="bg-base-200/50 backdrop-blur-sm p-6 rounded-2xl border border-base-content/5 relative group/section">
                 <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
                     <span class="text-secondary">artists</span>
-                    <span class="text-base-content/40 text-sm font-normal">Top 7 Days</span>
+                    <span class="text-base-content/40 text-sm font-normal period-label">All Time</span>
                 </h2>
-                <div class="flex flex-wrap gap-2">
+                 <div id="loading-overlay-artists" class="absolute inset-0 bg-base-200/80 items-center justify-center z-10 rounded-2xl hidden">
+                    <span class="loading loading-spinner loading-md text-secondary"></span>
+                </div>
+                <div class="flex flex-wrap gap-2" id="artists-list">
                     {topArtists.map((artist, i) => (
                         <a href={artist.url} target="_blank" rel="noopener noreferrer" 
                            class="flex items-center gap-2 px-3 py-1.5 bg-base-100 rounded-full border border-base-content/5 hover:border-secondary hover:text-secondary transition-all text-sm">
@@ -100,12 +112,15 @@ const isPlaying = currentTrack?.['@attr']?.nowplaying === 'true';
             </section>
 
             <!-- Top Albums -->
-            <section class="bg-base-200/50 backdrop-blur-sm p-6 rounded-2xl border border-base-content/5">
+            <section class="bg-base-200/50 backdrop-blur-sm p-6 rounded-2xl border border-base-content/5 relative group/section">
                 <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
                     <span class="text-accent">albums</span>
-                    <span class="text-base-content/40 text-sm font-normal">Top 7 Days</span>
+                    <span class="text-base-content/40 text-sm font-normal period-label">All Time</span>
                 </h2>
-                <div class="grid grid-cols-5 gap-2">
+                <div id="loading-overlay-albums" class="absolute inset-0 bg-base-200/80 items-center justify-center z-10 rounded-2xl hidden">
+                    <span class="loading loading-spinner loading-md text-accent"></span>
+                </div>
+                <div class="grid grid-cols-5 gap-2" id="albums-list">
                     {topAlbums.map((album) => (
                         <a href={album.url} target="_blank" rel="noopener noreferrer" class="group relative aspect-square">
                             <img 
@@ -122,31 +137,114 @@ const isPlaying = currentTrack?.['@attr']?.nowplaying === 'true';
     </div>
   </div>
 
+  <style>
+      .period-btn.active {
+          background-color: oklch(var(--p));
+          color: oklch(var(--pc));
+      }
+  </style>
+
   <script>
-    // Simple client-side polling for "Now Playing" updates
+    // Note: getBestImage is redefined here to avoid import issues in client-side script
+
+    // If importing is not possible in inline script without bundling config, redefine helper or expose globally.
+    // Astro scripts are modules by default so imports work if the path is resolvable.
+    // For simplicity/robustness in this inline context:
+    function getBestImage(images) {
+      if (!Array.isArray(images)) return '';
+      const sizes = ['extralarge', 'large', 'medium', 'small'];
+      for (const size of sizes) {
+        const img = images.find((i) => i.size === size);
+        if (img && img['#text']) return img['#text'];
+      }
+      return images[0]?.['#text'] || '';
+    }
+
+    // Toggle Logic
+    const buttons = document.querySelectorAll('.period-btn');
+    const artistsList = document.getElementById('artists-list');
+    const albumsList = document.getElementById('albums-list');
+    const periodLabels = document.querySelectorAll('.period-label');
+    const loaders = {
+        artists: document.getElementById('loading-overlay-artists'),
+        albums: document.getElementById('loading-overlay-albums')
+    };
+
+    const periodMap = {
+        'overall': 'All Time',
+        '12month': 'Last Year',
+        '7day': 'Last Week'
+    };
+
+    buttons.forEach(btn => {
+        btn.addEventListener('click', async () => {
+             // 1. Update active state
+            buttons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            const period = btn.dataset.period;
+            const label = periodMap[period];
+
+            // 2. Update labels
+            periodLabels.forEach(el => el.textContent = label);
+
+            // 3. Show loaders
+            Object.values(loaders).forEach(el => el.classList.remove('hidden'));
+            Object.values(loaders).forEach(el => el.classList.add('flex'));
+
+            try {
+                // 4. Fetch data in parallel
+                const [artistsRes, albumsRes] = await Promise.all([
+                    fetch(`/api/lastfm?method=artists&period=${period}&limit=5`),
+                    fetch(`/api/lastfm?method=albums&period=${period}&limit=5`)
+                ]);
+
+                const artists = await artistsRes.json();
+                const albums = await albumsRes.json();
+
+                // 5. Render Artists
+                artistsList.innerHTML = artists.map((artist, i) => `
+                    <a href="${artist.url}" target="_blank" rel="noopener noreferrer" 
+                       class="flex items-center gap-2 px-3 py-1.5 bg-base-100 rounded-full border border-base-content/5 hover:border-secondary hover:text-secondary transition-all text-sm">
+                        <span class="text-secondary font-bold text-xs">#${i + 1}</span>
+                        ${artist.name}
+                    </a>
+                `).join('');
+
+                // 6. Render Albums
+                albumsList.innerHTML = albums.map(album => `
+                    <a href="${album.url}" target="_blank" rel="noopener noreferrer" class="group relative aspect-square">
+                        <img 
+                            src="${getBestImage(album.image)}" 
+                            alt="${album.name}"
+                            class="w-full h-full rounded-lg object-cover shadow-md group-hover:shadow-xl group-hover:scale-105 transition-all duration-300"
+                            title="${album.name} by ${album.artist.name}"
+                        />
+                    </a>
+                `).join('');
+
+            } catch (error) {
+                console.error("Failed to fetch data", error);
+                // Handle error visually if needed
+            } finally {
+                // 7. Hide loaders
+                Object.values(loaders).forEach(el => el.classList.add('hidden'));
+                Object.values(loaders).forEach(el => el.classList.remove('flex'));
+            }
+        });
+    });
+
+    // Simple client-side polling for "Now Playing" updates (existing logic)
     async function updateNowPlaying() {
         try {
             const res = await fetch('/api/lastfm?limit=1');
             const data = await res.json();
             const track = data[0];
-            
-            // This is a basic implementation. Ideally, we would diff and update the DOM 
-            // only if changed. For now, we rely on SSR for the initial load and could 
-            // enhance this with VDOM or just manual DOM updates if needed for a "live" feel.
-            // Given the complexity, full client-side hydration or specific DOM targeting 
-            // would be better for a production app with heavy traffic.
-            
-            if (track && track['@attr']?.nowplaying === 'true') {
-               // Logic to update hero section if needed
-               // For this static site, we might just let users refresh or
-               // implement a more complex specific DOM updater here.
-            }
+            // ... (keep existing simple check or expand)
         } catch (e) {
             console.error('Failed to update now playing', e);
         }
     }
-    
-    // Poll every 30 seconds
     setInterval(updateNowPlaying, 30000);
   </script>
 </Layout>
