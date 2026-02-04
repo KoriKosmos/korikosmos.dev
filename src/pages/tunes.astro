@@ -3,7 +3,7 @@ import Layout from '../layouts/Layout.astro';
 import { getRecentTracks, getTopArtists, getTopAlbums, getBestImage } from '../lib/lastfm';
 
 const recentTracks = await getRecentTracks(10);
-const topArtists = await getTopArtists('overall', 5);
+const topArtists = await getTopArtists('overall', 5, false);
 const topAlbums = await getTopAlbums('overall', 5);
 
 const currentTrack = recentTracks[0];
@@ -150,7 +150,7 @@ const isPlaying = currentTrack?.['@attr']?.nowplaying === 'true';
                         />
                          <div class="absolute -bottom-4 md:-bottom-8 left-0 right-0 text-center opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
                             <span class="text-xs font-bold bg-base-100/90 px-3 py-1 rounded-full shadow-sm truncate max-w-[90%] inline-block">
-                                #{i+1} {album.artist.name}
+                                #{i+1} {album.name}
                             </span>
                         </div>
                     </div>
@@ -252,6 +252,51 @@ const isPlaying = currentTrack?.['@attr']?.nowplaying === 'true';
         }
     }, 2000);
 
+    // Helper for rendering
+    function renderArtists(artists) {
+        return artists.map((artist, i) => {
+            const imgUrl = getBestImage(artist.image);
+            return `
+            <a href="${artist.url}" target="_blank" rel="noopener noreferrer" 
+               class="flex items-center gap-4 p-3 rounded-2xl bg-base-100/50 hover:bg-base-100 hover:scale-105 transition-all duration-300 shadow-sm hover:shadow-md group/item border border-transparent hover:border-secondary/20">
+                ${imgUrl ? `
+                    <img 
+                        src="${imgUrl}" 
+                        alt="${artist.name}"
+                        class="w-12 h-12 rounded-xl object-cover shadow-sm group-hover/item:scale-110 transition-transform"
+                    />
+                ` : `
+                    <div class="w-12 h-12 rounded-xl bg-neutral text-neutral-content flex items-center justify-center font-bold text-sm shadow-sm group-hover/item:scale-110 transition-transform">
+                        #${i + 1}
+                    </div>
+                `}
+                <span class="font-bold text-lg truncate flex-1">${artist.name}</span>
+                <span class="opacity-0 group-hover/item:opacity-100 transition-opacity text-secondary font-bold">#${i+1}</span>
+            </a>
+            `;
+        }).join('');
+    }
+
+    function renderAlbums(albums) {
+        return albums.map((album, i) => `
+            <a href="${album.url}" target="_blank" rel="noopener noreferrer" class="group relative aspect-square perspective-1000">
+                <div class="w-full h-full relative preserve-3d group-hover:rotate-y-12 transition-transform duration-500">
+                    <img 
+                        src="${getBestImage(album.image)}" 
+                        alt="${album.name}"
+                        class="w-full h-full rounded-2xl object-cover shadow-lg group-hover:shadow-2xl transition-all duration-300"
+                        title="${album.name} by ${album.artist.name}"
+                    />
+                     <div class="absolute -bottom-4 md:-bottom-8 left-0 right-0 text-center opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
+                        <span class="text-xs font-bold bg-base-100/90 px-3 py-1 rounded-full shadow-sm truncate max-w-[90%] inline-block">
+                            #${i+1} ${album.name}
+                        </span>
+                    </div>
+                </div>
+            </a>
+        `).join('');
+    }
+
     buttons.forEach(btn => {
         btn.addEventListener('click', async () => {
              // 1. Update active state
@@ -272,56 +317,26 @@ const isPlaying = currentTrack?.['@attr']?.nowplaying === 'true';
                 // 4. Fetch data (cached or network)
                 const { artists, albums } = await fetchData(period);
 
-                // 5. Render Artists
-                artistsList.innerHTML = artists.map((artist, i) => {
-                   const imgUrl = getBestImage(artist.image);
-                   return `
-                    <a href="${artist.url}" target="_blank" rel="noopener noreferrer" 
-                       class="flex items-center gap-4 p-3 rounded-2xl bg-base-100/50 hover:bg-base-100 hover:scale-105 transition-all duration-300 shadow-sm hover:shadow-md group/item border border-transparent hover:border-secondary/20">
-                        ${imgUrl ? `
-                            <img 
-                                src="${imgUrl}" 
-                                alt="${artist.name}"
-                                class="w-12 h-12 rounded-xl object-cover shadow-sm group-hover/item:scale-110 transition-transform"
-                            />
-                        ` : `
-                            <div class="w-12 h-12 rounded-xl bg-neutral text-neutral-content flex items-center justify-center font-bold text-sm shadow-sm group-hover/item:scale-110 transition-transform">
-                                #${i + 1}
-                            </div>
-                        `}
-                        <span class="font-bold text-lg truncate flex-1">${artist.name}</span>
-                        <span class="opacity-0 group-hover/item:opacity-100 transition-opacity text-secondary font-bold">#${i+1}</span>
-                    </a>
-                `}).join('');
-
-                // 6. Render Albums
-                albumsList.innerHTML = albums.map((album, i) => `
-                    <a href="${album.url}" target="_blank" rel="noopener noreferrer" class="group relative aspect-square perspective-1000">
-                        <div class="w-full h-full relative preserve-3d group-hover:rotate-y-12 transition-transform duration-500">
-                            <img 
-                                src="${getBestImage(album.image)}" 
-                                alt="${album.name}"
-                                class="w-full h-full rounded-2xl object-cover shadow-lg group-hover:shadow-2xl transition-all duration-300"
-                                title="${album.name} by ${album.artist.name}"
-                            />
-                             <div class="absolute -bottom-4 md:-bottom-8 left-0 right-0 text-center opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
-                                <span class="text-xs font-bold bg-base-100/90 px-3 py-1 rounded-full shadow-sm truncate max-w-[90%] inline-block">
-                                    #${i+1} ${album.artist.name}
-                                </span>
-                            </div>
-                        </div>
-                    </a>
-                `).join('');
+                // 5. Render
+                artistsList.innerHTML = renderArtists(artists);
+                albumsList.innerHTML = renderAlbums(albums);
 
             } catch (error) {
                 console.error("Failed to fetch data", error);
-                // Handle error visually if needed
             } finally {
                 // 7. Hide loaders
                 Object.values(loaders).forEach(el => el.classList.add('hidden'));
                 Object.values(loaders).forEach(el => el.classList.remove('flex'));
             }
         });
+    });
+
+    // Hydrate 'overall' on load to get enriched images
+    fetchData('overall').then(({ artists }) => {
+        const activeBtn = document.querySelector('.period-btn.active[data-period="overall"]');
+        if (activeBtn) {
+            artistsList.innerHTML = renderArtists(artists);
+        }
     });
 
     // Client-side Polling for Hero Section

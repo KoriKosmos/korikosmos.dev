@@ -32,15 +32,27 @@ async function fetchLastFm(method: string, params: Record<string, string | numbe
 }
 
 export async function getRecentTracks(limit = 10) {
-  const data = await fetchLastFm('user.getrecenttracks', { limit });
-  return data?.recenttracks?.track || [];
+  // Fetch more than needed to account for filtering
+  const data = await fetchLastFm('user.getrecenttracks', { limit: limit + 5 });
+  const tracks = data?.recenttracks?.track || [];
+  
+  if (!Array.isArray(tracks)) return [];
+
+  // Filter out consecutive duplicates (scrobbling the same song repeatedly)
+  const uniqueTracks = tracks.filter((track: any, index: number) => {
+    if (index === 0) return true;
+    const prev = tracks[index - 1];
+    return track.name !== prev.name || track.artist['#text'] !== prev.artist['#text'];
+  });
+
+  return uniqueTracks.slice(0, limit);
 }
 
 const CACHE = new Map<string, { data: any, timestamp: number }>();
 const CACHE_TTL = 1000 * 60 * 15; // 15 minutes
 
-export async function getTopArtists(period = '7day', limit = 5) {
-  const cacheKey = `artist-${period}-${limit}`;
+export async function getTopArtists(period = '7day', limit = 5, enrich = true) {
+  const cacheKey = `artist-${period}-${limit}-${enrich}`;
   const now = Date.now();
   
   if (CACHE.has(cacheKey)) {
@@ -52,6 +64,10 @@ export async function getTopArtists(period = '7day', limit = 5) {
 
   const data = await fetchLastFm('user.gettopartists', { period, limit });
   const artists = data?.topartists?.artist || [];
+
+  if (!enrich) {
+     return artists;
+  }
 
   // Parallel fetch to enrich with proper images from artist.getinfo
   const enrichedArtists = await Promise.all(
