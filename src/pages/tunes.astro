@@ -1,119 +1,407 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { getRecentTracks, getTopArtists, getTopAlbums, getBestImage } from '../lib/lastfm';
+
+const recentTracks = await getRecentTracks(10);
+const topArtists = await getTopArtists('overall', 5, false);
+const topAlbums = await getTopAlbums('overall', 5);
+
+const currentTrack = recentTracks[0];
+const isPlaying = currentTrack?.['@attr']?.nowplaying === 'true';
 ---
 
-<Layout title="Tunes">
-  <h1 class="text-3xl font-bold my-6">Tunes</h1>
-  <section class="mb-8">
-    <h2 class="text-2xl font-semibold mb-4">Recent Tracks</h2>
-    <div id="player" class="border rounded p-4 max-w-md mx-auto">
-      <p>Loading...</p>
+<Layout title="Tunes | KoriKosmos" isWide={true}>
+  <div class="space-y-12 animate-fade-in">
+    <!-- Hero Section: Now Playing / Most Recent -->
+    <section class="relative overflow-hidden rounded-3xl bg-base-200 shadow-xl min-h-[400px] flex items-center justify-center">
+        <!-- Background Blur -->
+        <div class="absolute inset-0 z-0">
+             <img 
+                id="hero-bg-img"
+                src={getBestImage(currentTrack?.image) || '/placeholder-music.png'} 
+                alt="" 
+                class="w-full h-full object-cover opacity-30 blur-3xl scale-110"
+            />
+             <div class="absolute inset-0 bg-base-100/50"></div>
+        </div>
+
+        <div class="relative z-10 flex flex-col md:flex-row items-center gap-8 p-8 w-full mx-auto">
+            <div class="relative group">
+                 <img 
+                    id="hero-fg-img"
+                    src={getBestImage(currentTrack?.image) || '/placeholder-music.png'} 
+                    alt={currentTrack?.name} 
+                    class="w-64 h-64 rounded-2xl shadow-2xl object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+                <div id="now-playing-badge" class={`absolute -top-4 -right-4 bg-accent text-accent-content text-xs font-bold px-3 py-1 rounded-full shadow-lg animate-bounce ${isPlaying ? '' : 'hidden'}`}>
+                    NOW PLAYING
+                </div>
+            </div>
+            
+            <div class="text-center md:text-left space-y-4 flex-1">
+                <h2 id="hero-status-text" class="text-sm uppercase tracking-widest text-secondary font-semibold">
+                    {isPlaying ? 'Currently Vibing To' : 'Last Listened'}
+                </h2>
+                <h1 id="hero-track-name" class="text-4xl md:text-6xl font-black leading-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">
+                    {currentTrack?.name || 'Nothing playing'}
+                </h1>
+                <p id="hero-artist-name" class="text-xl md:text-2xl text-base-content/80 font-medium">
+                    {currentTrack?.artist['#text']}
+                </p>
+                <div id="hero-album-name" class="text-sm text-base-content/60">
+                    {currentTrack?.album['#text']}
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Stats Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-[1fr_1fr_min-content] gap-6 items-stretch">
+        
+        <!-- Recent History -->
+        <section class="bg-base-200/50 backdrop-blur-sm p-6 rounded-3xl border border-base-content/5 flex flex-col h-full hover:bg-base-200/70 transition-colors">
+            <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
+                <span class="text-primary">scrobbles</span>
+                <span class="text-base-content/40 text-sm font-normal">History</span>
+            </h2>
+            <div class="space-y-4 flex-1" id="recent-list">
+                {recentTracks.slice(1, 6).map((track) => (
+                    <div class="flex items-center gap-4 group p-3 rounded-2xl hover:bg-base-100/80 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg border border-transparent hover:border-base-content/5">
+                        <img 
+                            src={getBestImage(track.image)} 
+                            alt={track.name}
+                            class="w-12 h-12 rounded-xl object-cover shadow-sm group-hover:rotate-6 transition-transform"
+                        />
+                        <div class="min-w-0 flex-1">
+                            <h3 class="font-bold truncate group-hover:text-primary transition-colors">{track.name}</h3>
+                            <p class="text-sm text-base-content/60 truncate">{track.artist['#text']}</p>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </section>
+
+        <!-- Top Artists -->
+        <section class="bg-base-200/50 backdrop-blur-sm p-6 rounded-3xl border border-base-content/5 relative group/section flex flex-col h-full hover:bg-base-200/70 transition-colors">
+            <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
+                <span class="text-secondary">artists</span>
+                <span class="text-base-content/40 text-sm font-normal period-label">All Time</span>
+            </h2>
+             <div id="loading-overlay-artists" class="absolute inset-0 bg-base-200/80 backdrop-blur-sm items-center justify-center z-10 rounded-3xl hidden">
+                <span class="loading loading-bars loading-lg text-secondary"></span>
+            </div>
+            <div class="flex flex-col gap-3 flex-1 justify-center" id="artists-list">
+                {topArtists.map((artist, i) => (
+                    <a href={artist.url} target="_blank" rel="noopener noreferrer" 
+                       class="flex items-center gap-4 p-3 rounded-2xl bg-base-100/50 hover:bg-base-100 hover:scale-105 transition-all duration-300 shadow-sm hover:shadow-md group/item border border-transparent hover:border-secondary/20">
+                        {getBestImage(artist.image) ? (
+                            <img 
+                                src={getBestImage(artist.image)} 
+                                alt={artist.name}
+                                class="w-12 h-12 rounded-xl object-cover shadow-sm group-hover/item:scale-110 transition-transform"
+                            />
+                        ) : (
+                            <div class="w-12 h-12 rounded-xl bg-neutral text-neutral-content flex items-center justify-center font-bold text-sm shadow-sm group-hover/item:scale-110 transition-transform">
+                            #{i + 1}
+                            </div>
+                        )}
+                        <span class="font-bold text-lg truncate flex-1">{artist.name}</span>
+                        <span class="opacity-0 group-hover/item:opacity-100 transition-opacity text-secondary font-bold">#{i+1}</span>
+                    </a>
+                ))}
+            </div>
+        </section>
+
+        <!-- Controls (Stacked Bubbles) -->
+        <div class="flex flex-col gap-4 min-w-[160px] h-full">
+            <button class="flex-1 rounded-3xl bg-base-100 border border-base-content/10 shadow-sm hover:shadow-xl hover:scale-105 transition-all duration-300 font-black text-lg period-btn active flex items-center justify-center gap-2 group relative overflow-hidden" data-period="overall">
+                <span class="relative z-10">🌎 All Time</span>
+                <div class="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            </button>
+            <button class="flex-1 rounded-3xl bg-base-100 border border-base-content/10 shadow-sm hover:shadow-xl hover:scale-105 transition-all duration-300 font-bold text-lg period-btn flex items-center justify-center gap-2 group relative overflow-hidden" data-period="12month">
+                <span class="relative z-10">📅 Last Year</span>
+                 <div class="absolute inset-0 bg-secondary/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            </button>
+            <button class="flex-1 rounded-3xl bg-base-100 border border-base-content/10 shadow-sm hover:shadow-xl hover:scale-105 transition-all duration-300 font-bold text-lg period-btn flex items-center justify-center gap-2 group relative overflow-hidden" data-period="7day">
+                 <span class="relative z-10">📆 Last Week</span>
+                 <div class="absolute inset-0 bg-accent/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            </button>
+        </div>
     </div>
-  </section>
 
-  <script is:inline>
-    const ignoreNames = ['the magnus archives', 'the yard', 'knifepoint horror'];
+    <!-- Top Albums (Full Width Below) -->
+    <section class="bg-base-200/50 backdrop-blur-sm p-8 rounded-3xl border border-base-content/5 relative group/section hover:bg-base-200/70 transition-colors">
+        <h2 class="text-2xl font-bold mb-8 flex items-center gap-2">
+            <span class="text-accent">albums</span>
+            <span class="text-base-content/40 text-sm font-normal period-label">All Time</span>
+        </h2>
+        <div id="loading-overlay-albums" class="absolute inset-0 bg-base-200/80 backdrop-blur-sm items-center justify-center z-10 rounded-3xl hidden">
+            <span class="loading loading-bars loading-lg text-accent"></span>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-6" id="albums-list">
+            {topAlbums.map((album, i) => (
+                <a href={album.url} target="_blank" rel="noopener noreferrer" class="group relative aspect-square perspective-1000">
+                    <div class="w-full h-full relative preserve-3d group-hover:rotate-y-12 transition-transform duration-500">
+                        <img 
+                            src={getBestImage(album.image)} 
+                            alt={album.name}
+                            class="w-full h-full rounded-2xl object-cover shadow-lg group-hover:shadow-2xl transition-all duration-300"
+                            title={`${album.name} by ${album.artist.name}`}
+                        />
+                         <div class="absolute -bottom-4 md:-bottom-8 left-0 right-0 text-center opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
+                            <span class="text-xs font-bold bg-base-100/90 px-3 py-1 rounded-full shadow-sm truncate max-w-[90%] inline-block">
+                                #{i+1} {album.name}
+                            </span>
+                        </div>
+                    </div>
+                </a>
+            ))}
+        </div>
+    </section>
+  </div>
 
-    function getImage(images, preferredSize = 'medium') {
-      if (!Array.isArray(images)) return null;
-      let img = images.find((i) => i.size === preferredSize && i['#text']);
-      if (img && img['#text']) return img['#text'];
-      img = images.find((i) => i['#text']);
-      return img ? img['#text'] : null;
-    }
-
-    function isMusic(name) {
-      const lower = (name || '').toLowerCase();
-      return !ignoreNames.some((bad) => lower.includes(bad));
-    }
-
-    function normalize(name) {
-      return (name || '')
-        .toLowerCase()
-        .replace(/[\u3000]/g, ' ')
-        .replace(/\(.*?\)/g, '')
-        .replace(/feat\.?[^-]*$/i, '')
-        .replace(/\s+/g, ' ')
-        .trim();
-    }
-
-    async function fetchLastFm() {
-      // Fetch from our local API proxy
-      const res = await fetch('/api/lastfm');
-      if (!res.ok) return null;
-      return await res.json();
-    }
-
-    function createTrackEl(track, first) {
-      const div = document.createElement('div');
-      div.className = `track ${first ? '' : 'hidden'}`;
-      const imgSrc = getImage(track.image, 'extralarge');
-      if (imgSrc) {
-        const img = document.createElement('img');
-        img.src = imgSrc;
-        img.alt = `Art for ${track.name}`;
-        img.loading = 'lazy';
-        img.className = 'w-full h-64 object-cover rounded mb-4';
-        div.appendChild(img);
+  <style>
+      .period-btn.active[data-period="overall"] {
+          background-color: oklch(var(--p));
+          color: oklch(var(--pc));
+          transform: scale(1.05);
+          box-shadow: 0 0 20px -5px oklch(var(--p));
+          border-color: transparent;
       }
-      const info = document.createElement('div');
-      info.className = 'text-center';
-      const name = document.createElement('p');
-      name.className = 'font-semibold';
-      name.textContent = track.name;
-      const artist = document.createElement('p');
-      artist.className = 'text-sm text-gray-500';
-      artist.textContent = track.artist['#text'];
-      info.appendChild(name);
-      info.appendChild(artist);
-      div.appendChild(info);
-      return div;
+      .period-btn.active[data-period="12month"] {
+           background-color: oklch(var(--s));
+           color: oklch(var(--sc));
+           transform: scale(1.05);
+           box-shadow: 0 0 20px -5px oklch(var(--s));
+           border-color: transparent;
+      }
+      .period-btn.active[data-period="7day"] {
+           background-color: oklch(var(--a));
+           color: oklch(var(--ac));
+           transform: scale(1.05);
+           box-shadow: 0 0 20px -5px oklch(var(--a));
+           border-color: transparent;
+      }
+      .preserve-3d { transform-style: preserve-3d; }
+  </style>
+
+  <script>
+    // Note: getBestImage is redefined here to avoid import issues in client-side script
+
+    // If importing is not possible in inline script without bundling config, redefine helper or expose globally.
+    // Astro scripts are modules by default so imports work if the path is resolvable.
+    // For simplicity/robustness in this inline context:
+    function getBestImage(images) {
+      if (!Array.isArray(images)) return '';
+      const sizes = ['extralarge', 'large', 'medium', 'small'];
+      for (const size of sizes) {
+        const img = images.find((i) => i.size === size);
+        if (img && img['#text']) {
+            if (img['#text'].includes('2a96cbd8b46e442fc41c2b86b821562f')) return '';
+            return img['#text'];
+        }
+      }
+      return '';
     }
 
-    async function loadTracks() {
-      const data = await fetchLastFm();
-      const container = document.getElementById('player');
-      container.innerHTML = '';
-      if (!data || !data.recenttracks) {
-        container.textContent = 'Failed to load tracks.';
-        return;
-      }
-      const seen = new Set();
-      const unique = [];
-      for (const t of data.recenttracks.track || []) {
-        if (!isMusic(t.name) || !isMusic(t?.artist?.['#text'])) continue;
-        const key = t.mbid || normalize(t.name);
-        if (!key || seen.has(key)) continue;
-        seen.add(key);
-        unique.push(t);
-        if (unique.length >= 10) break;
-      }
-      if (!unique.length) {
-        container.textContent = 'No recent tracks found.';
-        return;
-      }
-      unique.forEach((track, i) => container.appendChild(createTrackEl(track, i === 0)));
-      
-      if (unique.length > 1) {
-        const controls = document.createElement('div');
-        controls.className = 'flex justify-between mt-4 text-2xl';
-        controls.innerHTML = '<button id="prev" class="px-3 py-1 border rounded" aria-label="Previous">\u23EE</button><button id="next" class="px-3 py-1 border rounded" aria-label="Next">\u23ED</button>';
-        container.appendChild(controls);
-        const tracks = Array.from(container.querySelectorAll('.track'));
-        let current = 0;
-        controls.querySelector('#prev').addEventListener('click', () => {
-          tracks[current].classList.add('hidden');
-          current = (current - 1 + tracks.length) % tracks.length;
-          tracks[current].classList.remove('hidden');
+    // Toggle Logic
+    const buttons = document.querySelectorAll('.period-btn');
+    const artistsList = document.getElementById('artists-list');
+    const albumsList = document.getElementById('albums-list');
+    const periodLabels = document.querySelectorAll('.period-label');
+    const loaders = {
+        artists: document.getElementById('loading-overlay-artists'),
+        albums: document.getElementById('loading-overlay-albums')
+    };
+
+    const periodMap = {
+        'overall': 'All Time',
+        '12month': 'Last Year',
+        '7day': 'Last Week'
+    };
+
+    // Client-side Cache
+    const dataCache = new Map();
+    const BLOCKED_ITEMS = ['The Magnus Archives'];
+
+    async function fetchData(period) {
+        if (dataCache.has(period)) return dataCache.get(period);
+
+        try {
+            // Fetch more items to safely filter client-side
+            const [artistsRes, albumsRes] = await Promise.all([
+                fetch(`/api/lastfm?method=artists&period=${period}&limit=10`),
+                fetch(`/api/lastfm?method=albums&period=${period}&limit=10`)
+            ]);
+            
+            const artists = await artistsRes.json();
+            const albums = await albumsRes.json();
+            const data = { artists, albums };
+            
+            dataCache.set(period, data);
+            return data;
+        } catch (e) {
+            console.error('Fetch failed', e);
+            throw e;
+        }
+    }
+
+    // Prefetch other periods after load
+    setTimeout(async () => {
+        const fetchOrder = Object.keys(periodMap).filter(p => p !== 'overall'); // Assuming 'overall' is default
+        for (const p of fetchOrder) {
+            await fetchData(p);
+        }
+    }, 2000);
+
+    // Helper for rendering
+    function renderArtists(artists) {
+        const filtered = artists.filter(artist => 
+            !BLOCKED_ITEMS.some(blocked => artist.name.toLowerCase().includes(blocked.toLowerCase()))
+        ).slice(0, 5);
+
+        return filtered.map((artist, i) => {
+            const imgUrl = getBestImage(artist.image);
+            return `
+            <a href="${artist.url}" target="_blank" rel="noopener noreferrer" 
+               class="flex items-center gap-4 p-3 rounded-2xl bg-base-100/50 hover:bg-base-100 hover:scale-105 transition-all duration-300 shadow-sm hover:shadow-md group/item border border-transparent hover:border-secondary/20">
+                ${imgUrl ? `
+                    <img 
+                        src="${imgUrl}" 
+                        alt="${artist.name}"
+                        class="w-12 h-12 rounded-xl object-cover shadow-sm group-hover/item:scale-110 transition-transform"
+                    />
+                ` : `
+                    <div class="w-12 h-12 rounded-xl bg-neutral text-neutral-content flex items-center justify-center font-bold text-sm shadow-sm group-hover/item:scale-110 transition-transform">
+                        #${i + 1}
+                    </div>
+                `}
+                <span class="font-bold text-lg truncate flex-1">${artist.name}</span>
+                <span class="opacity-0 group-hover/item:opacity-100 transition-opacity text-secondary font-bold">#${i+1}</span>
+            </a>
+            `;
+        }).join('');
+    }
+
+    function renderAlbums(albums) {
+        const filtered = albums.filter(album => 
+            !BLOCKED_ITEMS.some(blocked => 
+                album.name.toLowerCase().includes(blocked.toLowerCase()) || 
+                album.artist.name.toLowerCase().includes(blocked.toLowerCase())
+            )
+        ).slice(0, 5);
+
+        return filtered.map((album, i) => `
+            <a href="${album.url}" target="_blank" rel="noopener noreferrer" class="group relative aspect-square perspective-1000">
+                <div class="w-full h-full relative preserve-3d group-hover:rotate-y-12 transition-transform duration-500">
+                    <img 
+                        src="${getBestImage(album.image)}" 
+                        alt="${album.name}"
+                        class="w-full h-full rounded-2xl object-cover shadow-lg group-hover:shadow-2xl transition-all duration-300"
+                        title="${album.name} by ${album.artist.name}"
+                    />
+                     <div class="absolute -bottom-4 md:-bottom-8 left-0 right-0 text-center opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
+                        <span class="text-xs font-bold bg-base-100/90 px-3 py-1 rounded-full shadow-sm truncate max-w-[90%] inline-block">
+                            #${i+1} ${album.name}
+                        </span>
+                    </div>
+                </div>
+            </a>
+        `).join('');
+    }
+
+    buttons.forEach(btn => {
+        btn.addEventListener('click', async () => {
+             // 1. Update active state
+            buttons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            const period = btn.dataset.period;
+            const label = periodMap[period];
+
+            // 2. Update labels
+            periodLabels.forEach(el => el.textContent = label);
+
+            // 3. Show loaders
+            Object.values(loaders).forEach(el => el.classList.remove('hidden'));
+            Object.values(loaders).forEach(el => el.classList.add('flex'));
+
+            try {
+                // 4. Fetch data (cached or network)
+                const { artists, albums } = await fetchData(period);
+
+                // 5. Render
+                artistsList.innerHTML = renderArtists(artists);
+                albumsList.innerHTML = renderAlbums(albums);
+
+            } catch (error) {
+                console.error("Failed to fetch data", error);
+            } finally {
+                // 7. Hide loaders
+                Object.values(loaders).forEach(el => el.classList.add('hidden'));
+                Object.values(loaders).forEach(el => el.classList.remove('flex'));
+            }
         });
-        controls.querySelector('#next').addEventListener('click', () => {
-          tracks[current].classList.add('hidden');
-          current = (current + 1) % tracks.length;
-          tracks[current].classList.remove('hidden');
-        });
-      }
-    }
+    });
 
-    loadTracks();
+    // Hydrate 'overall' on load to get enriched images
+    fetchData('overall').then(({ artists }) => {
+        const activeBtn = document.querySelector('.period-btn.active[data-period="overall"]');
+        if (activeBtn) {
+            artistsList.innerHTML = renderArtists(artists);
+        }
+    });
+
+    // Client-side Polling for Hero Section
+    async function updateNowPlaying() {
+        try {
+            const res = await fetch('/api/lastfm?limit=1');
+            const data = await res.json();
+            const track = data[0];
+            
+            if (!track) return;
+
+            // Elements
+            const bgImg = document.getElementById('hero-bg-img');
+            const fgImg = document.getElementById('hero-fg-img');
+            const statusText = document.getElementById('hero-status-text');
+            const trackName = document.getElementById('hero-track-name');
+            const artistName = document.getElementById('hero-artist-name');
+            const albumName = document.getElementById('hero-album-name');
+            const badge = document.getElementById('now-playing-badge');
+
+            // Diff check (using track name + artist as key)
+            const currentKey = `${trackName.textContent.trim()}-${artistName.textContent.trim()}`;
+            const newKey = `${track.name}-${track.artist['#text']}`;
+
+            if (currentKey !== newKey) {
+                // Update text
+                trackName.textContent = track.name;
+                artistName.textContent = track.artist['#text'];
+                albumName.textContent = track.album['#text'];
+                
+                // Update images
+                const imgUrl = getBestImage(track.image) || '/placeholder-music.png';
+                bgImg.src = imgUrl;
+                fgImg.src = imgUrl;
+                fgImg.alt = track.name;
+                
+                // Update status and badge
+                const isPlaying = track['@attr']?.nowplaying === 'true';
+                statusText.textContent = isPlaying ? 'Currently Vibing To' : 'Last Listened';
+                
+                if (isPlaying) {
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
+                }
+            }
+        } catch (e) {
+            console.error('Failed to update now playing', e);
+        }
+    }
+    
+    // Poll every 30 seconds
+    setInterval(updateNowPlaying, 30000);
   </script>
 </Layout>
