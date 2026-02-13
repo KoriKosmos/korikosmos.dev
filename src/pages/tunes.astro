@@ -10,16 +10,15 @@ const currentTrack = recentTracks[0];
 const isPlaying = currentTrack?.['@attr']?.nowplaying === 'true';
 ---
 
-<Layout title="Tunes | KoriKosmos" isWide={true}>
-  <div class="space-y-12 animate-fade-in">
+<Layout title="Tunes" description="What I'm listening to right now, powered by Last.fm scrobbles." isWide={true}>
+  <div class="space-y-12">
     <!-- Hero Section: Now Playing / Most Recent -->
     <section class="relative overflow-hidden rounded-3xl bg-base-200 shadow-xl min-h-[400px] flex items-center justify-center">
-        <!-- Background Blur -->
         <div class="absolute inset-0 z-0">
-             <img 
+             <img
                 id="hero-bg-img"
-                src={getBestImage(currentTrack?.image) || '/placeholder-music.png'} 
-                alt="" 
+                src={getBestImage(currentTrack?.image) || '/placeholder-music.png'}
+                alt=""
                 class="w-full h-full object-cover opacity-30 blur-3xl scale-110"
             />
              <div class="absolute inset-0 bg-base-100/50"></div>
@@ -27,17 +26,17 @@ const isPlaying = currentTrack?.['@attr']?.nowplaying === 'true';
 
         <div class="relative z-10 flex flex-col md:flex-row items-center gap-8 p-8 w-full mx-auto">
             <div class="relative group">
-                 <img 
+                 <img
                     id="hero-fg-img"
-                    src={getBestImage(currentTrack?.image) || '/placeholder-music.png'} 
-                    alt={currentTrack?.name} 
+                    src={getBestImage(currentTrack?.image) || '/placeholder-music.png'}
+                    alt={currentTrack?.name}
                     class="w-64 h-64 rounded-2xl shadow-2xl object-cover transition-transform duration-500 group-hover:scale-105"
                 />
                 <div id="now-playing-badge" class={`absolute -top-4 -right-4 bg-accent text-accent-content text-xs font-bold px-3 py-1 rounded-full shadow-lg animate-bounce ${isPlaying ? '' : 'hidden'}`}>
                     NOW PLAYING
                 </div>
             </div>
-            
+
             <div class="text-center md:text-left space-y-4 flex-1">
                 <h2 id="hero-status-text" class="text-sm uppercase tracking-widest text-secondary font-semibold">
                     {isPlaying ? 'Currently Vibing To' : 'Last Listened'}
@@ -57,7 +56,7 @@ const isPlaying = currentTrack?.['@attr']?.nowplaying === 'true';
 
     <!-- Main Stats Grid -->
     <div class="grid grid-cols-1 lg:grid-cols-[1fr_1fr_min-content] gap-6 items-stretch">
-        
+
         <!-- Recent History -->
         <section class="bg-base-200/50 backdrop-blur-sm p-6 rounded-3xl border border-base-content/5 flex flex-col h-full hover:bg-base-200/70 transition-colors">
             <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
@@ -67,8 +66,8 @@ const isPlaying = currentTrack?.['@attr']?.nowplaying === 'true';
             <div class="space-y-4 flex-1" id="recent-list">
                 {recentTracks.slice(1, 6).map((track) => (
                     <div class="flex items-center gap-4 group p-3 rounded-2xl hover:bg-base-100/80 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg border border-transparent hover:border-base-content/5">
-                        <img 
-                            src={getBestImage(track.image)} 
+                        <img
+                            src={getBestImage(track.image)}
                             alt={track.name}
                             class="w-12 h-12 rounded-xl object-cover shadow-sm group-hover:rotate-6 transition-transform"
                         />
@@ -90,40 +89,21 @@ const isPlaying = currentTrack?.['@attr']?.nowplaying === 'true';
              <div id="loading-overlay-artists" class="absolute inset-0 bg-base-200/80 backdrop-blur-sm items-center justify-center z-10 rounded-3xl hidden">
                 <span class="loading loading-bars loading-lg text-secondary"></span>
             </div>
-            <div class="flex flex-col gap-3 flex-1 justify-center" id="artists-list">
-                {topArtists.map((artist, i) => (
-                    <a href={artist.url} target="_blank" rel="noopener noreferrer" 
-                       class="flex items-center gap-4 p-3 rounded-2xl bg-base-100/50 hover:bg-base-100 hover:scale-105 transition-all duration-300 shadow-sm hover:shadow-md group/item border border-transparent hover:border-secondary/20">
-                        {getBestImage(artist.image) ? (
-                            <img 
-                                src={getBestImage(artist.image)} 
-                                alt={artist.name}
-                                class="w-12 h-12 rounded-xl object-cover shadow-sm group-hover/item:scale-110 transition-transform"
-                            />
-                        ) : (
-                            <div class="w-12 h-12 rounded-xl bg-neutral text-neutral-content flex items-center justify-center font-bold text-sm shadow-sm group-hover/item:scale-110 transition-transform">
-                            #{i + 1}
-                            </div>
-                        )}
-                        <span class="font-bold text-lg truncate flex-1">{artist.name}</span>
-                        <span class="opacity-0 group-hover/item:opacity-100 transition-opacity text-secondary font-bold">#{i+1}</span>
-                    </a>
-                ))}
-            </div>
+            <div class="flex flex-col gap-3 flex-1 justify-center" id="artists-list"></div>
         </section>
 
         <!-- Controls (Stacked Bubbles) -->
         <div class="flex flex-col gap-4 min-w-[160px] h-full">
             <button class="flex-1 rounded-3xl bg-base-100 border border-base-content/10 shadow-sm hover:shadow-xl hover:scale-105 transition-all duration-300 font-black text-lg period-btn active flex items-center justify-center gap-2 group relative overflow-hidden" data-period="overall">
-                <span class="relative z-10">🌎 All Time</span>
+                <span class="relative z-10">All Time</span>
                 <div class="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
             </button>
             <button class="flex-1 rounded-3xl bg-base-100 border border-base-content/10 shadow-sm hover:shadow-xl hover:scale-105 transition-all duration-300 font-bold text-lg period-btn flex items-center justify-center gap-2 group relative overflow-hidden" data-period="12month">
-                <span class="relative z-10">📅 Last Year</span>
+                <span class="relative z-10">Last Year</span>
                  <div class="absolute inset-0 bg-secondary/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
             </button>
             <button class="flex-1 rounded-3xl bg-base-100 border border-base-content/10 shadow-sm hover:shadow-xl hover:scale-105 transition-all duration-300 font-bold text-lg period-btn flex items-center justify-center gap-2 group relative overflow-hidden" data-period="7day">
-                 <span class="relative z-10">📆 Last Week</span>
+                 <span class="relative z-10">Last Week</span>
                  <div class="absolute inset-0 bg-accent/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
             </button>
         </div>
@@ -138,25 +118,7 @@ const isPlaying = currentTrack?.['@attr']?.nowplaying === 'true';
         <div id="loading-overlay-albums" class="absolute inset-0 bg-base-200/80 backdrop-blur-sm items-center justify-center z-10 rounded-3xl hidden">
             <span class="loading loading-bars loading-lg text-accent"></span>
         </div>
-        <div class="grid grid-cols-2 md:grid-cols-5 gap-6" id="albums-list">
-            {topAlbums.map((album, i) => (
-                <a href={album.url} target="_blank" rel="noopener noreferrer" class="group relative aspect-square perspective-1000">
-                    <div class="w-full h-full relative preserve-3d group-hover:rotate-y-12 transition-transform duration-500">
-                        <img 
-                            src={getBestImage(album.image)} 
-                            alt={album.name}
-                            class="w-full h-full rounded-2xl object-cover shadow-lg group-hover:shadow-2xl transition-all duration-300"
-                            title={`${album.name} by ${album.artist.name}`}
-                        />
-                         <div class="absolute -bottom-4 md:-bottom-8 left-0 right-0 text-center opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
-                            <span class="text-xs font-bold bg-base-100/90 px-3 py-1 rounded-full shadow-sm truncate max-w-[90%] inline-block">
-                                #{i+1} {album.name}
-                            </span>
-                        </div>
-                    </div>
-                </a>
-            ))}
-        </div>
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-6" id="albums-list"></div>
     </section>
   </div>
 
@@ -185,36 +147,26 @@ const isPlaying = currentTrack?.['@attr']?.nowplaying === 'true';
       .preserve-3d { transform-style: preserve-3d; }
   </style>
 
+  <!-- Pass SSR data to client -->
+  <script define:vars={{ initialArtists: topArtists, initialAlbums: topAlbums }}>
+    window.__TUNES_INITIAL__ = { artists: initialArtists, albums: initialAlbums };
+  </script>
+
   <script>
-    // Note: getBestImage is redefined here to avoid import issues in client-side script
+    import { getBestImage } from '../lib/images';
+    import { BLOCKED_ITEMS } from '../lib/constants';
 
-    // If importing is not possible in inline script without bundling config, redefine helper or expose globally.
-    // Astro scripts are modules by default so imports work if the path is resolvable.
-    // For simplicity/robustness in this inline context:
-    function getBestImage(images) {
-      if (!Array.isArray(images)) return '';
-      const sizes = ['extralarge', 'large', 'medium', 'small'];
-      for (const size of sizes) {
-        const img = images.find((i) => i.size === size);
-        if (img && img['#text']) {
-            if (img['#text'].includes('2a96cbd8b46e442fc41c2b86b821562f')) return '';
-            return img['#text'];
-        }
-      }
-      return '';
-    }
-
-    // Toggle Logic
+    // DOM Elements
     const buttons = document.querySelectorAll('.period-btn');
-    const artistsList = document.getElementById('artists-list');
-    const albumsList = document.getElementById('albums-list');
+    const artistsList = document.getElementById('artists-list')!;
+    const albumsList = document.getElementById('albums-list')!;
     const periodLabels = document.querySelectorAll('.period-label');
     const loaders = {
-        artists: document.getElementById('loading-overlay-artists'),
-        albums: document.getElementById('loading-overlay-albums')
+        artists: document.getElementById('loading-overlay-artists')!,
+        albums: document.getElementById('loading-overlay-albums')!
     };
 
-    const periodMap = {
+    const periodMap: Record<string, string> = {
         'overall': 'All Time',
         '12month': 'Last Year',
         '7day': 'Last Week'
@@ -222,22 +174,20 @@ const isPlaying = currentTrack?.['@attr']?.nowplaying === 'true';
 
     // Client-side Cache
     const dataCache = new Map();
-    const BLOCKED_ITEMS = ['The Magnus Archives'];
 
-    async function fetchData(period) {
+    async function fetchData(period: string) {
         if (dataCache.has(period)) return dataCache.get(period);
 
         try {
-            // Fetch more items to safely filter client-side
             const [artistsRes, albumsRes] = await Promise.all([
                 fetch(`/api/lastfm?method=artists&period=${period}&limit=10`),
                 fetch(`/api/lastfm?method=albums&period=${period}&limit=10`)
             ]);
-            
+
             const artists = await artistsRes.json();
             const albums = await albumsRes.json();
             const data = { artists, albums };
-            
+
             dataCache.set(period, data);
             return data;
         } catch (e) {
@@ -248,26 +198,25 @@ const isPlaying = currentTrack?.['@attr']?.nowplaying === 'true';
 
     // Prefetch other periods after load
     setTimeout(async () => {
-        const fetchOrder = Object.keys(periodMap).filter(p => p !== 'overall'); // Assuming 'overall' is default
-        for (const p of fetchOrder) {
+        for (const p of Object.keys(periodMap).filter(p => p !== 'overall')) {
             await fetchData(p);
         }
     }, 2000);
 
-    // Helper for rendering
-    function renderArtists(artists) {
-        const filtered = artists.filter(artist => 
+    // Rendering helpers (single source of truth for markup)
+    function renderArtists(artists: any[]) {
+        const filtered = artists.filter(artist =>
             !BLOCKED_ITEMS.some(blocked => artist.name.toLowerCase().includes(blocked.toLowerCase()))
         ).slice(0, 5);
 
         return filtered.map((artist, i) => {
             const imgUrl = getBestImage(artist.image);
             return `
-            <a href="${artist.url}" target="_blank" rel="noopener noreferrer" 
+            <a href="${artist.url}" target="_blank" rel="noopener noreferrer"
                class="flex items-center gap-4 p-3 rounded-2xl bg-base-100/50 hover:bg-base-100 hover:scale-105 transition-all duration-300 shadow-sm hover:shadow-md group/item border border-transparent hover:border-secondary/20">
                 ${imgUrl ? `
-                    <img 
-                        src="${imgUrl}" 
+                    <img
+                        src="${imgUrl}"
                         alt="${artist.name}"
                         class="w-12 h-12 rounded-xl object-cover shadow-sm group-hover/item:scale-110 transition-transform"
                     />
@@ -283,10 +232,10 @@ const isPlaying = currentTrack?.['@attr']?.nowplaying === 'true';
         }).join('');
     }
 
-    function renderAlbums(albums) {
-        const filtered = albums.filter(album => 
-            !BLOCKED_ITEMS.some(blocked => 
-                album.name.toLowerCase().includes(blocked.toLowerCase()) || 
+    function renderAlbums(albums: any[]) {
+        const filtered = albums.filter(album =>
+            !BLOCKED_ITEMS.some(blocked =>
+                album.name.toLowerCase().includes(blocked.toLowerCase()) ||
                 album.artist.name.toLowerCase().includes(blocked.toLowerCase())
             )
         ).slice(0, 5);
@@ -294,8 +243,8 @@ const isPlaying = currentTrack?.['@attr']?.nowplaying === 'true';
         return filtered.map((album, i) => `
             <a href="${album.url}" target="_blank" rel="noopener noreferrer" class="group relative aspect-square perspective-1000">
                 <div class="w-full h-full relative preserve-3d group-hover:rotate-y-12 transition-transform duration-500">
-                    <img 
-                        src="${getBestImage(album.image)}" 
+                    <img
+                        src="${getBestImage(album.image)}"
                         alt="${album.name}"
                         class="w-full h-full rounded-2xl object-cover shadow-lg group-hover:shadow-2xl transition-all duration-300"
                         title="${album.name} by ${album.artist.name}"
@@ -310,46 +259,43 @@ const isPlaying = currentTrack?.['@attr']?.nowplaying === 'true';
         `).join('');
     }
 
+    // Render initial SSR data immediately
+    const initial = (window as any).__TUNES_INITIAL__;
+    if (initial) {
+        artistsList.innerHTML = renderArtists(initial.artists);
+        albumsList.innerHTML = renderAlbums(initial.albums);
+    }
+
+    // Hydrate 'overall' with enriched images from API
+    fetchData('overall').then(({ artists }) => {
+        artistsList.innerHTML = renderArtists(artists);
+    }).catch(() => {});
+
+    // Period button click handlers
     buttons.forEach(btn => {
         btn.addEventListener('click', async () => {
-             // 1. Update active state
             buttons.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
 
-            const period = btn.dataset.period;
+            const period = (btn as HTMLElement).dataset.period!;
             const label = periodMap[period];
 
-            // 2. Update labels
             periodLabels.forEach(el => el.textContent = label);
 
-            // 3. Show loaders
-            Object.values(loaders).forEach(el => el.classList.remove('hidden'));
-            Object.values(loaders).forEach(el => el.classList.add('flex'));
+            Object.values(loaders).forEach(el => { el.classList.remove('hidden'); el.classList.add('flex'); });
 
             try {
-                // 4. Fetch data (cached or network)
                 const { artists, albums } = await fetchData(period);
-
-                // 5. Render
                 artistsList.innerHTML = renderArtists(artists);
                 albumsList.innerHTML = renderAlbums(albums);
-
             } catch (error) {
                 console.error("Failed to fetch data", error);
+                artistsList.innerHTML = '<p class="text-center p-4 text-base-content/60">Failed to load data. Try again later.</p>';
+                albumsList.innerHTML = '<p class="text-center p-4 text-base-content/60">Failed to load data. Try again later.</p>';
             } finally {
-                // 7. Hide loaders
-                Object.values(loaders).forEach(el => el.classList.add('hidden'));
-                Object.values(loaders).forEach(el => el.classList.remove('flex'));
+                Object.values(loaders).forEach(el => { el.classList.add('hidden'); el.classList.remove('flex'); });
             }
         });
-    });
-
-    // Hydrate 'overall' on load to get enriched images
-    fetchData('overall').then(({ artists }) => {
-        const activeBtn = document.querySelector('.period-btn.active[data-period="overall"]');
-        if (activeBtn) {
-            artistsList.innerHTML = renderArtists(artists);
-        }
     });
 
     // Client-side Polling for Hero Section
@@ -358,38 +304,33 @@ const isPlaying = currentTrack?.['@attr']?.nowplaying === 'true';
             const res = await fetch('/api/lastfm?limit=1');
             const data = await res.json();
             const track = data[0];
-            
+
             if (!track) return;
 
-            // Elements
-            const bgImg = document.getElementById('hero-bg-img');
-            const fgImg = document.getElementById('hero-fg-img');
-            const statusText = document.getElementById('hero-status-text');
-            const trackName = document.getElementById('hero-track-name');
-            const artistName = document.getElementById('hero-artist-name');
-            const albumName = document.getElementById('hero-album-name');
-            const badge = document.getElementById('now-playing-badge');
+            const bgImg = document.getElementById('hero-bg-img') as HTMLImageElement;
+            const fgImg = document.getElementById('hero-fg-img') as HTMLImageElement;
+            const statusText = document.getElementById('hero-status-text')!;
+            const trackName = document.getElementById('hero-track-name')!;
+            const artistName = document.getElementById('hero-artist-name')!;
+            const albumName = document.getElementById('hero-album-name')!;
+            const badge = document.getElementById('now-playing-badge')!;
 
-            // Diff check (using track name + artist as key)
-            const currentKey = `${trackName.textContent.trim()}-${artistName.textContent.trim()}`;
+            const currentKey = `${trackName.textContent?.trim()}-${artistName.textContent?.trim()}`;
             const newKey = `${track.name}-${track.artist['#text']}`;
 
             if (currentKey !== newKey) {
-                // Update text
                 trackName.textContent = track.name;
                 artistName.textContent = track.artist['#text'];
                 albumName.textContent = track.album['#text'];
-                
-                // Update images
+
                 const imgUrl = getBestImage(track.image) || '/placeholder-music.png';
                 bgImg.src = imgUrl;
                 fgImg.src = imgUrl;
                 fgImg.alt = track.name;
-                
-                // Update status and badge
+
                 const isPlaying = track['@attr']?.nowplaying === 'true';
                 statusText.textContent = isPlaying ? 'Currently Vibing To' : 'Last Listened';
-                
+
                 if (isPlaying) {
                     badge.classList.remove('hidden');
                 } else {
@@ -400,8 +341,7 @@ const isPlaying = currentTrack?.['@attr']?.nowplaying === 'true';
             console.error('Failed to update now playing', e);
         }
     }
-    
-    // Poll every 30 seconds
+
     setInterval(updateNowPlaying, 30000);
   </script>
 </Layout>
