@@ -2,6 +2,8 @@
 import Layout from '../../layouts/Layout.astro';
 import { getCollection, getEntryBySlug } from 'astro:content';
 
+export const prerender = true;
+
 export async function getStaticPaths() {
   const posts = await getCollection('blog');
   return posts.map(p => ({ params: { slug: p.slug } }));
@@ -12,7 +14,7 @@ const post = await getEntryBySlug('blog', slug);
 const { Content } = await post.render();
 ---
 
-<Layout title={post.data.title}>
+<Layout title={post.data.title} description={post.data.description}>
   <article class="prose dark:prose-invert my-8">
     <h1 class="text-3xl font-bold mb-2">{post.data.title}</h1>
     <Content />

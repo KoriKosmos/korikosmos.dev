@@ -1,7 +1,7 @@
 ---
 const { project } = Astro.props;
 ---
-<a href={`/portfolio/${project.slug}/`} class="block bg-surface-60 rounded-lg p-4 hover:bg-surface transition">
+<a href={`/portfolio/${project.slug}/`} class="block bg-base-200/60 rounded-lg p-4 hover:bg-base-200 transition">
   <h2 class="text-xl font-semibold mb-2">{project.data.title}</h2>
-  <p class="text-gray-400">{project.data.summary}</p>
+  <p class="text-base-content/60">{project.data.summary}</p>
 </a>

@@ -2,18 +2,49 @@
 import "../styles/global.css";
 import OnekoToggle from "../components/OnekoToggle.astro";
 import ThemeBar from "../components/ThemeBar.astro";
-import { NAV_LINKS } from "../config";
-const { title = 'KoriKosmos', isWide = false } = Astro.props
+import { NAV_LINKS, SITE_TITLE, SITE_DESCRIPTION } from "../config";
+
+const {
+	title = SITE_TITLE,
+	description = SITE_DESCRIPTION,
+	image,
+	isWide = false,
+} = Astro.props;
+
+const formattedTitle = title === SITE_TITLE ? SITE_TITLE : `${title} | ${SITE_TITLE}`;
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 ---
 
 <html lang="en" data-theme="dark">
 <head>
 	<meta charset="UTF-8" />
-	<title>{title}</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>{formattedTitle}</title>
+	<meta name="description" content={description} />
+	<link rel="canonical" href={canonicalURL} />
+	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+	<meta name="generator" content={Astro.generator} />
+
+	<!-- Open Graph -->
+	<meta property="og:type" content="website" />
+	<meta property="og:url" content={canonicalURL} />
+	<meta property="og:title" content={formattedTitle} />
+	<meta property="og:description" content={description} />
+	{image && <meta property="og:image" content={new URL(image, Astro.site)} />}
+
+	<!-- Twitter Card -->
+	<meta name="twitter:card" content="summary" />
+	<meta name="twitter:title" content={formattedTitle} />
+	<meta name="twitter:description" content={description} />
+
+	<!-- Preconnect -->
+	<link rel="preconnect" href="https://lastfm.freetls.fastly.net" crossorigin />
 </head>
-<body class="font-sans bg-base text-base min-h-screen flex flex-col">
-<header class="p-4 border-b shrink-0">
+<body class="font-sans bg-base-100 text-base-content min-h-screen flex flex-col">
+<a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-content focus:rounded">
+	Skip to content
+</a>
+<header class="p-4 border-b border-base-content/10 shrink-0">
 	<nav class="flex gap-4">
 		{
 			NAV_LINKS.map(link => (
@@ -23,12 +54,12 @@ const { title = 'KoriKosmos', isWide = false } = Astro.props
 	</nav>
 </header>
 
-<main class={`${isWide ? 'max-w-7xl' : 'max-w-3xl'} mx-auto px-4 flex-grow flex flex-col justify-center w-full pb-32`}>
+<main id="main-content" class={`${isWide ? 'max-w-7xl' : 'max-w-3xl'} mx-auto px-4 flex-grow flex flex-col justify-center w-full pb-32`}>
 	<slot />
 </main>
 
-<footer class="text-center text-sm text-gray-500 p-6 shrink-0">
-        © {new Date().getFullYear()} Maan – KoriKosmos
+<footer class="text-center text-sm text-base-content/60 p-6 shrink-0">
+	&copy; {new Date().getFullYear()} Maan &ndash; KoriKosmos
 </footer>
 <OnekoToggle />
 <ThemeBar />

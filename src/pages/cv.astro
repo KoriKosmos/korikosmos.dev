@@ -6,18 +6,18 @@ import cvData from '../data/cv.json';
 const { personal, sections } = cvData;
 ---
 
-<Layout title="CV">
+<Layout title="CV" description="CV and professional background of Maan.">
   <section class="my-8 text-center">
-    <div class="bg-gradient-to-r from-accent to-accent-dark rounded-xl p-8 shadow-lg">
+    <div class="bg-gradient-to-r from-primary to-secondary rounded-xl p-8 shadow-lg text-primary-content">
       <h1 class="text-5xl font-extrabold mb-2">{personal.name}</h1>
       <p class="text-xl mb-2">{personal.title}</p>
       <p>{personal.location}</p>
       <p class="mt-4 flex flex-wrap justify-center gap-4">
-        <a href={`mailto:${personal.email}`} class="text-white underline hover:text-gray-200">{personal.email}</a>
-        <span class="text-white">&bull;</span>
-        <a href={personal.website} class="text-white underline hover:text-gray-200">korikosmos.dev</a>
-        <span class="text-white">&bull;</span>
-        <a href={personal.linkedin} class="text-white underline hover:text-gray-200">LinkedIn</a>
+        <a href={`mailto:${personal.email}`} class="underline hover:opacity-80">{personal.email}</a>
+        <span>&bull;</span>
+        <a href={personal.website} class="underline hover:opacity-80">korikosmos.dev</a>
+        <span>&bull;</span>
+        <a href={personal.linkedin} class="underline hover:opacity-80">LinkedIn</a>
       </p>
     </div>
   </section>
@@ -63,7 +63,7 @@ const { personal, sections } = cvData;
                     {item.subItems.map(sub => <li>{sub}</li>)}
                   </ul>
                 )}
-                {item.description && <p class="mt-1 text-sm text-gray-300">{item.description}</p>}
+                {item.description && <p class="mt-1 text-sm text-base-content/60">{item.description}</p>}
               </li>
             ))}
           </ul>

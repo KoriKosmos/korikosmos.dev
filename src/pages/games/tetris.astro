@@ -2,18 +2,42 @@
 import Layout from '../../layouts/Layout.astro';
 ---
 
-<Layout title="Tetris">
+<Layout title="Tetris" description="Play Tetris in your browser with leaderboard support.">
+  <!-- Username Dialog -->
+  <dialog id="username-dialog" class="rounded-xl bg-base-200 text-base-content shadow-xl backdrop:bg-black/50 p-0">
+    <form method="dialog" class="p-8 space-y-4">
+      <h2 class="text-xl font-bold">Enter your username</h2>
+      <input type="text" id="username-input" maxlength="20" required
+             class="w-full px-4 py-2 rounded bg-base-100 text-base-content border border-base-content/20 focus:border-primary focus:outline-none"
+             placeholder="Username" />
+      <button type="submit" class="w-full px-6 py-2 bg-primary text-primary-content rounded hover:opacity-90 transition">
+        Start Playing
+      </button>
+    </form>
+  </dialog>
+
+  <!-- Game Over Dialog -->
+  <dialog id="gameover-dialog" class="rounded-xl bg-base-200 text-base-content shadow-xl backdrop:bg-black/50 p-0">
+    <div class="p-8 space-y-4 text-center">
+      <h2 class="text-2xl font-bold">Game Over!</h2>
+      <p id="gameover-message" class="text-lg"></p>
+      <button id="gameover-restart" class="px-6 py-2 bg-primary text-primary-content rounded hover:opacity-90 transition">
+        Play Again
+      </button>
+    </div>
+  </dialog>
+
   <h1 class="text-3xl font-bold my-6">Tetris</h1>
   <div class="flex gap-4">
-    <canvas id="board" width="300" height="600"></canvas>
+    <canvas id="board" width="300" height="600" role="img" aria-label="Tetris game board"></canvas>
     <div class="space-y-4">
       <div>
         <p class="font-bold">Next</p>
-        <canvas id="next" width="120" height="120"></canvas>
+        <canvas id="next" width="120" height="120" role="img" aria-label="Next piece preview"></canvas>
       </div>
       <div>
         <p class="font-bold">Hold</p>
-        <canvas id="hold" width="120" height="120"></canvas>
+        <canvas id="hold" width="120" height="120" role="img" aria-label="Held piece"></canvas>
       </div>
       <div class="space-y-2">
         <p>Score: <span id="score">0</span></p>
@@ -24,12 +48,12 @@ import Layout from '../../layouts/Layout.astro';
     </div>
   </div>
   <div class="md:hidden mt-4 flex flex-wrap gap-2">
-    <button id="btn-left" class="px-4 py-2 bg-gray-700 text-white rounded">◀</button>
-    <button id="btn-rotate-ccw" class="px-4 py-2 bg-gray-700 text-white rounded">⟲</button>
-    <button id="btn-rotate" class="px-4 py-2 bg-gray-700 text-white rounded">⟳</button>
-    <button id="btn-right" class="px-4 py-2 bg-gray-700 text-white rounded">▶</button>
-    <button id="btn-drop" class="px-4 py-2 bg-gray-700 text-white rounded">⬇</button>
-    <button id="btn-hold" class="px-4 py-2 bg-gray-700 text-white rounded">H</button>
+    <button id="btn-left" aria-label="Move left" class="px-4 py-2 bg-neutral text-neutral-content rounded">&#9664;</button>
+    <button id="btn-rotate-ccw" aria-label="Rotate counter-clockwise" class="px-4 py-2 bg-neutral text-neutral-content rounded">&#10226;</button>
+    <button id="btn-rotate" aria-label="Rotate clockwise" class="px-4 py-2 bg-neutral text-neutral-content rounded">&#10227;</button>
+    <button id="btn-right" aria-label="Move right" class="px-4 py-2 bg-neutral text-neutral-content rounded">&#9654;</button>
+    <button id="btn-drop" aria-label="Drop piece" class="px-4 py-2 bg-neutral text-neutral-content rounded">&#11015;</button>
+    <button id="btn-hold" aria-label="Hold piece" class="px-4 py-2 bg-neutral text-neutral-content rounded">H</button>
   </div>
   <div class="mt-6">
     <h2 class="font-bold">Leaderboard</h2>
@@ -39,18 +63,32 @@ import Layout from '../../layouts/Layout.astro';
     import { TetrisGame } from '../../lib/tetris.js';
 
     // UI Elements
-    const $score = document.getElementById('score');
-    const $lines = document.getElementById('lines');
-    const $level = document.getElementById('level');
-    const $high = document.getElementById('highscore');
-    const $leaderboard = document.getElementById('leaderboard');
+    const $score = document.getElementById('score')!;
+    const $lines = document.getElementById('lines')!;
+    const $level = document.getElementById('level')!;
+    const $high = document.getElementById('highscore')!;
+    const $leaderboard = document.getElementById('leaderboard')!;
+    const usernameDialog = document.getElementById('username-dialog') as HTMLDialogElement;
+    const gameoverDialog = document.getElementById('gameover-dialog') as HTMLDialogElement;
+    const gameoverMessage = document.getElementById('gameover-message')!;
+    const gameoverRestart = document.getElementById('gameover-restart')!;
 
-    // High Score System
+    // Username via accessible dialog
     let username = localStorage.getItem('tetris_username');
-    while (!username) {
-      username = prompt('Enter a username:')?.trim();
+
+    async function getUsername(): Promise<string> {
+      if (username) return username;
+
+      usernameDialog.showModal();
+      return new Promise((resolve) => {
+        usernameDialog.addEventListener('close', () => {
+          const input = document.getElementById('username-input') as HTMLInputElement;
+          username = input.value.trim() || 'Player';
+          localStorage.setItem('tetris_username', username);
+          resolve(username);
+        }, { once: true });
+      });
     }
-    localStorage.setItem('tetris_username', username);
 
     let highScore = parseInt(localStorage.getItem('tetris_highscore') || '0', 10);
     $high.textContent = highScore.toString();
@@ -59,7 +97,7 @@ import Layout from '../../layouts/Layout.astro';
     async function syncAndLoadLeaderboard() {
       if (isSyncing) return;
       isSyncing = true;
-      let serverData = [];
+      let serverData: any[] = [];
       try {
         const res = await fetch('/api/scores/tetris');
         if (res.ok) {
@@ -67,15 +105,16 @@ import Layout from '../../layouts/Layout.astro';
         }
       } catch (e) {
         console.error('Failed to load leaderboard', e);
+        const li = document.createElement('li');
+        li.textContent = 'Could not load leaderboard.';
+        $leaderboard.appendChild(li);
       } finally {
         isSyncing = false;
       }
 
-      // Check if we need to sync local high score
       if (username && highScore > 0) {
-        const serverEntry = serverData.find(e => e.name === username);
+        const serverEntry = serverData.find((e: any) => e.name === username);
         if (!serverEntry || serverEntry.score < highScore) {
-           console.log('Syncing local high score to server...', highScore);
            try {
              const res = await fetch('/api/scores/tetris', {
                  method: 'POST',
@@ -90,20 +129,14 @@ import Layout from '../../layouts/Layout.astro';
            }
         }
       }
-      
-      renderLeaderboard(serverData);
-      isSyncing = false;
-    }
-    
-    /* parse/save local are removed in favor of API */
 
-    function renderLeaderboard(data) {
-      // Clear existing leaderboard entries
+      renderLeaderboard(serverData);
+    }
+
+    function renderLeaderboard(data: any[]) {
       while ($leaderboard.firstChild) {
         $leaderboard.removeChild($leaderboard.firstChild);
       }
-
-      // Safely add entries using textContent to avoid XSS
       data.forEach((e) => {
         const li = document.createElement('li');
         li.textContent = `${e.name}: ${e.score}`;
@@ -111,95 +144,97 @@ import Layout from '../../layouts/Layout.astro';
       });
     }
 
-    syncAndLoadLeaderboard();
+    // Initialize game after username is resolved
+    async function init() {
+      await getUsername();
 
-    // Poll for leaderboard updates every 15 seconds
-    setInterval(syncAndLoadLeaderboard, 15000);
+      syncAndLoadLeaderboard();
+      setInterval(syncAndLoadLeaderboard, 15000);
 
-    // Game Instantiation
-    const game = new TetrisGame(
-      document.getElementById('board'),
-      document.getElementById('next'),
-      document.getElementById('hold'),
-      {
-        onScore: (score, lines, level) => {
-          $score.textContent = score;
-          $lines.textContent = lines;
-          $level.textContent = level;
-          if (score > highScore) {
-            highScore = score;
-            localStorage.setItem('tetris_highscore', highScore.toString());
-            $high.textContent = highScore.toString();
-          }
-        },
-        onGameOver: async (finalScore) => {
-          // Sync score to server (will submit if it's a new high score) and update leaderboard
-          await syncAndLoadLeaderboard();
-          
-          // Use setTimeout to ensure the DOM updates (Leaderboard repaint) before the alert blocks
-          setTimeout(() => {
-              alert(`Game over, ${username}! Your score: ${finalScore}`);
+      const game = new TetrisGame(
+        document.getElementById('board'),
+        document.getElementById('next'),
+        document.getElementById('hold'),
+        {
+          onScore: (score: number, lines: number, level: number) => {
+            $score.textContent = String(score);
+            $lines.textContent = String(lines);
+            $level.textContent = String(level);
+            if (score > highScore) {
+              highScore = score;
+              localStorage.setItem('tetris_highscore', highScore.toString());
+              $high.textContent = highScore.toString();
+            }
+          },
+          onGameOver: async (finalScore: number) => {
+            await syncAndLoadLeaderboard();
+
+            gameoverMessage.textContent = `${username}, your score: ${finalScore}`;
+            gameoverDialog.showModal();
+
+            gameoverRestart.onclick = () => {
+              gameoverDialog.close();
               game.reset();
               game.start();
-          }, 50);
+            };
+          }
         }
+      );
+
+      // Keyboard Controls
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowLeft') {
+          game.setHoriz(-1); e.preventDefault();
+        } else if (e.key === 'ArrowRight') {
+          game.setHoriz(1); e.preventDefault();
+        } else if (e.key === 'ArrowDown') {
+          game.setDown(true); e.preventDefault();
+        } else if (e.key === 'x' || e.key === 'X') {
+          game.tryRotate(1); e.preventDefault();
+        } else if (e.key === 'z' || e.key === 'Z') {
+          game.tryRotate(-1); e.preventDefault();
+        } else if (e.code === 'Space') {
+          if (!e.repeat) game.hardDrop();
+          e.preventDefault();
+        } else if (e.key === 'c' || e.key === 'C' || e.key === 'Shift') {
+          game.holdPiece(); e.preventDefault();
+        }
+      });
+
+      window.addEventListener('keyup', (e) => {
+        if (e.key === 'ArrowLeft') {
+          if (game.horiz === -1) game.setHoriz(0);
+        } else if (e.key === 'ArrowRight') {
+          if (game.horiz === 1) game.setHoriz(0);
+        } else if (e.key === 'ArrowDown') {
+          game.setDown(false);
+        }
+      });
+
+      // Mobile Controls
+      function bindButton(el: HTMLElement | null, down: () => void, up?: () => void) {
+        if (!el) return;
+        el.addEventListener('pointerdown', (e) => { e.preventDefault(); down(); });
+        el.addEventListener('pointerup', (e) => { e.preventDefault(); if (up) up(); });
+        el.addEventListener('pointerleave', () => { if (up) up(); });
       }
-    );
 
-    // Controls
-    window.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowLeft') {
-        game.setHoriz(-1); e.preventDefault();
-      } else if (e.key === 'ArrowRight') {
-        game.setHoriz(1); e.preventDefault();
-      } else if (e.key === 'ArrowDown') {
-        game.setDown(true); e.preventDefault();
-      } else if (e.key === 'x' || e.key === 'X') {
-        game.tryRotate(1); e.preventDefault();
-      } else if (e.key === 'z' || e.key === 'Z') {
-        game.tryRotate(-1); e.preventDefault();
-      } else if (e.code === 'Space') {
-        if (!e.repeat) game.hardDrop();
-        e.preventDefault();
-      } else if (e.key === 'c' || e.key === 'C' || e.key === 'Shift') {
-        game.holdPiece(); e.preventDefault();
-      }
-    });
+      bindButton(document.getElementById('btn-left'), () => game.setHoriz(-1), () => { if (game.horiz === -1) game.setHoriz(0); });
+      bindButton(document.getElementById('btn-right'), () => game.setHoriz(1), () => { if (game.horiz === 1) game.setHoriz(0); });
 
-    window.addEventListener('keyup', (e) => {
-      if (e.key === 'ArrowLeft') {
-        if (game.horiz === -1) game.setHoriz(0);
-      } else if (e.key === 'ArrowRight') {
-        if (game.horiz === 1) game.setHoriz(0);
-      } else if (e.key === 'ArrowDown') {
-        game.setDown(false);
-      }
-    });
+      const btnRotate = document.getElementById('btn-rotate');
+      const btnRotateCCW = document.getElementById('btn-rotate-ccw');
+      const btnDrop = document.getElementById('btn-drop');
+      const btnHold = document.getElementById('btn-hold');
 
-    // Mobile Controls
-    const btnLeft = document.getElementById('btn-left');
-    const btnRight = document.getElementById('btn-right');
-    const btnRotate = document.getElementById('btn-rotate');
-    const btnRotateCCW = document.getElementById('btn-rotate-ccw');
-    const btnDrop = document.getElementById('btn-drop');
-    const btnHold = document.getElementById('btn-hold');
+      if (btnRotate) btnRotate.addEventListener('pointerdown', (e) => { e.preventDefault(); game.tryRotate(1); });
+      if (btnRotateCCW) btnRotateCCW.addEventListener('pointerdown', (e) => { e.preventDefault(); game.tryRotate(-1); });
+      if (btnDrop) btnDrop.addEventListener('pointerdown', (e) => { e.preventDefault(); game.hardDrop(); });
+      if (btnHold) btnHold.addEventListener('pointerdown', (e) => { e.preventDefault(); game.holdPiece(); });
 
-    function bindButton(el, down, up) {
-      if (!el) return;
-      el.addEventListener('pointerdown', (e) => { e.preventDefault(); down(); });
-      el.addEventListener('pointerup', (e) => { e.preventDefault(); if (up) up(); });
-      el.addEventListener('pointerleave', () => { if (up) up(); });
+      game.start();
     }
 
-    bindButton(btnLeft, () => game.setHoriz(-1), () => { if (game.horiz === -1) game.setHoriz(0); });
-    bindButton(btnRight, () => game.setHoriz(1), () => { if (game.horiz === 1) game.setHoriz(0); });
-    
-    if (btnRotate) btnRotate.addEventListener('pointerdown', (e) => { e.preventDefault(); game.tryRotate(1); });
-    if (btnRotateCCW) btnRotateCCW.addEventListener('pointerdown', (e) => { e.preventDefault(); game.tryRotate(-1); });
-    if (btnDrop) btnDrop.addEventListener('pointerdown', (e) => { e.preventDefault(); game.hardDrop(); });
-    if (btnHold) btnHold.addEventListener('pointerdown', (e) => { e.preventDefault(); game.holdPiece(); });
-
-    // Start
-    game.start();
+    init();
   </script>
 </Layout>

@@ -2,13 +2,13 @@
 import Layout from '../../layouts/Layout.astro';
 ---
 
-<Layout title="Rock Paper Scissors">
+<Layout title="Rock Paper Scissors" description="Challenge the CPU in Rock Paper Scissors with a global leaderboard.">
   <h1 class="text-3xl font-bold my-6">Rock Paper Scissors</h1>
   <div class="space-y-4">
     <div class="flex gap-4">
-      <button class="throw px-4 py-2 bg-gray-700 text-white rounded" data-throw="rock">Rock</button>
-      <button class="throw px-4 py-2 bg-gray-700 text-white rounded" data-throw="paper">Paper</button>
-      <button class="throw px-4 py-2 bg-gray-700 text-white rounded" data-throw="scissors">Scissors</button>
+      <button class="throw px-4 py-2 bg-neutral text-neutral-content rounded" data-throw="rock">Rock</button>
+      <button class="throw px-4 py-2 bg-neutral text-neutral-content rounded" data-throw="paper">Paper</button>
+      <button class="throw px-4 py-2 bg-neutral text-neutral-content rounded" data-throw="scissors">Scissors</button>
     </div>
     <p id="computerChoice"></p>
     <p id="result"></p>
@@ -19,7 +19,7 @@ import Layout from '../../layouts/Layout.astro';
       <p class="font-bold">Net Score: <span id="netScore">0</span></p>
       <p>High Score (Net): <span id="highscore">0</span></p>
     </div>
-    <button id="resetScores" class="px-4 py-2 bg-gray-700 text-white rounded">Reset Scores</button>
+    <button id="resetScores" class="px-4 py-2 bg-neutral text-neutral-content rounded">Reset Scores</button>
   </div>
 
   <div class="mt-8">
