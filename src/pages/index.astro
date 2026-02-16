@@ -2,12 +2,27 @@
 import Layout from '../layouts/Layout.astro'
 ---
 
-<Layout title="Welcome to KoriKosmos">
+<Layout description="Personal portfolio, blog, and games hub by Maan.">
 	<section class="text-center py-20">
-		<h1 class="text-5xl font-bold mb-4">Hi, I'm Maan 👋</h1>
-		<p class="text-xl mb-6">Welcome to my personal space on the internet.</p>
-                <a href="/portfolio" class="inline-block px-6 py-3 bg-accent text-white rounded hover:bg-accent-dark transition">
-			View My Work
-		</a>
+		<h1 class="text-5xl font-bold mb-4">Hi, I'm Maan</h1>
+		<p class="text-xl mb-10 text-base-content/70">Welcome to my personal space on the internet.</p>
+		<div class="grid gap-4 sm:grid-cols-2 max-w-lg mx-auto">
+			<a href="/portfolio" class="block p-6 rounded-xl bg-gradient-to-br from-primary to-secondary shadow-lg hover:scale-105 transition-transform text-primary-content">
+				<h2 class="text-xl font-bold mb-1">Portfolio</h2>
+				<p class="text-sm opacity-80">Projects and work</p>
+			</a>
+			<a href="/blog" class="block p-6 rounded-xl bg-base-200 shadow-lg hover:scale-105 transition-transform">
+				<h2 class="text-xl font-bold mb-1">Blog</h2>
+				<p class="text-sm text-base-content/60">Thoughts and write-ups</p>
+			</a>
+			<a href="/games" class="block p-6 rounded-xl bg-base-200 shadow-lg hover:scale-105 transition-transform">
+				<h2 class="text-xl font-bold mb-1">Games</h2>
+				<p class="text-sm text-base-content/60">Tetris, RPS, and more</p>
+			</a>
+			<a href="/tunes" class="block p-6 rounded-xl bg-base-200 shadow-lg hover:scale-105 transition-transform">
+				<h2 class="text-xl font-bold mb-1">Tunes</h2>
+				<p class="text-sm text-base-content/60">What I'm listening to</p>
+			</a>
+		</div>
 	</section>
 </Layout>

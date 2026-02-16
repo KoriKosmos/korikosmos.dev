@@ -5,10 +5,10 @@ import { getCollection } from 'astro:content';
 const posts = await getCollection('blog');
 ---
 
-<Layout title="Blog">
+<Layout title="Blog" description="Blog posts by Maan on tech, creativity, and personal projects.">
   <div class="grid gap-6 md:grid-cols-2">
     {posts.map(post => (
-      <a href={`/blog/${post.slug}/`} class="block p-6 rounded-xl bg-gradient-to-br from-accent to-accent-dark shadow-lg hover:scale-105 focus:scale-105 focus:outline-none focus:ring-2 focus:ring-white transition-transform text-white">
+      <a href={`/blog/${post.slug}/`} class="block p-6 rounded-xl bg-gradient-to-br from-primary to-secondary shadow-lg hover:scale-105 focus:scale-105 focus:outline-none focus:ring-2 focus:ring-white transition-transform text-primary-content">
         <h2 class="text-2xl font-bold mb-2">{post.data.title}</h2>
         <p class="opacity-90">{post.data.description}</p>
         <div class="mt-4 text-sm opacity-90">
