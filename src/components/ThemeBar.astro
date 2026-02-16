@@ -9,7 +9,7 @@
 const current = localStorage.getItem('theme') || 'dark';
 const root = document.documentElement;
 root.setAttribute('data-theme', current);
-for (const btn of document.querySelectorAll('[data-theme]')) {
+for (const btn of document.querySelectorAll('button[data-theme]')) {
   btn.addEventListener('click', () => {
     const theme = btn.getAttribute('data-theme');
     root.setAttribute('data-theme', theme);
