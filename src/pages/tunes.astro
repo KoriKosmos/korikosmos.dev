@@ -301,7 +301,7 @@ const isPlaying = currentTrack?.['@attr']?.nowplaying === 'true';
     // Client-side Polling for Hero Section
     async function updateNowPlaying() {
         try {
-            const res = await fetch('/api/lastfm?limit=1');
+            const res = await fetch(`/api/lastfm?limit=1&t=${Date.now()}`);
             const data = await res.json();
             const track = data[0];
 
