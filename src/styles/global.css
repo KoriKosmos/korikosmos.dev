@@ -1,12 +1,86 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@plugin "daisyui";
 
 /* Custom accent-dark hover (not provided by DaisyUI) */
-.hover\:bg-accent-dark:hover { background-color: rgb(var(--accent-dark)); }
+.hover\:bg-accent-dark:hover {
+  background-color: rgb(var(--accent-dark));
+}
 
 /* Global focus-visible style */
 *:focus-visible {
   outline: 2px solid oklch(var(--p));
   outline-offset: 2px;
+}
+
+@plugin "daisyui/theme" {
+  name: "dark";
+  default: true;
+  --color-primary: #3B82F6;
+  --color-secondary: #60A5FA;
+  --color-accent: #3B82F6;
+  --color-neutral: #1F2937;
+  --color-base-100: #111827;
+  --color-base-200: #1F2937;
+  --color-base-300: #374151;
+  --color-base-content: #F3F4F6;
+  --color-info: #3B82F6;
+  --color-success: #4ADE80;
+  --color-warning: #FBBF24;
+  --color-error: #EF4444;
+  --accent-dark: 37 99 235;
+  --surface: 31 41 55;
+}
+
+@plugin "daisyui/theme" {
+  name: "light";
+  --color-primary: #3B82F6;
+  --color-secondary: #2563EB;
+  --color-accent: #3B82F6;
+  --color-neutral: #E5E7EB;
+  --color-base-100: #F3F4F6;
+  --color-base-200: #E5E7EB;
+  --color-base-300: #D1D5DB;
+  --color-base-content: #111827;
+  --color-info: #3B82F6;
+  --color-success: #22C55E;
+  --color-warning: #F59E0B;
+  --color-error: #EF4444;
+  --accent-dark: 37 99 235;
+  --surface: 229 231 235;
+}
+
+@plugin "daisyui/theme" {
+  name: "forest";
+  --color-primary: #4ADE80;
+  --color-secondary: #22C55E;
+  --color-accent: #4ADE80;
+  --color-neutral: #14241C;
+  --color-base-100: #101B14;
+  --color-base-200: #14241C;
+  --color-base-300: #1A3326;
+  --color-base-content: #E5FFE6;
+  --color-info: #4ADE80;
+  --color-success: #4ADE80;
+  --color-warning: #FBBF24;
+  --color-error: #EF4444;
+  --accent-dark: 21 128 61;
+  --surface: 20 36 28;
+}
+
+@plugin "daisyui/theme" {
+  name: "batman";
+  --color-primary: #FFD700;
+  --color-secondary: #FFFF00;
+  --color-accent: #FFD700;
+  --color-neutral: #1a1a1a;
+  --color-base-100: #000000;
+  --color-base-200: #1a1a1a;
+  --color-base-300: #333333;
+  --color-base-content: #FFD700;
+  --color-info: #FFD700;
+  --color-success: #FFD700;
+  --color-warning: #FFD700;
+  --color-error: #FFD700;
+  --accent-dark: 255 215 0;
+  --surface: 0 0 0;
 }
