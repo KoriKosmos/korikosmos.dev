@@ -70,9 +70,13 @@
 @plugin "daisyui/theme" {
   name: "batman";
   --color-primary: #FFD700;
+  --color-primary-content: #000000;
   --color-secondary: #FFFF00;
+  --color-secondary-content: #000000;
   --color-accent: #FFD700;
+  --color-accent-content: #000000;
   --color-neutral: #1a1a1a;
+  --color-neutral-content: #FFD700;
   --color-base-100: #000000;
   --color-base-200: #1a1a1a;
   --color-base-300: #333333;
