@@ -1,118 +1,116 @@
-# korikosmos.dev
+# KoriKosmos.dev
 
-This repo contains the source for **korikosmos.dev**, my personal website built with [Astro](https://astro.build) and Tailwind CSS. Here I share my projects, CV, blog posts, games and the music I'm currently listening to.
+The personal website and digital garden of **Maan, aka KoriKosmos**, built with the modern web stack. This repository hosts my portfolio, blog, interactive games, and a dynamic "Tunes" page that tracks my listening habits.
 
-## Setup
+![Astro](https://img.shields.io/badge/Astro-5.11-orange?style=flat-square&logo=astro)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.1-38bdf8?style=flat-square&logo=tailwind-css)
+![DaisyUI](https://img.shields.io/badge/DaisyUI-5.5-5a0ef8?style=flat-square&logo=daisyui)
+![Docker](https://img.shields.io/badge/Docker-Enabled-2496ed?style=flat-square&logo=docker)
 
-1. Install dependencies
-   ```sh
-   npm install
-   ```
-2. Copy `.env.example` to `.env` and add my Last.fm credentials. I can
-   optionally set `GIT_REPO` and `GIT_BRANCH` here if the Docker container
-   should pull from a remote repo on startup.
-   ```sh
-   cp .env.example .env
-   ```
-   `LASTFM_USER` and `LASTFM_API_KEY` are loaded from this file and used by the server-side proxy at `/api/lastfm`. The tunes page fetches data from this internal API, keeping your keys secure.
+## 🚀 Tech Stack
 
-## Development
+-   **Framework:** [Astro 5](https://astro.build) (SSR mode with Node.js adapter)
+-   **Styling:** [Tailwind CSS 4](https://tailwindcss.com) + [DaisyUI 5](https://daisyui.com)
+-   **CMS:** [Decap CMS](https://decapcms.org) (Git-based content management)
+-   **Deployment:** Docker (Multi-stage build, Alpine Node.js)
+-   **State Management:** Nano Stores (for cross-component state like themes)
 
-Start a local server at `http://localhost:4321`:
+## ✨ Features
 
-```sh
+-   **Dynamic Theming**: Switch between **Light**, **Dark**, **Forest** and **Batman** themes (persisted via local storage).
+-   **Tunes Page**: Real-time integration with Last.fm using a secure server-side proxy to hide API keys.
+-   **Interactive Games**:
+    -   **Tetris**: A full-featured clone with SRS rotation, hold mechanic, touch controls for mobile, and global leaderboards.
+    -   **Rock Paper Scissors**: Simple game with persisted scores.
+-   **Oneko Cat**: A toggleable retro cat that chases your cursor across the screen.
+-   **Blog & Portfolio**: Content managed via Markdown and Decap CMS.
+-   **CV**: Data-driven curriculum vitae generated from JSON.
+
+## 🛠️ Getting Started
+
+### Prerequisites
+
+-   **Node.js** (v20+ recommended)
+-   **npm**
+
+### Installation
+
+1.  Clone the repository:
+    ```bash
+    git clone https://github.com/korikosmos/korikosmos.dev.git
+    cd korikosmos.dev
+    ```
+
+2.  Install dependencies:
+    ```bash
+    npm install
+    ```
+
+3.  Configure environment variables:
+     Copy `.env.example` to `.env` and add your keys (required for Last.fm features):
+    ```bash
+    cp .env.example .env
+    ```
+    *Note: `LASTFM_API_KEY` and `LASTFM_USER` are required for the Tunes page to work.*
+
+### Development
+
+Start the development server:
+
+```bash
 npm run dev
 ```
 
-### CMS (Local Development)
+Visit `http://localhost:4321` to see the site.
 
-To edit content locally with Decap CMS:
+### Production Build
 
-1.  Run the proxy server in a separate terminal:
-    ```sh
-    npx decap-server
-    ```
-2.  Navigate to `http://localhost:4321/admin`.
-3.  Click "Login with Local Backend".
+Build the static assets and server code:
 
-_Note: In production, the CMS authenticates via GitHub._
-
-## Features
-
-- **Refactored Architecture**:
-  - **CV Page**: Fully data-driven using `src/data/cv.json` and reusable `CvSection` components.
-  - **Tetris**: Game logic decoupled into a dedicated `src/lib/tetris.js` engine, separating `update()`/`draw()` loops from the UI component.
-  - **Tunes Page**: Last.fm integration now uses a server-side proxy (`src/pages/api/lastfm.ts`) to prevent API key exposure.
-  - **High Scores**: Global leaderboard implemented via server-side API (`src/pages/api/scores/[game].ts`, accessed as `/api/scores/:game`) and persistent JSON storage.
-  - **Config**: Centralized navigation and site settings in `src/config.ts`.
-- Displays my most recently played tracks with album artwork
-- Normalizes track names to avoid duplicates credited in different languages
-- Toggle a little cursor-following cat from the corner button
-- Switch between light, dark and forest themes using the new theme bar
-- Showcases my projects from `src/content/projects`
-- Manage posts, projects, and CV via **Decap CMS** at `/admin`.
-- Responsive Tailwind styling
-- Includes dedicated pages for my Final Year Project and Year 2 Java calculator
-- I built a playable Tetris clone for the Games page with touch controls, SRS rotation, and a **global leaderboard** that persists scores across devices.
-- I also added a simple Rock Paper Scissors game that saves scores in `localStorage`.
-
-## Project Structure
-
-```
-/
-├── public/
-│   └── admin/           # Decap CMS
-├── src/
-│   ├── assets/
-│   ├── components/
-│   ├── config.ts        # Site configuration & navigation
-│   ├── data/            # Static data (e.g., CV)
-│   ├── env.d.ts         # Type definitions
-│   ├── layouts/
-│   ├── lib/             # Game engines & shared logic
-│   ├── pages/
-│   │   ├── api/         # Server-side API endpoints
-│   │   └── ...
-│   └── content/
-│       ├── blog/
-│       └── projects/
-└── ...
+```bash
+npm run build
 ```
 
-## Commands
+Preview the build locally:
 
-Run these from the project root:
+```bash
+npm run preview
+```
 
-| Command             | Action                                 |
-| :------------------ | :------------------------------------- |
-| `npm install`       | Install dependencies                   |
-| `npm run dev`       | Start the dev server                   |
-| `npm run build`     | Build the production site to `./dist/` |
-| `npm run preview`   | Preview the built site locally         |
-| `npm run astro ...` | Run additional Astro CLI commands      |
+## 🐳 Docker Deployment
 
-## Docker
+You can build and run the entire application as a Docker container.
 
-Build and run the containerized application (using Node.js adapter):
-
-```sh
+```bash
 docker compose up --build
 ```
 
-The site will be available at http://localhost:8484.
+The site will be available at `http://localhost:8484`.
 
-**Note**: This uses a multi-stage `Dockerfile` that builds the Astro project into a standalone Node.js app. The "pull-on-boot" feature has been removed for stability.
+**Update Script**:
+The included `./update-deploy.sh` script pulls the latest changes from Git, rebuilds the container, and restarts it—useful for simple VPS deployments.
 
-### Updating the site
+## 📂 Project Structure
 
-To update the site with the latest changes from git, run:
-
-```sh
-./update-deploy.sh
+```
+src/
+├── components/    # Reusable Astro components (UI, Cards, Games)
+├── content/       # Content Collections (Blog, Projects)
+├── data/          # Static data (CV, initial game scores)
+├── layouts/       # Page layouts (Head, Footer, Navbar)
+├── lib/           # Game engines (Tetris) & shared utilities
+├── pages/         # File-based routing & API endpoints
+│   ├── api/       # Server-side API routes (Last.fm, Leaderboards)
+│   ├── games/     # Game pages
+│   └── ...        # Top-level pages (index, about, tunes)
+├── styles/        # Global CSS & Tailwind configuration
+└── config.ts      # Site-wide constants & navigation
 ```
 
-This script will:
+## 📝 Documentation
 
-1. Pull the latest code (`git pull`).
-2. Rebuild the Docker image.
-3. Restart the container with the new version.
+For detailed development guidelines, architectural decisions, and style guides, please refer to [AGENTS.md](./AGENTS.md). This file serves as the primary extensive documentation for AI agents and developers alike.
+
+## 📄 License
+
+This project is open source and available under the [MIT License](LICENSE).
