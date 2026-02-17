@@ -1,27 +1,68 @@
 ---
-import Layout from '../layouts/Layout.astro'
+import Layout from "../layouts/Layout.astro";
 ---
 
 <Layout description="Personal portfolio, blog, and games hub by Maan.">
 	<section class="text-center py-20">
-		<h1 class="text-5xl font-bold mb-4">Hi, I'm Maan</h1>
-		<p class="text-xl mb-10 text-base-content/70">Welcome to my personal space on the internet.</p>
+		<h1 class="text-5xl font-bold mb-4 min-h-[1.2em]">
+			<span id="typing-text"></span><span class="animate-pulse">|</span>
+		</h1>
+
+		<script>
+			const text = "Hi, I'm Maan";
+			const typingDelay = 100;
+			const element = document.getElementById("typing-text");
+
+			if (element) {
+				let i = 0;
+				function type() {
+					if (i < text.length) {
+						element!.textContent += text.charAt(i);
+						i++;
+						setTimeout(type, typingDelay);
+					}
+				}
+				// Start typing after a short delay
+				setTimeout(type, 500);
+			}
+		</script>
+		<p class="text-xl mb-10 text-base-content/70">
+			Welcome to my personal space on the internet.
+		</p>
 		<div class="grid gap-4 sm:grid-cols-2 max-w-lg mx-auto">
-			<a href="/portfolio" class="block p-6 rounded-xl bg-gradient-to-br from-primary to-secondary shadow-lg hover:scale-105 transition-transform text-primary-content">
+			<a
+				href="/portfolio"
+				class="block p-6 rounded-xl bg-gradient-to-br from-primary to-secondary shadow-lg hover:scale-105 transition-transform text-primary-content"
+			>
 				<h2 class="text-xl font-bold mb-1">Portfolio</h2>
 				<p class="text-sm opacity-80">Projects and work</p>
 			</a>
-			<a href="/blog" class="block p-6 rounded-xl bg-base-200 shadow-lg hover:scale-105 transition-transform">
+			<a
+				href="/blog"
+				class="block p-6 rounded-xl bg-base-200 shadow-lg hover:scale-105 transition-transform"
+			>
 				<h2 class="text-xl font-bold mb-1">Blog</h2>
-				<p class="text-sm text-base-content/60">Thoughts and write-ups</p>
+				<p class="text-sm text-base-content/60">
+					Thoughts and write-ups
+				</p>
 			</a>
-			<a href="/games" class="block p-6 rounded-xl bg-base-200 shadow-lg hover:scale-105 transition-transform">
+			<a
+				href="/games"
+				class="block p-6 rounded-xl bg-base-200 shadow-lg hover:scale-105 transition-transform"
+			>
 				<h2 class="text-xl font-bold mb-1">Games</h2>
-				<p class="text-sm text-base-content/60">Tetris, RPS, and more</p>
+				<p class="text-sm text-base-content/60">
+					Tetris, RPS, and more
+				</p>
 			</a>
-			<a href="/tunes" class="block p-6 rounded-xl bg-base-200 shadow-lg hover:scale-105 transition-transform">
+			<a
+				href="/tunes"
+				class="block p-6 rounded-xl bg-base-200 shadow-lg hover:scale-105 transition-transform"
+			>
 				<h2 class="text-xl font-bold mb-1">Tunes</h2>
-				<p class="text-sm text-base-content/60">What I'm listening to</p>
+				<p class="text-sm text-base-content/60">
+					What I'm listening to
+				</p>
 			</a>
 		</div>
 	</section>
