@@ -15,7 +15,7 @@ const formattedTitle = title === SITE_TITLE ? SITE_TITLE : `${title} | ${SITE_TI
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 ---
 
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -39,6 +39,11 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 
 	<!-- Preconnect -->
 	<link rel="preconnect" href="https://lastfm.freetls.fastly.net" crossorigin />
+
+	<!-- Apply saved theme immediately to prevent FOUC -->
+	<script is:inline>
+		document.documentElement.setAttribute("data-theme", localStorage.getItem("theme") || "dark");
+	</script>
 </head>
 <body class="font-sans bg-base-100 text-base-content min-h-screen flex flex-col">
 <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-content focus:rounded">
