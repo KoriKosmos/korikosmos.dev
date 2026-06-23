@@ -1,31 +1,11 @@
 ---
 import Layout from "../layouts/Layout.astro";
+import { TypingHeading } from "../page-components/TypingHeading.tsx";
 ---
 
 <Layout description="Personal portfolio, blog, and games hub by Maan.">
 	<section class="text-center py-20">
-		<h1 class="text-5xl font-bold mb-4 min-h-[1.2em]">
-			<span id="typing-text"></span><span class="animate-pulse">|</span>
-		</h1>
-
-		<script>
-			const text = "Hi, I'm Maan";
-			const typingDelay = 100;
-			const element = document.getElementById("typing-text");
-
-			if (element) {
-				let i = 0;
-				function type() {
-					if (i < text.length) {
-						element!.textContent += text.charAt(i);
-						i++;
-						setTimeout(type, typingDelay);
-					}
-				}
-				// Start typing after a short delay
-				setTimeout(type, 500);
-			}
-		</script>
+		<TypingHeading client:load />
 		<p class="text-xl mb-10 text-base-content/70">
 			Welcome to my personal space on the internet.
 		</p>

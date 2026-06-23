@@ -1,0 +1,259 @@
+import { useEffect } from "react";
+import { TetrisGame } from "../lib/tetris.js";
+
+export function Tetris() {
+  useEffect(() => {
+    // UI Elements
+    const $score = document.getElementById('score')!;
+    const $lines = document.getElementById('lines')!;
+    const $level = document.getElementById('level')!;
+    const $high = document.getElementById('highscore')!;
+    const $leaderboard = document.getElementById('leaderboard')!;
+    const usernameDialog = document.getElementById('username-dialog') as HTMLDialogElement;
+    const gameoverDialog = document.getElementById('gameover-dialog') as HTMLDialogElement;
+    const gameoverMessage = document.getElementById('gameover-message')!;
+    const gameoverRestart = document.getElementById('gameover-restart')!;
+
+    // Username via accessible dialog
+    let username = localStorage.getItem('tetris_username');
+
+    async function getUsername(): Promise<string> {
+      if (username) return username;
+
+      usernameDialog.showModal();
+      return new Promise((resolve) => {
+        usernameDialog.addEventListener('close', () => {
+          const input = document.getElementById('username-input') as HTMLInputElement;
+          username = input.value.trim() || 'Player';
+          localStorage.setItem('tetris_username', username);
+          resolve(username);
+        }, { once: true });
+      });
+    }
+
+    let highScore = parseInt(localStorage.getItem('tetris_highscore') || '0', 10);
+    $high.textContent = highScore.toString();
+
+    let isSyncing = false;
+    async function syncAndLoadLeaderboard() {
+      if (isSyncing) return;
+      isSyncing = true;
+      let serverData: any[] = [];
+      try {
+        const res = await fetch('/api/scores/tetris');
+        if (res.ok) {
+            serverData = await res.json();
+        }
+      } catch (e) {
+        console.error('Failed to load leaderboard', e);
+        const li = document.createElement('li');
+        li.textContent = 'Could not load leaderboard.';
+        $leaderboard.appendChild(li);
+      } finally {
+        isSyncing = false;
+      }
+
+      if (username && highScore > 0) {
+        const serverEntry = serverData.find((e: any) => e.name === username);
+        if (!serverEntry || serverEntry.score < highScore) {
+           try {
+             const res = await fetch('/api/scores/tetris', {
+                 method: 'POST',
+                 headers: { 'Content-Type': 'application/json' },
+                 body: JSON.stringify({ name: username, score: highScore })
+             });
+             if (res.ok) {
+                 serverData = await res.json();
+             }
+           } catch (e) {
+               console.error('Failed to sync score', e);
+           }
+        }
+      }
+
+      renderLeaderboard(serverData);
+    }
+
+    function renderLeaderboard(data: any[]) {
+      while ($leaderboard.firstChild) {
+        $leaderboard.removeChild($leaderboard.firstChild);
+      }
+      data.forEach((e) => {
+        const li = document.createElement('li');
+        li.textContent = `${e.name}: ${e.score}`;
+        $leaderboard.appendChild(li);
+      });
+    }
+
+    let game: any;
+    let cancelled = false;
+
+    function bindButton(el: HTMLElement | null, down: () => void, up?: () => void) {
+      if (!el) return;
+      el.addEventListener('pointerdown', (e) => { e.preventDefault(); down(); });
+      el.addEventListener('pointerup', (e) => { e.preventDefault(); if (up) up(); });
+      el.addEventListener('pointerleave', () => { if (up) up(); });
+    }
+
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'ArrowLeft') {
+        game.setHoriz(-1); e.preventDefault();
+      } else if (e.key === 'ArrowRight') {
+        game.setHoriz(1); e.preventDefault();
+      } else if (e.key === 'ArrowDown') {
+        game.setDown(true); e.preventDefault();
+      } else if (e.key === 'x' || e.key === 'X') {
+        game.tryRotate(1); e.preventDefault();
+      } else if (e.key === 'z' || e.key === 'Z') {
+        game.tryRotate(-1); e.preventDefault();
+      } else if (e.code === 'Space') {
+        if (!e.repeat) game.hardDrop();
+        e.preventDefault();
+      } else if (e.key === 'c' || e.key === 'C' || e.key === 'Shift') {
+        game.holdPiece(); e.preventDefault();
+      }
+    }
+
+    function onKeyUp(e: KeyboardEvent) {
+      if (e.key === 'ArrowLeft') {
+        if (game.horiz === -1) game.setHoriz(0);
+      } else if (e.key === 'ArrowRight') {
+        if (game.horiz === 1) game.setHoriz(0);
+      } else if (e.key === 'ArrowDown') {
+        game.setDown(false);
+      }
+    }
+
+    // Initialize game after username is resolved
+    async function init() {
+      await getUsername();
+      if (cancelled) return;
+
+      syncAndLoadLeaderboard();
+      const intervalId = setInterval(syncAndLoadLeaderboard, 15000);
+
+      game = new TetrisGame(
+        document.getElementById('board'),
+        document.getElementById('next'),
+        document.getElementById('hold'),
+        {
+          onScore: (score: number, lines: number, level: number) => {
+            $score.textContent = String(score);
+            $lines.textContent = String(lines);
+            $level.textContent = String(level);
+            if (score > highScore) {
+              highScore = score;
+              localStorage.setItem('tetris_highscore', highScore.toString());
+              $high.textContent = highScore.toString();
+            }
+          },
+          onGameOver: async (finalScore: number) => {
+            await syncAndLoadLeaderboard();
+
+            gameoverMessage.textContent = `${username}, your score: ${finalScore}`;
+            gameoverDialog.showModal();
+
+            gameoverRestart.onclick = () => {
+              gameoverDialog.close();
+              game.reset();
+              game.start();
+            };
+          }
+        }
+      );
+
+      // Keyboard Controls
+      window.addEventListener('keydown', onKeyDown);
+      window.addEventListener('keyup', onKeyUp);
+
+      // Mobile Controls
+      bindButton(document.getElementById('btn-left'), () => game.setHoriz(-1), () => { if (game.horiz === -1) game.setHoriz(0); });
+      bindButton(document.getElementById('btn-right'), () => game.setHoriz(1), () => { if (game.horiz === 1) game.setHoriz(0); });
+
+      const btnRotate = document.getElementById('btn-rotate');
+      const btnRotateCCW = document.getElementById('btn-rotate-ccw');
+      const btnDrop = document.getElementById('btn-drop');
+      const btnHold = document.getElementById('btn-hold');
+
+      if (btnRotate) btnRotate.addEventListener('pointerdown', (e) => { e.preventDefault(); game.tryRotate(1); });
+      if (btnRotateCCW) btnRotateCCW.addEventListener('pointerdown', (e) => { e.preventDefault(); game.tryRotate(-1); });
+      if (btnDrop) btnDrop.addEventListener('pointerdown', (e) => { e.preventDefault(); game.hardDrop(); });
+      if (btnHold) btnHold.addEventListener('pointerdown', (e) => { e.preventDefault(); game.holdPiece(); });
+
+      game.start();
+
+      return () => clearInterval(intervalId);
+    }
+
+    let cleanupInterval: (() => void) | undefined;
+    init().then((cleanup) => { cleanupInterval = cleanup; });
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
+      cleanupInterval?.();
+    };
+  }, []);
+
+  return (
+    <>
+      {/* Username Dialog */}
+      <dialog id="username-dialog" className="rounded-xl bg-base-200 text-base-content shadow-xl backdrop:bg-black/50 p-0">
+        <form method="dialog" className="p-8 space-y-4">
+          <h2 className="text-xl font-bold">Enter your username</h2>
+          <input type="text" id="username-input" maxLength={20} required
+                 className="w-full px-4 py-2 rounded bg-base-100 text-base-content border border-base-content/20 focus:border-primary focus:outline-none"
+                 placeholder="Username" />
+          <button type="submit" className="w-full px-6 py-2 bg-primary text-primary-content rounded hover:opacity-90 transition">
+            Start Playing
+          </button>
+        </form>
+      </dialog>
+
+      {/* Game Over Dialog */}
+      <dialog id="gameover-dialog" className="rounded-xl bg-base-200 text-base-content shadow-xl backdrop:bg-black/50 p-0">
+        <div className="p-8 space-y-4 text-center">
+          <h2 className="text-2xl font-bold">Game Over!</h2>
+          <p id="gameover-message" className="text-lg"></p>
+          <button id="gameover-restart" className="px-6 py-2 bg-primary text-primary-content rounded hover:opacity-90 transition">
+            Play Again
+          </button>
+        </div>
+      </dialog>
+
+      <h1 className="text-3xl font-bold my-6">Tetris</h1>
+      <div className="flex gap-4">
+        <canvas id="board" width={300} height={600} role="img" aria-label="Tetris game board"></canvas>
+        <div className="space-y-4">
+          <div>
+            <p className="font-bold">Next</p>
+            <canvas id="next" width={120} height={120} role="img" aria-label="Next piece preview"></canvas>
+          </div>
+          <div>
+            <p className="font-bold">Hold</p>
+            <canvas id="hold" width={120} height={120} role="img" aria-label="Held piece"></canvas>
+          </div>
+          <div className="space-y-2">
+            <p>Score: <span id="score">0</span></p>
+            <p>Lines: <span id="lines">0</span></p>
+            <p>Level: <span id="level">0</span></p>
+            <p>High Score: <span id="highscore">0</span></p>
+          </div>
+        </div>
+      </div>
+      <div className="md:hidden mt-4 flex flex-wrap gap-2">
+        <button id="btn-left" aria-label="Move left" className="px-4 py-2 bg-neutral text-neutral-content rounded">&#9664;</button>
+        <button id="btn-rotate-ccw" aria-label="Rotate counter-clockwise" className="px-4 py-2 bg-neutral text-neutral-content rounded">&#10226;</button>
+        <button id="btn-rotate" aria-label="Rotate clockwise" className="px-4 py-2 bg-neutral text-neutral-content rounded">&#10227;</button>
+        <button id="btn-right" aria-label="Move right" className="px-4 py-2 bg-neutral text-neutral-content rounded">&#9654;</button>
+        <button id="btn-drop" aria-label="Drop piece" className="px-4 py-2 bg-neutral text-neutral-content rounded">&#11015;</button>
+        <button id="btn-hold" aria-label="Hold piece" className="px-4 py-2 bg-neutral text-neutral-content rounded">H</button>
+      </div>
+      <div className="mt-6">
+        <h2 className="font-bold">Leaderboard</h2>
+        <ol id="leaderboard" className="list-decimal ml-6"></ol>
+      </div>
+    </>
+  );
+}
