@@ -17,7 +17,7 @@ function disable() {
   localStorage.setItem(STORAGE_KEY, "false");
 }
 
-export default function OnekoToggle() {
+export function OnekoToggle() {
   const [visible, setVisible] = useState(false);
   const [enabled, setEnabled] = useState(false);
 
@@ -59,3 +59,5 @@ export default function OnekoToggle() {
     </div>
   );
 }
+
+export default OnekoToggle;

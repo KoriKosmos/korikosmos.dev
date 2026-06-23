@@ -4,7 +4,7 @@ interface Props {
   project: CollectionEntry<"projects">;
 }
 
-export default function ProjectCard({ project }: Props) {
+export function ProjectCard({ project }: Props) {
   return (
     <a
       href={`/portfolio/${project.slug}/`}
@@ -15,3 +15,5 @@ export default function ProjectCard({ project }: Props) {
     </a>
   );
 }
+
+export default ProjectCard;

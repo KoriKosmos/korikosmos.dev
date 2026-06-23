@@ -1,4 +1,4 @@
-export { default as CvSection } from "./CvSection.tsx";
-export { default as ProjectCard } from "./ProjectCard.tsx";
-export { default as ThemeBar } from "./ThemeBar.tsx";
-export { default as OnekoToggle } from "./OnekoToggle.tsx";
+export { CvSection } from "./CvSection.tsx";
+export { ProjectCard } from "./ProjectCard.tsx";
+export { ThemeBar } from "./ThemeBar.tsx";
+export { OnekoToggle } from "./OnekoToggle.tsx";

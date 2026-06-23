@@ -5,7 +5,7 @@ function applyTheme(theme: string) {
   localStorage.setItem("theme", theme);
 }
 
-export default function ThemeBar() {
+export function ThemeBar() {
   useEffect(() => {
     const current = localStorage.getItem("theme") || "dark";
     document.documentElement.setAttribute("data-theme", current);
@@ -40,3 +40,5 @@ export default function ThemeBar() {
     </div>
   );
 }
+
+export default ThemeBar;

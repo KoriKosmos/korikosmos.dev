@@ -1,0 +1,18 @@
+{
+  "projectId": "4404d435-77d0-4265-9a8e-54937be21c4e",
+  "shape": "package",
+  "pkg": "korikosmos-dev",
+  "globalName": "KoriKosmos",
+  "srcDir": "src/components",
+  "tsconfig": "tsconfig.json",
+  "buildCmd": "npx tailwindcss -i src/styles/global.css -o .design-sync/.cache/compiled.css --config tailwind.config.mjs --minify",
+  "cssEntry": ".design-sync/.cache/compiled.css",
+  "dtsPropsFor": {
+    "ProjectCard": "project: { slug: string; data: { title: string; summary: string; description: string; github?: string } };"
+  },
+  "overrides": {
+    "OnekoToggle": { "cardMode": "single", "primaryStory": "Default" },
+    "ThemeBar": { "cardMode": "single", "primaryStory": "Default" }
+  },
+  "readmeHeader": ".design-sync/conventions.md"
+}
