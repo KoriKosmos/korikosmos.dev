@@ -1,6 +1,6 @@
 # korikosmos.dev
 
-This repo contains the source for **korikosmos.dev**, my personal website built with [Astro](https://astro.build) and Tailwind CSS. Here I share my projects, CV, blog posts, games and the music I'm currently listening to.
+This repo contains the source for **korikosmos.dev**, my personal website built with [Astro](https://astro.build) (SSR) and [React](https://react.dev) islands, styled with Tailwind CSS + DaisyUI. Astro handles routing and server-side data fetching; every rendered component is React. Here I share my projects, CV, blog posts, games and the music I'm currently listening to.
 
 ## Setup
 
@@ -39,16 +39,19 @@ _Note: In production, the CMS authenticates via GitHub._
 
 ## Features
 
-- **Refactored Architecture**:
+- **React islands architecture**:
+  - `.astro` pages are thin wrappers: they do the server-side data fetching (content collections, Last.fm, `cv.json`) and render a React component in `src/page-components/` with the result as props.
+  - Presentational components render to static HTML with zero client JS; interactive ones (`ThemeBar`, `OnekoToggle`, `Tetris`, `RockPaperScissors`, `Tunes`, the homepage typing heading) hydrate with `client:load`.
+  - Reusable components live in `src/components/` (also synced to a Claude Design project via `.design-sync/`); page-specific markup lives in `src/page-components/`.
   - **CV Page**: Fully data-driven using `src/data/cv.json` and reusable `CvSection` components.
-  - **Tetris**: Game logic decoupled into a dedicated `src/lib/tetris.js` engine, separating `update()`/`draw()` loops from the UI component.
-  - **Tunes Page**: Last.fm integration now uses a server-side proxy (`src/pages/api/lastfm.ts`) to prevent API key exposure.
+  - **Tetris**: Game logic decoupled into a dedicated `src/lib/tetris.js` engine, separating `update()`/`draw()` loops from the UI component; `Tetris.tsx` is a faithful island wrapper around it.
+  - **Tunes Page**: Last.fm integration uses a server-side proxy (`src/pages/api/lastfm.ts`) to prevent API key exposure; React state is the source of truth, polling for now-playing updates.
   - **High Scores**: Global leaderboard implemented via server-side API (`src/pages/api/scores/[game].ts`, accessed as `/api/scores/:game`) and persistent JSON storage.
   - **Config**: Centralized navigation and site settings in `src/config.ts`.
 - Displays my most recently played tracks with album artwork
 - Normalizes track names to avoid duplicates credited in different languages
 - Toggle a little cursor-following cat from the corner button
-- Switch between light, dark and forest themes using the new theme bar
+- Switch between four DaisyUI themes (dark, light, forest, batman) using the theme bar
 - Showcases my projects from `src/content/projects`
 - Manage posts, projects, and CV via **Decap CMS** at `/admin`.
 - Responsive Tailwind styling
@@ -63,19 +66,21 @@ _Note: In production, the CMS authenticates via GitHub._
 ├── public/
 │   └── admin/           # Decap CMS
 ├── src/
-│   ├── assets/
-│   ├── components/
+│   ├── components/      # Reusable React components (design-sync surface)
+│   ├── page-components/ # Page-body React components (one per route)
 │   ├── config.ts        # Site configuration & navigation
 │   ├── data/            # Static data (e.g., CV)
 │   ├── env.d.ts         # Type definitions
 │   ├── layouts/
 │   ├── lib/             # Game engines & shared logic
-│   ├── pages/
+│   ├── pages/           # .astro routes: SSR data fetch → render page-components/*.tsx
 │   │   ├── api/         # Server-side API endpoints
 │   │   └── ...
+│   ├── styles/
 │   └── content/
 │       ├── blog/
 │       └── projects/
+├── .design-sync/        # Config for syncing src/components/ to Claude Design
 └── ...
 ```
 
