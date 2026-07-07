@@ -1,74 +1,11 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import CvSection from '../components/CvSection.astro';
 import cvData from '../data/cv.json';
+import { CvPage } from '../page-components/CvPage.tsx';
 
 const { personal, sections } = cvData;
 ---
 
 <Layout title="CV" description="CV and professional background of Maan.">
-  <section class="my-8 text-center">
-    <div class="bg-gradient-to-r from-primary to-secondary rounded-xl p-8 shadow-lg text-primary-content">
-      <h1 class="text-5xl font-extrabold mb-2">{personal.name}</h1>
-      <p class="text-xl mb-2">{personal.title}</p>
-      <p>{personal.location}</p>
-      <p class="mt-4 flex flex-wrap justify-center gap-4">
-        <a href={`mailto:${personal.email}`} class="underline hover:opacity-80">{personal.email}</a>
-        <span>&bull;</span>
-        <a href={personal.website} class="underline hover:opacity-80">korikosmos.dev</a>
-        <span>&bull;</span>
-        <a href={personal.linkedin} class="underline hover:opacity-80">LinkedIn</a>
-      </p>
-    </div>
-  </section>
-
-  <div class="space-y-8">
-    {sections.map((section) => (
-      <CvSection title={section.title}>
-        {section.content && (
-          <div class="space-y-2">
-            {section.content.map(p => <p class="mb-2">{p}</p>)}
-          </div>
-        )}
-
-        {section.items && (
-          <ul class="list-disc pl-5 space-y-2">
-            {section.items.map((item) => (
-              <li>
-                 {/* Simple bolding strategy: if string has a colon, bold before it.
-                     For links (markdown style [text](url)), we'd need a parser, but for now we'll do basic regex replacement or just text.
-                     Given the time, we'll render innerHTML for descriptions if they exist, or just text.
-                     For the main item, we can try to split by the first colon.
-                 */}
-                {(() => {
-                  const colonIndex = item.main.indexOf(':');
-                  if (colonIndex > -1 && colonIndex < 50) { // Limit bold key length to avoid huge paragraphs being bold
-                     const key = item.main.substring(0, colonIndex + 1);
-                     const rest = item.main.substring(colonIndex + 1);
-                     // Check for markdown link in rest
-                     const linkMatch = rest.match(/\[(.*?)\]\((.*?)\)/);
-                     if (linkMatch) {
-                       const [_, text, url] = linkMatch;
-                       const pre = rest.substring(0, linkMatch.index);
-                       const post = rest.substring(linkMatch.index + linkMatch[0].length);
-                       return <span><strong>{key}</strong>{pre}<a href={url} class="text-blue-400 hover:underline">{text}</a>{post}</span>;
-                     }
-                     return <span><strong>{key}</strong>{rest}</span>;
-                  }
-                  return <span>{item.main}</span>;
-                })()}
-
-                {item.subItems && (
-                  <ul class="list-disc pl-5 mt-1">
-                    {item.subItems.map(sub => <li>{sub}</li>)}
-                  </ul>
-                )}
-                {item.description && <p class="mt-1 text-sm text-base-content/60">{item.description}</p>}
-              </li>
-            ))}
-          </ul>
-        )}
-      </CvSection>
-    ))}
-  </div>
+  <CvPage personal={personal} sections={sections} />
 </Layout>

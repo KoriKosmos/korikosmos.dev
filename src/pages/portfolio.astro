@@ -1,14 +1,11 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import ProjectCard from '../components/ProjectCard.astro';
 import { getCollection } from 'astro:content';
+import { PortfolioPage } from '../page-components/PortfolioPage.tsx';
 
 const projects = await getCollection('projects');
 ---
 
 <Layout title="Portfolio" description="Projects and work by Maan.">
-  <h1 class="text-3xl font-bold my-6">Portfolio</h1>
-  <div class="grid gap-6 sm:grid-cols-2">
-    {projects.map(p => <ProjectCard project={p} />)}
-  </div>
+  <PortfolioPage projects={projects} />
 </Layout>

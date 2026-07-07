@@ -1,6 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import { getCollection, getEntryBySlug } from 'astro:content';
+import { BlogPostPage } from '../../page-components/BlogPostPage.tsx';
 
 export const prerender = true;
 
@@ -15,8 +16,7 @@ const { Content } = await post.render();
 ---
 
 <Layout title={post.data.title} description={post.data.description}>
-  <article class="prose dark:prose-invert my-8">
-    <h1 class="text-3xl font-bold mb-2">{post.data.title}</h1>
+  <BlogPostPage title={post.data.title}>
     <Content />
-  </article>
+  </BlogPostPage>
 </Layout>

@@ -1,7 +1,7 @@
 ---
 import "../styles/global.css";
-import OnekoToggle from "../components/OnekoToggle.astro";
-import ThemeBar from "../components/ThemeBar.astro";
+import OnekoToggle from "../components/OnekoToggle.tsx";
+import ThemeBar from "../components/ThemeBar.tsx";
 import { NAV_LINKS, SITE_TITLE, SITE_DESCRIPTION } from "../config";
 
 const {
@@ -66,7 +66,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 <footer class="text-center text-sm text-base-content/60 p-6 shrink-0">
 	&copy; {new Date().getFullYear()} Maan &ndash; KoriKosmos
 </footer>
-<OnekoToggle />
-<ThemeBar />
+<OnekoToggle client:load />
+<ThemeBar client:load />
 </body>
 </html>
