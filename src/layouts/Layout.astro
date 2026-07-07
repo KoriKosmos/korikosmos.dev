@@ -1,5 +1,6 @@
 ---
 import "../styles/global.css";
+import { ClientRouter } from "astro:transitions";
 import OnekoToggle from "../components/OnekoToggle.tsx";
 import ThemeBar from "../components/ThemeBar.tsx";
 import { NAV_LINKS, SITE_TITLE, SITE_DESCRIPTION } from "../config";
@@ -40,20 +41,38 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 	<!-- Preconnect -->
 	<link rel="preconnect" href="https://lastfm.freetls.fastly.net" crossorigin />
 
-	<!-- Apply saved theme immediately to prevent FOUC -->
+	<!-- Critical theme backgrounds: correct paint even before the stylesheet loads -->
+	<style is:inline>
+		html { background-color: #111827; }
+		html[data-theme="light"] { background-color: #F3F4F6; }
+		html[data-theme="forest"] { background-color: #101B14; }
+		html[data-theme="batman"] { background-color: #000000; }
+	</style>
+
+	<!-- Apply saved theme before first paint, and re-apply after every client-side navigation -->
 	<script is:inline>
-		document.documentElement.setAttribute("data-theme", localStorage.getItem("theme") || "dark");
+		(() => {
+			const applyTheme = () =>
+				document.documentElement.setAttribute("data-theme", localStorage.getItem("theme") || "dark");
+			applyTheme();
+			if (!window.__themeSwapHooked) {
+				window.__themeSwapHooked = true;
+				document.addEventListener("astro:after-swap", applyTheme);
+			}
+		})();
 	</script>
+
+	<ClientRouter />
 </head>
 <body class="font-sans bg-base-100 text-base-content min-h-screen flex flex-col">
 <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-content focus:rounded">
 	Skip to content
 </a>
-<header class="p-4 border-b border-base-content/10 shrink-0">
+<header class="p-4 border-b border-base-content/10 shrink-0" transition:name="site-header">
 	<nav class="flex gap-4">
 		{
 			NAV_LINKS.map(link => (
-				<a href={link.href} class="hover:underline">{link.label}</a>
+				<a href={link.href} class="nav-link">{link.label}</a>
 			))
 		}
 	</nav>
@@ -63,10 +82,10 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 	<slot />
 </main>
 
-<footer class="text-center text-sm text-base-content/60 p-6 shrink-0">
+<footer class="text-center text-sm text-base-content/60 p-6 shrink-0" transition:name="site-footer">
 	&copy; {new Date().getFullYear()} Maan &ndash; KoriKosmos
 </footer>
-<OnekoToggle client:load />
-<ThemeBar client:load />
+<OnekoToggle client:load transition:persist="oneko-toggle" />
+<ThemeBar client:load transition:persist="theme-bar" />
 </body>
 </html>

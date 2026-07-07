@@ -103,14 +103,19 @@
     }
     nekoEl.style.backgroundImage = `url(${nekoFile})`;
 
-    document.body.appendChild(nekoEl);
+    // Mount next to the script tag when possible so the cat lives inside a
+    // persisted island and survives client-side navigations
+    const mount = curScript && curScript.parentElement ? curScript.parentElement : document.body;
+    mount.appendChild(nekoEl);
 
-    document.addEventListener("mousemove", function (event) {
-      mousePosX = event.clientX;
-      mousePosY = event.clientY;
-    });
+    document.addEventListener("mousemove", onMouseMove);
 
     window.requestAnimationFrame(onAnimationFrame);
+  }
+
+  function onMouseMove(event) {
+    mousePosX = event.clientX;
+    mousePosY = event.clientY;
   }
 
   let lastFrameTimestamp;
@@ -118,6 +123,7 @@
   function onAnimationFrame(timestamp) {
     // Stops execution if the neko element is removed from DOM
     if (!nekoEl.isConnected) {
+      document.removeEventListener("mousemove", onMouseMove);
       return;
     }
     if (!lastFrameTimestamp) {

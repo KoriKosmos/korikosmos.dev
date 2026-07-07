@@ -10,3 +10,86 @@
   outline: 2px solid oklch(var(--p));
   outline-offset: 2px;
 }
+
+/* ---------------------------------------------------------------------------
+   Page navigation transitions (Astro ClientRouter / View Transitions API)
+   Header, footer, and the persisted islands have their own transition names,
+   so only the page content (root group) fades out and rises in.
+--------------------------------------------------------------------------- */
+@keyframes vt-page-out {
+  to { opacity: 0; transform: translateY(-8px); }
+}
+@keyframes vt-page-in {
+  from { opacity: 0; transform: translateY(14px); }
+}
+
+::view-transition-old(root) {
+  animation: vt-page-out 0.15s cubic-bezier(0.4, 0, 1, 1) both;
+}
+::view-transition-new(root) {
+  animation: vt-page-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) 0.05s both;
+}
+
+/* ---------------------------------------------------------------------------
+   Theme switching: circular reveal driven from ThemeBar.tsx.
+   While html[data-theme-switching] is set, every element is folded back into
+   the root snapshot and the default crossfade is disabled — ThemeBar animates
+   a clip-path circle on the new snapshot instead.
+--------------------------------------------------------------------------- */
+html[data-theme-switching] :where(body *) {
+  view-transition-name: none !important;
+}
+html[data-theme-switching]::view-transition-old(root),
+html[data-theme-switching]::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+html[data-theme-switching]::view-transition-old(root) { z-index: 1; }
+html[data-theme-switching]::view-transition-new(root) { z-index: 2; }
+
+/* Fallback theme fade for browsers without the View Transitions API */
+html[data-theme-fade],
+html[data-theme-fade] *,
+html[data-theme-fade] *::before,
+html[data-theme-fade] *::after {
+  transition:
+    background-color 0.35s ease,
+    color 0.35s ease,
+    border-color 0.35s ease,
+    fill 0.35s ease,
+    stroke 0.35s ease !important;
+}
+
+/* Animated gradient underline for nav links */
+.nav-link {
+  position: relative;
+}
+.nav-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -3px;
+  height: 2px;
+  border-radius: 9999px;
+  background: linear-gradient(to right, oklch(var(--p)), oklch(var(--s)));
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.25s ease;
+}
+.nav-link:hover::after,
+.nav-link:focus-visible::after {
+  transform: scaleX(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-image-pair(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+  .nav-link::after {
+    transition: none;
+  }
+}
