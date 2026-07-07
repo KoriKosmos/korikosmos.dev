@@ -86,6 +86,10 @@ export function Tunes({ recentTracks, initialArtists, initialAlbums, currentTrac
       fetch(`/api/lastfm?method=albums&period=${period}&limit=10`),
     ]);
 
+    if (!artistsRes.ok || !albumsRes.ok) {
+      throw new Error("Failed to fetch Last.fm data");
+    }
+
     const data = { artists: await artistsRes.json(), albums: await albumsRes.json() };
     dataCache.current.set(period, data);
     return data;
@@ -299,7 +303,13 @@ export function Tunes({ recentTracks, initialArtists, initialAlbums, currentTrac
             <p className="text-center p-4 text-base-content/60 col-span-full">Failed to load data. Try again later.</p>
           ) : (
             albums.map((album, i) => (
-              <a key={album.name} href={album.url} target="_blank" rel="noopener noreferrer" className="group relative aspect-square perspective-1000">
+              <a
+                key={`${album.artist.name}-${album.name}`}
+                href={album.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group relative aspect-square perspective-1000"
+              >
                 <div className="w-full h-full relative preserve-3d group-hover:rotate-y-12 transition-transform duration-500">
                   <img
                     src={getBestImage(album.image)}

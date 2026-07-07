@@ -190,6 +190,7 @@ export function Tetris() {
 
     return () => {
       cancelled = true;
+      if (game) game.running = false;
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
       cleanupInterval?.();

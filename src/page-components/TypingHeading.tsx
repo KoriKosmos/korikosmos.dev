@@ -9,12 +9,13 @@ export function TypingHeading() {
   useEffect(() => {
     const element = ref.current;
     if (!element) return;
+    element.textContent = "";
 
     let i = 0;
     let timeoutId: ReturnType<typeof setTimeout>;
     function type() {
       if (i < TEXT.length) {
-        element!.textContent += TEXT.charAt(i);
+        element.textContent += TEXT.charAt(i);
         i++;
         timeoutId = setTimeout(type, TYPING_DELAY);
       }

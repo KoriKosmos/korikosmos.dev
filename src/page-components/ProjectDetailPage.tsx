@@ -25,7 +25,7 @@ export function ProjectDetailPage({ project }: Props) {
               clipRule="evenodd"
             />
           </svg>
-          <span className="ml-2">View on Github</span>
+          <span className="ml-2">View on GitHub</span>
         </a>
       )}
     </article>
