@@ -10,7 +10,16 @@ type DocumentWithViewTransition = Document & {
 
 const THEMES: { name: string; label: string; swatch: string; icon?: ReactNode }[] = [
   { name: "dark", label: "Dark theme", swatch: "bg-blue-600 border" },
-  { name: "light", label: "Light theme", swatch: "bg-yellow-400 border" },
+  {
+    name: "light",
+    label: "Light theme",
+    swatch: "bg-white border border-gray-300 flex items-center justify-center overflow-hidden",
+    icon: (
+      <svg viewBox="0 0 24 24" className="w-4 h-4 text-yellow-500 fill-current">
+        <path d="M12 4.5a1 1 0 0 1-1-1V2a1 1 0 1 1 2 0v1.5a1 1 0 0 1-1 1Zm0 15a1 1 0 0 1 1 1V22a1 1 0 1 1-2 0v-1.5a1 1 0 0 1 1-1ZM4.5 12a1 1 0 0 1-1 1H2a1 1 0 1 1 0-2h1.5a1 1 0 0 1 1 1Zm15 0a1 1 0 0 1 1-1H22a1 1 0 1 1 0 2h-1.5a1 1 0 0 1-1-1ZM6.34 6.34a1 1 0 0 1-1.41 0L3.87 5.28a1 1 0 0 1 1.41-1.41l1.06 1.06a1 1 0 0 1 0 1.41Zm12.73 12.73a1 1 0 0 1-1.41 0l-1.06-1.06a1 1 0 0 1 1.41-1.41l1.06 1.06a1 1 0 0 1 0 1.41ZM6.34 17.66a1 1 0 0 1 0 1.41l-1.06 1.06a1 1 0 0 1-1.41-1.41l1.06-1.06a1 1 0 0 1 1.41 0ZM19.07 4.93a1 1 0 0 1 0 1.41l-1.06 1.06a1 1 0 1 1-1.41-1.41l1.06-1.06a1 1 0 0 1 1.41 0ZM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10Z" />
+      </svg>
+    ),
+  },
   { name: "forest", label: "Forest theme", swatch: "bg-green-600 border" },
   {
     name: "batman",
