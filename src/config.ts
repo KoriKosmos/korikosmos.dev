@@ -33,11 +33,13 @@ export const NAV_ITEMS: NavItem[] = [
     ],
   },
   { href: '/blog', label: 'Blog' },
+  { href: '/tunes', label: 'Tunes' },
   {
     label: 'Play',
     items: [
       { href: '/games', label: 'Games' },
-      { href: '/tunes', label: 'Tunes' },
+      { href: '/games/tetris', label: 'Tetris' },
+      { href: '/games/rock-paper-scissors', label: 'Rock Paper Scissors' },
     ],
   },
 ];
