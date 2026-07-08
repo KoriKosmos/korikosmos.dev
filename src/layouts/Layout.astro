@@ -6,6 +6,7 @@ import OnekoToggle from "../components/OnekoToggle.tsx";
 import ThemeBar from "../components/ThemeBar.tsx";
 import ConstellationField from "../page-components/ConstellationField.tsx";
 import CommandPalette from "../page-components/CommandPalette.tsx";
+import NavigationProgress from "../page-components/NavigationProgress.tsx";
 import type { PaletteLink } from "../page-components/CommandPalette.tsx";
 import { NAV_ITEMS, SITE_TITLE, SITE_DESCRIPTION } from "../config";
 
@@ -177,5 +178,6 @@ const paletteLinks: PaletteLink[] = [
 <OnekoToggle client:load transition:persist="oneko-toggle" />
 <ThemeBar client:load transition:persist="theme-bar" />
 <CommandPalette client:load transition:persist="command-palette" links={paletteLinks} />
+<NavigationProgress client:load transition:persist="navigation-progress" />
 </body>
 </html>
