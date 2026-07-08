@@ -24,18 +24,20 @@ Start a local server at `http://localhost:4321`:
 npm run dev
 ```
 
-### CMS (Local Development)
+### Content editing (Keystatic CMS)
 
-To edit content locally with Decap CMS:
+Content is managed with [Keystatic](https://keystatic.com) — schemas live in
+`keystatic.config.ts`, and content stays as Markdown/JSON in the repo.
 
-1.  Run the proxy server in a separate terminal:
-    ```sh
-    npx decap-server
-    ```
-2.  Navigate to `http://localhost:4321/admin`.
-3.  Click "Login with Local Backend".
+**Locally:** just run `npm run dev` and open `http://localhost:4321/keystatic`.
+Local mode edits the files on disk directly — no login, no extra proxy process.
+Commit the changes like any other edit. (`/admin` redirects to `/keystatic`.)
 
-_Note: In production, the CMS authenticates via GitHub._
+**In production:** the admin is *not* included in a normal build. To enable it,
+create a [GitHub App](https://keystatic.com/docs/github-mode) for the repo and
+provide `KEYSTATIC_GITHUB_CLIENT_ID`, `KEYSTATIC_GITHUB_CLIENT_SECRET`, and
+`KEYSTATIC_SECRET` at build time; Keystatic then authenticates through GitHub
+and commits edits to the repo.
 
 ## Features
 
@@ -53,7 +55,7 @@ _Note: In production, the CMS authenticates via GitHub._
 - Toggle a little cursor-following cat from the corner button
 - Switch between four DaisyUI themes (dark, light, forest, batman) using the theme bar
 - Showcases my projects from `src/content/projects`
-- Manage posts, projects, and CV via **Decap CMS** at `/admin`.
+- Manage posts, projects, and CV via **Keystatic** at `/keystatic` (schemas in `keystatic.config.ts`).
 - Responsive Tailwind styling
 - Includes dedicated pages for my Final Year Project and Year 2 Java calculator
 - I built a playable Tetris clone for the Games page with touch controls, SRS rotation, and a **global leaderboard** that persists scores across devices.
@@ -63,8 +65,8 @@ _Note: In production, the CMS authenticates via GitHub._
 
 ```
 /
+├── keystatic.config.ts  # Keystatic CMS schemas (blog, projects, CV)
 ├── public/
-│   └── admin/           # Decap CMS
 ├── src/
 │   ├── components/      # Reusable React components (design-sync surface)
 │   ├── page-components/ # Page-body React components (one per route)

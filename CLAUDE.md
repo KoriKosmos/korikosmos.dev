@@ -11,7 +11,7 @@ Personal portfolio, blog, and games hub at **korikosmos.dev**. Built with Astro 
 - **Styling:** Tailwind CSS 3.3 + DaisyUI 5.5 (5 custom themes: dark, light, forest, spider-man, batman)
 - **TypeScript:** Strict mode (`astro/tsconfigs/strict`)
 - **Deployment:** Docker (multi-stage build, Node 20 Alpine, port 4321)
-- **CMS:** Decap CMS (admin at `/admin`, GitHub OAuth backend)
+- **CMS:** Keystatic (admin at `/keystatic`; schemas in `keystatic.config.ts`). Local mode in dev (edits files on disk, no auth); GitHub mode in production only when `KEYSTATIC_GITHUB_CLIENT_ID`/`KEYSTATIC_GITHUB_CLIENT_SECRET`/`KEYSTATIC_SECRET` are set at build time — otherwise the admin routes are not built at all (see the guard in `astro.config.mjs`). `/admin` 301-redirects to `/keystatic`.
 
 ## Commands
 
@@ -45,8 +45,9 @@ src/
 │   ├── og/        # [...route].ts — prerendered OG image endpoint (astro-og-canvas)
 │   └── ...        # index, about, cv, portfolio, blog, tunes, now, uses, links, 404
 └── styles/        # global.css (Tailwind directives + custom utilities)
-public/            # Static assets (favicon.svg, robots.txt, oneko.js, admin config)
+public/            # Static assets (favicon.svg, robots.txt, oneko.js)
 data/scores/       # Persistent game leaderboard data (JSON files, written by API)
+keystatic.config.ts  # Keystatic CMS schemas (blog, projects collections + cv singleton)
 .design-sync/      # Config/notes/previews for syncing src/components/ to a Claude Design project
 ```
 
@@ -73,6 +74,7 @@ data/scores/       # Persistent game leaderboard data (JSON files, written by AP
 
 - `LASTFM_USER` — Last.fm username for scrobble data
 - `LASTFM_API_KEY` — Last.fm API key
+- `KEYSTATIC_GITHUB_CLIENT_ID` / `KEYSTATIC_GITHUB_CLIENT_SECRET` / `KEYSTATIC_SECRET` — optional, build-time; enable the Keystatic admin in production (GitHub mode)
 
 ## Style Guidelines
 
