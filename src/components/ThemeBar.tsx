@@ -22,6 +22,36 @@ const THEMES: { name: string; label: string; swatch: string; icon?: ReactNode }[
   },
   { name: "forest", label: "Forest theme", swatch: "bg-green-600 border" },
   {
+    name: "spiderman",
+    label: "Spider-Man theme",
+    swatch: "bg-blue-800 border border-red-700 flex items-center justify-center overflow-hidden",
+    icon: (
+      <svg viewBox="0 0 24 24" className="w-5 h-5" aria-hidden="true">
+        {/* mask */}
+        <circle cx="12" cy="12" r="11" fill="#DC2626" />
+        {/* webbing */}
+        <g stroke="#450A0A" strokeWidth="0.7" fill="none">
+          <path d="M12 11 L12 1 M12 11 L4.5 3 M12 11 L19.5 3 M12 11 L1 11 M12 11 L23 11 M12 11 L5 20.5 M12 11 L19 20.5 M12 11 L12 23" />
+          <circle cx="12" cy="11" r="4.5" />
+          <circle cx="12" cy="11" r="8" />
+        </g>
+        {/* eyes */}
+        <path
+          d="M3.6,9.8 C5.4,6.4 9.4,7.0 10.8,9.0 C11.0,12.8 8.6,15.2 6.0,14.4 C4.4,13.4 3.4,11.4 3.6,9.8 Z"
+          fill="#FFFFFF"
+          stroke="#000000"
+          strokeWidth="0.8"
+        />
+        <path
+          d="M20.4,9.8 C18.6,6.4 14.6,7.0 13.2,9.0 C13.0,12.8 15.4,15.2 18.0,14.4 C19.6,13.4 20.6,11.4 20.4,9.8 Z"
+          fill="#FFFFFF"
+          stroke="#000000"
+          strokeWidth="0.8"
+        />
+      </svg>
+    ),
+  },
+  {
     name: "batman",
     label: "Batman theme",
     swatch: "bg-black border border-yellow-500 flex items-center justify-center overflow-hidden",
