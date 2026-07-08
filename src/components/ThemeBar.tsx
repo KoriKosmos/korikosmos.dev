@@ -22,13 +22,13 @@ const THEMES: { name: string; label: string; swatch: string; icon?: ReactNode }[
   },
   { name: "forest", label: "Forest theme", swatch: "bg-green-600 border" },
   {
-    name: "spiderman",
+    name: "spider-man",
     label: "Spider-Man theme",
-    swatch: "bg-blue-800 border border-red-700 flex items-center justify-center overflow-hidden",
+    swatch: "bg-[#2B3990] border border-red-700 flex items-center justify-center overflow-hidden",
     icon: (
       <svg viewBox="0 0 24 24" className="w-5 h-5" aria-hidden="true">
         {/* mask */}
-        <circle cx="12" cy="12" r="11" fill="#DC2626" />
+        <circle cx="12" cy="12" r="11" fill="#DF1F2D" />
         {/* webbing */}
         <g stroke="#450A0A" strokeWidth="0.7" fill="none">
           <path d="M12 11 L12 1 M12 11 L4.5 3 M12 11 L19.5 3 M12 11 L1 11 M12 11 L23 11 M12 11 L5 20.5 M12 11 L19 20.5 M12 11 L12 23" />

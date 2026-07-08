@@ -93,3 +93,11 @@ html[data-theme-fade] *::after {
     transition: none;
   }
 }
+
+/* Spider-Man theme: solid classic red instead of primary→secondary gradient
+   blends (the red→blue midpoint reads as muddy purple). Headings using
+   bg-clip-text become solid red text; cards get a solid red background. */
+html[data-theme="spider-man"] .from-primary.to-secondary {
+  background-image: none;
+  background-color: #DF1F2D;
+}

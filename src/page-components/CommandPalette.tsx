@@ -28,7 +28,7 @@ const THEMES: { name: string; label: string }[] = [
   { name: "dark", label: "Dark" },
   { name: "light", label: "Light" },
   { name: "forest", label: "Forest" },
-  { name: "spiderman", label: "Spider-Man" },
+  { name: "spider-man", label: "Spider-Man" },
   { name: "batman", label: "Batman" },
 ];
 

@@ -83,14 +83,17 @@ const paletteLinks: PaletteLink[] = [
 		html[data-theme="light"] { background-color: #F3F4F6; }
 		html[data-theme="forest"] { background-color: #101B14; }
 		html[data-theme="batman"] { background-color: #000000; }
-		html[data-theme="spiderman"] { background-color: #10163A; }
+		html[data-theme="spider-man"] { background-color: #10163A; }
 	</style>
 
 	<!-- Apply saved theme before first paint, and re-apply after every client-side navigation -->
 	<script is:inline>
 		(() => {
-			const applyTheme = () =>
-				document.documentElement.setAttribute("data-theme", localStorage.getItem("theme") || "dark");
+			const applyTheme = () => {
+				let theme = localStorage.getItem("theme") || "dark";
+				if (theme === "spiderman") theme = "spider-man"; // pre-rename stored value
+				document.documentElement.setAttribute("data-theme", theme);
+			};
 			applyTheme();
 			if (!window.__themeSwapHooked) {
 				window.__themeSwapHooked = true;
