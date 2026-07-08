@@ -205,7 +205,9 @@ export function ConstellationField() {
     };
   }, []);
 
-  return <canvas ref={canvasRef} aria-hidden="true" className="fixed inset-0 -z-10 pointer-events-none" />;
+  // w-full/h-full is load-bearing: a canvas is a replaced element, so inset-0 alone
+  // leaves it at its intrinsic (dpr-scaled) size, misaligning drawing from the cursor
+  return <canvas ref={canvasRef} aria-hidden="true" className="fixed inset-0 w-full h-full -z-10 pointer-events-none" />;
 }
 
 export default ConstellationField;
