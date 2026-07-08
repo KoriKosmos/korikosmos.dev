@@ -1,0 +1,16 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { getRecentTracks } from '../lib/lastfm';
+import { NowPage } from '../page-components/NowPage.tsx';
+
+const recentTracks = await getRecentTracks(1);
+const raw = recentTracks[0];
+const currentTrack = raw
+  ? { name: raw.name, artist: raw.artist?.['#text'] ?? raw.artist?.name ?? '', url: raw.url }
+  : null;
+const isPlaying = raw?.['@attr']?.nowplaying === 'true';
+---
+
+<Layout title="Now" description="What Maan is focused on right now — projects, music, and more.">
+  <NowPage currentTrack={currentTrack} isPlaying={isPlaying} />
+</Layout>

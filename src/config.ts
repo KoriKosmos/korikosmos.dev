@@ -10,4 +10,6 @@ export const NAV_LINKS = [
   { href: '/tunes', label: 'Tunes' },
   { href: '/games', label: 'Games' },
   { href: '/blog', label: 'Blog' },
+  { href: '/now', label: 'Now' },
+  { href: '/uses', label: 'Uses' },
 ];
