@@ -10,6 +10,7 @@ type DocumentWithViewTransition = Document & {
 
 const THEMES: { name: string; label: string; swatch: string; icon?: ReactNode }[] = [
   { name: "dark", label: "Dark theme", swatch: "bg-blue-600 border" },
+  { name: "forest", label: "Forest theme", swatch: "bg-green-600 border" },
   {
     name: "light",
     label: "Light theme",
@@ -20,7 +21,6 @@ const THEMES: { name: string; label: string; swatch: string; icon?: ReactNode }[
       </svg>
     ),
   },
-  { name: "forest", label: "Forest theme", swatch: "bg-green-600 border" },
   {
     name: "spider-man",
     label: "Spider-Man theme",
