@@ -126,7 +126,23 @@ export function ThemeBar() {
   }
 
   return (
-    <div className="fixed top-4 right-4 z-50 flex gap-2">
+    <div className="fixed top-4 right-4 z-50 flex items-center gap-2">
+      {/* Command palette trigger — handled by CommandPalette's delegated
+          [data-palette-trigger] listener; kept here so it always sits left
+          of the first theme swatch */}
+      <button
+        type="button"
+        data-palette-trigger
+        className="h-6 flex items-center gap-1 rounded-full border border-base-content/20 bg-base-100/60 px-2 text-xs text-base-content/60 hover:text-base-content hover:border-base-content/40 transition-colors"
+        aria-label="Open command palette"
+        title="Ctrl+K / ⌘K"
+      >
+        <svg className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+          <circle cx="9" cy="9" r="6" />
+          <path d="m14 14 4 4" strokeLinecap="round" />
+        </svg>
+        <kbd className="hidden sm:inline font-sans">⌘K</kbd>
+      </button>
       {THEMES.map(({ name, label, swatch, icon }) => (
         <button
           key={name}

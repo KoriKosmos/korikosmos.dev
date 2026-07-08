@@ -109,10 +109,11 @@ const paletteLinks: PaletteLink[] = [
 <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-content focus:rounded">
 	Skip to content
 </a>
-<!-- pr-36 keeps nav links clear of the fixed ThemeBar in the top-right corner.
-     relative z-30 lifts the header's stacking context above page content so
-     dropdown menus aren't covered by z-indexed elements in <main> -->
-<header class="relative z-30 p-4 pr-36 border-b border-base-content/10 shrink-0" transition:name="site-header">
+<!-- Right padding keeps nav links clear of the fixed ThemeBar (search button +
+     5 swatches) in the top-right corner. relative z-30 lifts the header's
+     stacking context above page content so dropdown menus aren't covered by
+     z-indexed elements in <main> -->
+<header class="relative z-30 p-4 pr-52 sm:pr-60 border-b border-base-content/10 shrink-0" transition:name="site-header">
 	<nav class="flex flex-wrap items-center gap-x-4 gap-y-1 sm:gap-x-6" aria-label="Primary">
 		<a
 			href="/"
@@ -156,19 +157,6 @@ const paletteLinks: PaletteLink[] = [
 				)
 			)
 		}
-		<button
-			type="button"
-			data-palette-trigger
-			class="ml-auto flex items-center gap-1.5 rounded border border-base-content/20 px-2 py-1 text-sm text-base-content/60 hover:text-base-content hover:border-base-content/40 transition-colors"
-			aria-label="Open command palette"
-			title="Ctrl+K / ⌘K"
-		>
-			<svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-				<circle cx="9" cy="9" r="6" />
-				<path d="m14 14 4 4" stroke-linecap="round" />
-			</svg>
-			<kbd class="hidden sm:inline font-sans">⌘K</kbd>
-		</button>
 	</nav>
 </header>
 
