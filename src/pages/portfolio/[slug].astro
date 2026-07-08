@@ -12,6 +12,7 @@ export async function getStaticPaths() {
 
 const { slug } = Astro.params;
 const project = await getEntryBySlug('projects', slug);
+const Content = project ? (await project.render()).Content : null;
 ---
 
 <Layout
@@ -19,5 +20,7 @@ const project = await getEntryBySlug('projects', slug);
   description={project?.data.summary}
   image={`/og/portfolio/${slug}.png`}
 >
-  <ProjectDetailPage project={project} />
+  <ProjectDetailPage project={project}>
+    {Content && <Content />}
+  </ProjectDetailPage>
 </Layout>
