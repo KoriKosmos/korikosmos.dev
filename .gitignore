@@ -174,4 +174,5 @@ pnpm-workspace.yaml
 ds-bundle/
 .design-sync/.cache/
 .design-sync/learnings/
-.design-sync/node_modules.claude/
+.design-sync/node_modules
+.claude/
