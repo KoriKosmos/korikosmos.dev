@@ -3,6 +3,7 @@ import "../styles/global.css";
 import { ClientRouter } from "astro:transitions";
 import OnekoToggle from "../components/OnekoToggle.tsx";
 import ThemeBar from "../components/ThemeBar.tsx";
+import ConstellationField from "../page-components/ConstellationField.tsx";
 import { NAV_LINKS, SITE_TITLE, SITE_DESCRIPTION } from "../config";
 
 const {
@@ -68,6 +69,7 @@ const socialImage = new URL(image ?? '/og/site.png', Astro.site);
 	<ClientRouter />
 </head>
 <body class="font-sans text-base-content min-h-screen flex flex-col">
+<ConstellationField client:load transition:persist="constellation" />
 <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-content focus:rounded">
 	Skip to content
 </a>
