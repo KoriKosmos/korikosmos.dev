@@ -3,17 +3,17 @@ import { config, collection, singleton, fields } from '@keystatic/core';
 // Keystatic CMS config. This file is imported by the browser-side admin UI,
 // so only statically-replaced import.meta.env values may be referenced here
 // (process.env would throw in the browser).
-// - Dev builds: local mode — /keystatic edits files on disk directly, no auth.
-// - Production builds: GitHub mode, committing edits via a GitHub App
-//   (KEYSTATIC_GITHUB_CLIENT_ID / KEYSTATIC_GITHUB_CLIENT_SECRET /
-//   KEYSTATIC_SECRET). The admin is only mounted in production when those
-//   credentials exist — see the keystatic() integration guard in
-//   astro.config.mjs — so "production build" implies GitHub mode is usable.
+//
+// GitHub mode: edits authenticate through the korikosmos.dev GitHub App and
+// land as commits on the repo (in dev too). Credentials come from
+// KEYSTATIC_GITHUB_CLIENT_ID / KEYSTATIC_GITHUB_CLIENT_SECRET /
+// KEYSTATIC_SECRET (+ PUBLIC_KEYSTATIC_GITHUB_APP_SLUG for the client) — see
+// README "Content editing". Visiting /keystatic in dev without credentials
+// triggers Keystatic's GitHub App creation flow, which writes them to .env.
+// For offline work, temporarily switch storage to { kind: 'local' }.
 
 export default config({
-  storage: import.meta.env.DEV
-    ? { kind: 'local' }
-    : { kind: 'github', repo: 'KoriKosmos/korikosmos.dev' },
+  storage: { kind: 'github', repo: 'KoriKosmos/korikosmos.dev' },
 
   collections: {
     blog: collection({

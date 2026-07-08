@@ -29,15 +29,26 @@ npm run dev
 Content is managed with [Keystatic](https://keystatic.com) — schemas live in
 `keystatic.config.ts`, and content stays as Markdown/JSON in the repo.
 
-**Locally:** just run `npm run dev` and open `http://localhost:4321/keystatic`.
-Local mode edits the files on disk directly — no login, no extra proxy process.
-Commit the changes like any other edit. (`/admin` redirects to `/keystatic`.)
+Keystatic runs in **GitHub mode**: you sign in through the site's GitHub App
+and every save lands as a commit on the repo — in dev and production alike.
+(`/admin` redirects to `/keystatic`. For offline work, temporarily switch
+`storage` to `{ kind: 'local' }` in `keystatic.config.ts`.)
 
-**In production:** the admin is *not* included in a normal build. To enable it,
-create a [GitHub App](https://keystatic.com/docs/github-mode) for the repo and
-provide `KEYSTATIC_GITHUB_CLIENT_ID`, `KEYSTATIC_GITHUB_CLIENT_SECRET`, and
-`KEYSTATIC_SECRET` at build time; Keystatic then authenticates through GitHub
-and commits edits to the repo.
+**One-time GitHub App setup** (requires being logged into GitHub):
+
+1. Run `npm run dev`, open `http://localhost:4321/keystatic`, and click
+   "Log in with GitHub" — with no credentials configured this lands on the
+   Keystatic Setup page. Enter `https://korikosmos.dev` as the **Deployed App
+   URL** (this registers the production OAuth callback) and create the app.
+   Keystatic writes `KEYSTATIC_GITHUB_CLIENT_ID`,
+   `KEYSTATIC_GITHUB_CLIENT_SECRET`, `KEYSTATIC_SECRET`, and
+   `PUBLIC_KEYSTATIC_GITHUB_APP_SLUG` into `.env`.
+2. Install the app on the `KoriKosmos/korikosmos.dev` repo when prompted.
+3. Copy the four `KEYSTATIC_*` values into the server's `.env` —
+   `docker compose up --build` passes them at build time (which is what
+   includes the admin routes in the image) and at runtime.
+
+A production build **without** those env vars ships no admin routes at all.
 
 ## Features
 

@@ -10,6 +10,13 @@ RUN npm ci
 # 2. Rebuild the source code only when needed
 FROM base AS builder
 WORKDIR /app
+# Keystatic: the client id gates whether the /keystatic admin is built at all
+# (astro.config.mjs guard); the PUBLIC_ app slug is inlined into the client
+# bundle. Both must be present at build time, not just at runtime.
+ARG KEYSTATIC_GITHUB_CLIENT_ID
+ARG PUBLIC_KEYSTATIC_GITHUB_APP_SLUG
+ENV KEYSTATIC_GITHUB_CLIENT_ID=$KEYSTATIC_GITHUB_CLIENT_ID
+ENV PUBLIC_KEYSTATIC_GITHUB_APP_SLUG=$PUBLIC_KEYSTATIC_GITHUB_APP_SLUG
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build

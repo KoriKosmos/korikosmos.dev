@@ -11,7 +11,7 @@ Personal portfolio, blog, and games hub at **korikosmos.dev**. Built with Astro 
 - **Styling:** Tailwind CSS 3.3 + DaisyUI 5.5 (5 custom themes: dark, light, forest, spider-man, batman)
 - **TypeScript:** Strict mode (`astro/tsconfigs/strict`)
 - **Deployment:** Docker (multi-stage build, Node 20 Alpine, port 4321)
-- **CMS:** Keystatic (admin at `/keystatic`; schemas in `keystatic.config.ts`). Local mode in dev (edits files on disk, no auth); GitHub mode in production only when `KEYSTATIC_GITHUB_CLIENT_ID`/`KEYSTATIC_GITHUB_CLIENT_SECRET`/`KEYSTATIC_SECRET` are set at build time — otherwise the admin routes are not built at all (see the guard in `astro.config.mjs`). `/admin` 301-redirects to `/keystatic`.
+- **CMS:** Keystatic (admin at `/keystatic`; schemas in `keystatic.config.ts`). GitHub mode everywhere: edits authenticate via a GitHub App and land as commits (`KEYSTATIC_GITHUB_CLIENT_ID`/`KEYSTATIC_GITHUB_CLIENT_SECRET`/`KEYSTATIC_SECRET` + `PUBLIC_KEYSTATIC_GITHUB_APP_SLUG`). In production the admin routes are only built when the client id is present at build time (guard in `astro.config.mjs`; Dockerfile passes it as a build arg). `keystatic.config.ts` is imported by the browser — only `import.meta.env`, never `process.env`. `/admin` 301-redirects to `/keystatic`.
 
 ## Commands
 
@@ -74,7 +74,7 @@ keystatic.config.ts  # Keystatic CMS schemas (blog, projects collections + cv si
 
 - `LASTFM_USER` — Last.fm username for scrobble data
 - `LASTFM_API_KEY` — Last.fm API key
-- `KEYSTATIC_GITHUB_CLIENT_ID` / `KEYSTATIC_GITHUB_CLIENT_SECRET` / `KEYSTATIC_SECRET` — optional, build-time; enable the Keystatic admin in production (GitHub mode)
+- `KEYSTATIC_GITHUB_CLIENT_ID` / `KEYSTATIC_GITHUB_CLIENT_SECRET` / `KEYSTATIC_SECRET` / `PUBLIC_KEYSTATIC_GITHUB_APP_SLUG` — Keystatic GitHub mode; client id + public slug are needed at build time (route guard, client inline), all four at runtime. Written to `.env` by the /keystatic setup flow in dev
 
 ## Style Guidelines
 

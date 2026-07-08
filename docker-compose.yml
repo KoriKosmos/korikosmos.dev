@@ -1,13 +1,22 @@
 services:
   web:
-    build: .
+    build:
+      context: .
+      args:
+        # Build-time: gates the /keystatic admin routes and inlines the
+        # public app slug into the client bundle
+        - KEYSTATIC_GITHUB_CLIENT_ID=${KEYSTATIC_GITHUB_CLIENT_ID}
+        - PUBLIC_KEYSTATIC_GITHUB_APP_SLUG=${PUBLIC_KEYSTATIC_GITHUB_APP_SLUG}
     ports:
       - "8484:4321"
     environment:
-      - OAUTH_CLIENT_ID=${OAUTH_CLIENT_ID}
-      - OAUTH_CLIENT_SECRET=${OAUTH_CLIENT_SECRET}
       - LASTFM_USER=${LASTFM_USER}
       - LASTFM_API_KEY=${LASTFM_API_KEY}
+      # Runtime: Keystatic GitHub-mode auth (server API routes)
+      - KEYSTATIC_GITHUB_CLIENT_ID=${KEYSTATIC_GITHUB_CLIENT_ID}
+      - KEYSTATIC_GITHUB_CLIENT_SECRET=${KEYSTATIC_GITHUB_CLIENT_SECRET}
+      - KEYSTATIC_SECRET=${KEYSTATIC_SECRET}
+      - PUBLIC_KEYSTATIC_GITHUB_APP_SLUG=${PUBLIC_KEYSTATIC_GITHUB_APP_SLUG}
     volumes:
       - scores_data:/app/data
     restart: unless-stopped
