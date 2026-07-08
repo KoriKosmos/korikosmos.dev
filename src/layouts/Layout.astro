@@ -17,7 +17,8 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 const socialImage = new URL(image ?? '/og/site.png', Astro.site);
 ---
 
-<html lang="en">
+<!-- bg-base-100 lives on <html>, not <body>, so fixed -z-10 layers (homepage starfield) can paint above it -->
+<html lang="en" class="bg-base-100">
 <head>
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -66,7 +67,7 @@ const socialImage = new URL(image ?? '/og/site.png', Astro.site);
 
 	<ClientRouter />
 </head>
-<body class="font-sans bg-base-100 text-base-content min-h-screen flex flex-col">
+<body class="font-sans text-base-content min-h-screen flex flex-col">
 <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-content focus:rounded">
 	Skip to content
 </a>
