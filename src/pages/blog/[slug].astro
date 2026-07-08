@@ -15,7 +15,7 @@ const post = await getEntryBySlug('blog', slug);
 const { Content } = await post.render();
 ---
 
-<Layout title={post.data.title} description={post.data.description}>
+<Layout title={post.data.title} description={post.data.description} image={`/og/blog/${slug}.png`}>
   <BlogPostPage title={post.data.title}>
     <Content />
   </BlogPostPage>

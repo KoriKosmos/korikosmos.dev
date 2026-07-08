@@ -31,6 +31,7 @@ src/
 │   ├── blog/      # Blog posts with frontmatter: title, description, pubDate
 │   └── projects/  # Project entries with frontmatter: title, summary, description, github?
 ├── data/          # Static data (cv.json)
+├── fonts/         # Vendored Noto Sans TTFs (400 + 800) used by the OG image endpoint
 ├── layouts/       # Layout.astro — single layout with SEO meta, skip link, nav, footer
 ├── lib/           # Shared utilities
 │   ├── constants.ts      # Shared constants (BLOCKED_ITEMS for Last.fm filtering)
@@ -41,6 +42,7 @@ src/
 ├── pages/         # File-based routing — .astro files fetch data server-side, render page-components/*.tsx
 │   ├── api/       # API routes (lastfm, scores/[game], auth callbacks)
 │   ├── games/     # Tetris, Rock Paper Scissors
+│   ├── og/        # [...route].ts — prerendered OG image endpoint (astro-og-canvas)
 │   └── ...        # index, about, cv, portfolio, blog, tunes, now, uses, 404
 └── styles/        # global.css (Tailwind directives + custom utilities)
 public/            # Static assets (favicon.svg, robots.txt, oneko.js, admin config)
@@ -57,6 +59,7 @@ data/scores/       # Persistent game leaderboard data (JSON files, written by AP
 - **View transitions / no-FOUC:** `Layout.astro` uses Astro's `<ClientRouter />` for SPA-style navigation. Anti-flash relies on three head pieces: critical inline `<style>` with per-theme `html` backgrounds (correct first paint before the stylesheet loads), an inline script that applies the saved theme pre-paint **and** re-applies it on `astro:after-swap` (the router resets `<html>` attributes on every swap), and page animations in `global.css` (`vt-page-out`/`vt-page-in` on the root group). Header/footer have `transition:name` so they stay static during navigation; `ThemeBar`/`OnekoToggle` use `transition:persist`. The oneko cat is mounted *inside* the persisted OnekoToggle island (oneko.js appends next to its own script tag) so it survives navigations; islands that attach global listeners or rAF loops must clean up on unmount since navigation no longer reloads the page (Tetris does this via `game.running = false` + `removeEventListener`).
 - **Layout props:** `Layout.astro` accepts `title`, `description`, `image`, and `isWide` props. Title is auto-formatted as `{title} | KoriKosmos` (homepage uses bare site name).
 - **Tunes page pattern:** SSR fetches initial data, passed as props to `Tunes.tsx`. React state (not `<script define:vars>`/manual DOM writes) is the source of truth for rendering artists/albums and period switching. Client polls for now-playing updates every 30s via a ref-tracked key to avoid stale-closure bugs.
+- **OG / social images:** `src/pages/og/[...route].ts` uses `astro-og-canvas` (prerendered) to generate cards for the site default (`/og/site.png`), every blog post (`/og/blog/<slug>.png`), and every project (`/og/portfolio/<slug>.png`). `Layout.astro` falls back to `/og/site.png` when no `image` prop is passed; blog/portfolio `[slug]` pages pass their generated card. Fonts are vendored in `src/fonts/` so builds don't hit a font CDN; note the 800-weight TTF registers as the separate family `'Noto Sans ExtraBold'`, not as a weight of `'Noto Sans'`. New content collection entries get OG cards automatically.
 - **/now and /uses pages:** Indie-web convention pages, in the header nav via `NAV_LINKS`. `/now` fetches the latest scrobble via `getRecentTracks(1)` server-side; its editable content (and the `NOW_UPDATED` date) lives in `NowPage.tsx`. `/uses` is fully static with a data-driven `USES` array in `UsesPage.tsx`.
 - **Game scores:** Stored as JSON files in `/data/scores/`, accessed via API routes with `async-mutex` for write safety. Leaderboards sync between localStorage and server.
 - **Shared code between server and client:** `src/lib/images.ts` and `src/lib/constants.ts` are importable from both Astro frontmatter (server) and React components (client bundles). `src/lib/lastfm.ts` is server-only (uses env vars).

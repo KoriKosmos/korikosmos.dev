@@ -14,6 +14,7 @@ const {
 
 const formattedTitle = title === SITE_TITLE ? SITE_TITLE : `${title} | ${SITE_TITLE}`;
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+const socialImage = new URL(image ?? '/og/site.png', Astro.site);
 ---
 
 <html lang="en">
@@ -31,12 +32,13 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 	<meta property="og:url" content={canonicalURL} />
 	<meta property="og:title" content={formattedTitle} />
 	<meta property="og:description" content={description} />
-	{image && <meta property="og:image" content={new URL(image, Astro.site)} />}
+	<meta property="og:image" content={socialImage} />
 
 	<!-- Twitter Card -->
-	<meta name="twitter:card" content="summary" />
+	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:title" content={formattedTitle} />
 	<meta name="twitter:description" content={description} />
+	<meta name="twitter:image" content={socialImage} />
 
 	<!-- Preconnect -->
 	<link rel="preconnect" href="https://lastfm.freetls.fastly.net" crossorigin />

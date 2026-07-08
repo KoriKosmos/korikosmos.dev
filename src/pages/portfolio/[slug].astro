@@ -14,6 +14,10 @@ const { slug } = Astro.params;
 const project = await getEntryBySlug('projects', slug);
 ---
 
-<Layout title={project ? project.data.title : 'Project'}>
+<Layout
+  title={project ? project.data.title : 'Project'}
+  description={project?.data.summary}
+  image={`/og/portfolio/${slug}.png`}
+>
   <ProjectDetailPage project={project} />
 </Layout>
