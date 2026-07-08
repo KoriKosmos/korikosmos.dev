@@ -43,7 +43,7 @@ src/
 │   ├── api/       # API routes (lastfm, scores/[game], auth callbacks)
 │   ├── games/     # Tetris, Rock Paper Scissors
 │   ├── og/        # [...route].ts — prerendered OG image endpoint (astro-og-canvas)
-│   └── ...        # index, about, cv, portfolio, blog, tunes, now, uses, 404
+│   └── ...        # index, about, cv, portfolio, blog, tunes, now, uses, links, 404
 └── styles/        # global.css (Tailwind directives + custom utilities)
 public/            # Static assets (favicon.svg, robots.txt, oneko.js, admin config)
 data/scores/       # Persistent game leaderboard data (JSON files, written by API)

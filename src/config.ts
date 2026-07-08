@@ -12,4 +12,5 @@ export const NAV_LINKS = [
   { href: '/blog', label: 'Blog' },
   { href: '/now', label: 'Now' },
   { href: '/uses', label: 'Uses' },
+  { href: '/links', label: 'Links' },
 ];
