@@ -104,8 +104,10 @@ const paletteLinks: PaletteLink[] = [
 <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-content focus:rounded">
 	Skip to content
 </a>
-<!-- pr-36 keeps nav links clear of the fixed ThemeBar in the top-right corner -->
-<header class="p-4 pr-36 border-b border-base-content/10 shrink-0" transition:name="site-header">
+<!-- pr-36 keeps nav links clear of the fixed ThemeBar in the top-right corner.
+     relative z-30 lifts the header's stacking context above page content so
+     dropdown menus aren't covered by z-indexed elements in <main> -->
+<header class="relative z-30 p-4 pr-36 border-b border-base-content/10 shrink-0" transition:name="site-header">
 	<nav class="flex flex-wrap items-center gap-x-4 gap-y-1 sm:gap-x-6" aria-label="Primary">
 		<a
 			href="/"

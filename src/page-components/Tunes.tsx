@@ -163,7 +163,8 @@ export function Tunes({ recentTracks, initialArtists, initialAlbums, currentTrac
   return (
     <div className="space-y-12">
       {/* Hero Section: Now Playing / Most Recent */}
-      <section className="relative overflow-hidden rounded-3xl bg-base-200 shadow-xl min-h-[400px] flex items-center justify-center">
+      {/* isolate keeps the hero's internal z-layers from competing with page chrome */}
+      <section className="relative isolate overflow-hidden rounded-3xl bg-base-200 shadow-xl min-h-[400px] flex items-center justify-center">
         <div className="absolute inset-0 z-0">
           <img src={heroImg} alt="" className="w-full h-full object-cover opacity-30 blur-3xl scale-110" />
           <div className="absolute inset-0 bg-base-100/50"></div>
