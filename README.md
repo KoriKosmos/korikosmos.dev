@@ -24,18 +24,31 @@ Start a local server at `http://localhost:4321`:
 npm run dev
 ```
 
-### CMS (Local Development)
+### Content editing (Keystatic CMS)
 
-To edit content locally with Decap CMS:
+Content is managed with [Keystatic](https://keystatic.com) — schemas live in
+`keystatic.config.ts`, and content stays as Markdown/JSON in the repo.
 
-1.  Run the proxy server in a separate terminal:
-    ```sh
-    npx decap-server
-    ```
-2.  Navigate to `http://localhost:4321/admin`.
-3.  Click "Login with Local Backend".
+Keystatic runs in **GitHub mode**: you sign in through the site's GitHub App
+and every save lands as a commit on the repo — in dev and production alike.
+(`/admin` redirects to `/keystatic`. For offline work, temporarily switch
+`storage` to `{ kind: 'local' }` in `keystatic.config.ts`.)
 
-_Note: In production, the CMS authenticates via GitHub._
+**One-time GitHub App setup** (requires being logged into GitHub):
+
+1. Run `npm run dev`, open `http://localhost:4321/keystatic`, and click
+   "Log in with GitHub" — with no credentials configured this lands on the
+   Keystatic Setup page. Enter `https://korikosmos.dev` as the **Deployed App
+   URL** (this registers the production OAuth callback) and create the app.
+   Keystatic writes `KEYSTATIC_GITHUB_CLIENT_ID`,
+   `KEYSTATIC_GITHUB_CLIENT_SECRET`, `KEYSTATIC_SECRET`, and
+   `PUBLIC_KEYSTATIC_GITHUB_APP_SLUG` into `.env`.
+2. Install the app on the `KoriKosmos/korikosmos.dev` repo when prompted.
+3. Copy the four `KEYSTATIC_*` values into the server's `.env` —
+   `docker compose up --build` passes them at build time (which is what
+   includes the admin routes in the image) and at runtime.
+
+A production build **without** those env vars ships no admin routes at all.
 
 ## Features
 
@@ -53,7 +66,7 @@ _Note: In production, the CMS authenticates via GitHub._
 - Toggle a little cursor-following cat from the corner button
 - Switch between four DaisyUI themes (dark, light, forest, batman) using the theme bar
 - Showcases my projects from `src/content/projects`
-- Manage posts, projects, and CV via **Decap CMS** at `/admin`.
+- Manage posts, projects, and CV via **Keystatic** at `/keystatic` (schemas in `keystatic.config.ts`).
 - Responsive Tailwind styling
 - Includes dedicated pages for my Final Year Project and Year 2 Java calculator
 - I built a playable Tetris clone for the Games page with touch controls, SRS rotation, and a **global leaderboard** that persists scores across devices.
@@ -63,8 +76,8 @@ _Note: In production, the CMS authenticates via GitHub._
 
 ```
 /
+├── keystatic.config.ts  # Keystatic CMS schemas (blog, projects, CV)
 ├── public/
-│   └── admin/           # Decap CMS
 ├── src/
 │   ├── components/      # Reusable React components (design-sync surface)
 │   ├── page-components/ # Page-body React components (one per route)

@@ -1,10 +1,13 @@
+import type { ReactNode } from "react";
 import type { CollectionEntry } from "astro:content";
 
 interface Props {
   project: CollectionEntry<"projects"> | undefined;
+  /** Rendered entry body (Astro <Content />), passed pre-rendered from the .astro page */
+  children?: ReactNode;
 }
 
-export function ProjectDetailPage({ project }: Props) {
+export function ProjectDetailPage({ project, children }: Props) {
   if (!project) {
     return <p className="my-8">Project not found.</p>;
   }
@@ -13,6 +16,7 @@ export function ProjectDetailPage({ project }: Props) {
     <article className="my-8 space-y-4">
       <h1 className="text-3xl font-bold">{project.data.title}</h1>
       <p>{project.data.description}</p>
+      {children && <div className="prose dark:prose-invert">{children}</div>}
       {project.data.github && (
         <a
           href={project.data.github}
