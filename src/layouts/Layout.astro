@@ -1,9 +1,12 @@
 ---
 import "../styles/global.css";
 import { ClientRouter } from "astro:transitions";
+import { getCollection } from "astro:content";
 import OnekoToggle from "../components/OnekoToggle.tsx";
 import ThemeBar from "../components/ThemeBar.tsx";
 import ConstellationField from "../page-components/ConstellationField.tsx";
+import CommandPalette from "../page-components/CommandPalette.tsx";
+import type { PaletteLink } from "../page-components/CommandPalette.tsx";
 import { NAV_ITEMS, SITE_TITLE, SITE_DESCRIPTION } from "../config";
 
 const {
@@ -19,6 +22,31 @@ const socialImage = new URL(image ?? '/og/site.png', Astro.site);
 
 const isActive = (href: string) =>
 	Astro.url.pathname === href || Astro.url.pathname.startsWith(`${href}/`);
+
+const [paletteBlog, paletteProjects] = await Promise.all([
+	getCollection("blog"),
+	getCollection("projects"),
+]);
+const paletteLinks: PaletteLink[] = [
+	{ label: "Home", href: "/", section: "Pages" },
+	...NAV_ITEMS.flatMap(item => ("items" in item ? item.items : [item])).map(link => ({
+		label: link.label,
+		href: link.href,
+		section: "Pages",
+	})),
+	...paletteBlog.map(post => ({
+		label: post.data.title,
+		href: `/blog/${post.slug}`,
+		section: "Blog",
+		keywords: post.data.description,
+	})),
+	...paletteProjects.map(project => ({
+		label: project.data.title,
+		href: `/portfolio/${project.slug}`,
+		section: "Projects",
+		keywords: project.data.summary,
+	})),
+];
 ---
 
 <!-- bg-base-100 lives on <html>, not <body>, so fixed -z-10 layers (homepage starfield) can paint above it -->
@@ -121,6 +149,19 @@ const isActive = (href: string) =>
 				)
 			)
 		}
+		<button
+			type="button"
+			data-palette-trigger
+			class="ml-auto flex items-center gap-1.5 rounded border border-base-content/20 px-2 py-1 text-sm text-base-content/60 hover:text-base-content hover:border-base-content/40 transition-colors"
+			aria-label="Open command palette"
+			title="Ctrl+K / ⌘K"
+		>
+			<svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+				<circle cx="9" cy="9" r="6" />
+				<path d="m14 14 4 4" stroke-linecap="round" />
+			</svg>
+			<kbd class="hidden sm:inline font-sans">⌘K</kbd>
+		</button>
 	</nav>
 </header>
 
@@ -133,5 +174,6 @@ const isActive = (href: string) =>
 </footer>
 <OnekoToggle client:load transition:persist="oneko-toggle" />
 <ThemeBar client:load transition:persist="theme-bar" />
+<CommandPalette client:load transition:persist="command-palette" links={paletteLinks} />
 </body>
 </html>
