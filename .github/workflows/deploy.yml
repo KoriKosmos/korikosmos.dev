@@ -1,0 +1,38 @@
+name: Deploy to production
+
+# SECURITY (this is a PUBLIC repo): triggers only on push to `main` — which
+# requires repo write access — and manual dispatch. It is deliberately NOT
+# wired to `pull_request`, so a fork cannot run code on the self-hosted
+# runner. Do not add a `pull_request` trigger to a workflow that uses the
+# self-hosted runner.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+# One deploy at a time; let an in-flight build finish rather than cancelling
+# it half-way through a container rebuild.
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    # Matches the labels given to the runner during `./config.sh` on the server.
+    runs-on: [self-hosted, korikosmos]
+    timeout-minutes: 20
+    steps:
+      # The deploy runs inside the existing on-server clone (where .env and the
+      # docker-compose volume live) rather than the runner's own workspace, so
+      # there's no checkout step. Point DEPLOY_DIR at that clone:
+      #   gh variable set DEPLOY_DIR --body /absolute/path/to/korikosmos.dev
+      - name: Check DEPLOY_DIR is configured
+        run: |
+          if [ -z "${{ vars.DEPLOY_DIR }}" ]; then
+            echo "::error::Repo variable DEPLOY_DIR is not set. Run: gh variable set DEPLOY_DIR --body /path/to/deploy/clone"
+            exit 1
+          fi
+
+      - name: Pull latest and rebuild containers
+        working-directory: ${{ vars.DEPLOY_DIR }}
+        run: ./update-deploy.sh
