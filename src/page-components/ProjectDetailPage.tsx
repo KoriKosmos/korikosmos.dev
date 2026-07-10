@@ -16,7 +16,7 @@ export function ProjectDetailPage({ project, children }: Props) {
     <article className="my-8 space-y-4">
       <h1 className="text-3xl font-bold">{project.data.title}</h1>
       <p>{project.data.description}</p>
-      {children && <div className="prose dark:prose-invert">{children}</div>}
+      {children && <div className="prose">{children}</div>}
       {project.data.github && (
         <a
           href={project.data.github}
