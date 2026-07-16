@@ -49,5 +49,5 @@ export const NAV_ITEMS: NavItem[] = [
       { href: '/games/rock-paper-scissors', label: 'Rock Paper Scissors' },
     ],
   },
-  { href: '/amandata', label: 'Amanda Ta', reload: true },
+  { href: '/amandata', label: 'My Wife', reload: true },
 ];
