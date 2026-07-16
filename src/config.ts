@@ -41,7 +41,6 @@ export const NAV_ITEMS: NavItem[] = [
   },
   { href: '/blog', label: 'Blog' },
   { href: '/tunes', label: 'Tunes' },
-  { href: '/amandata', label: 'Amanda', reload: true },
   {
     label: 'Play',
     items: [
@@ -50,4 +49,5 @@ export const NAV_ITEMS: NavItem[] = [
       { href: '/games/rock-paper-scissors', label: 'Rock Paper Scissors' },
     ],
   },
+  { href: '/amandata', label: 'Amanda Ta', reload: true },
 ];
