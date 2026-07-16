@@ -14,6 +14,8 @@ export interface PaletteLink {
   section: string;
   /** Extra text to match against when searching, e.g. a post description. */
   keywords?: string;
+  /** Force a full browser navigation instead of a view-transition swap. */
+  reload?: boolean;
 }
 
 interface PaletteAction {
@@ -21,6 +23,7 @@ interface PaletteAction {
   section: string;
   keywords?: string;
   href?: string;
+  reload?: boolean;
   perform?: () => void;
 }
 
@@ -115,7 +118,10 @@ export function CommandPalette({ links }: { links: PaletteLink[] }) {
   function run(action: PaletteAction) {
     hide();
     if (action.perform) action.perform();
-    else if (action.href) navigate(action.href);
+    else if (action.href) {
+      if (action.reload) window.location.assign(action.href);
+      else navigate(action.href);
+    }
   }
 
   useEffect(() => {

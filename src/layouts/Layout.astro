@@ -34,6 +34,7 @@ const paletteLinks: PaletteLink[] = [
 		label: link.label,
 		href: link.href,
 		section: "Pages",
+		reload: link.reload,
 	})),
 	...paletteBlog.map(post => ({
 		label: post.data.title,
@@ -151,6 +152,7 @@ const paletteLinks: PaletteLink[] = [
 						href={item.href}
 						class={`nav-link ${isActive(item.href) ? "text-primary" : ""}`}
 						aria-current={isActive(item.href) ? "page" : undefined}
+						data-astro-reload={item.reload ? true : undefined}
 					>
 						{item.label}
 					</a>

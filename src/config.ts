@@ -6,6 +6,13 @@ export const SITE_DESCRIPTION = 'Personal portfolio and blog.';
 export interface NavLink {
   href: string;
   label: string;
+  /**
+   * Force a full browser navigation instead of a ClientRouter swap. Needed for
+   * routes that return a standalone HTML document (e.g. /amandata, a verbatim
+   * clone with its own <html>/<head>) which the view-transition swap can't
+   * merge into the current page.
+   */
+  reload?: boolean;
 }
 
 export interface NavGroup {
@@ -34,6 +41,7 @@ export const NAV_ITEMS: NavItem[] = [
   },
   { href: '/blog', label: 'Blog' },
   { href: '/tunes', label: 'Tunes' },
+  { href: '/amandata', label: 'Amanda', reload: true },
   {
     label: 'Play',
     items: [
