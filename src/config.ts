@@ -46,7 +46,7 @@ export const NAV_ITEMS: NavItem[] = [
   {
     label: 'Play',
     items: [
-      { href: '/games', label: 'Games' },
+      { href: '/games', label: 'All Games' },
       { href: '/games/tetris', label: 'Tetris' },
       { href: '/games/rock-paper-scissors', label: 'Rock Paper Scissors' },
     ],
