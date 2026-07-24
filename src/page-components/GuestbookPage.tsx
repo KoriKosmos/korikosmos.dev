@@ -36,7 +36,9 @@ export function GuestbookPage({ initialEntries }: Props) {
   const [name, setName] = useState('');
   const [message, setMessage] = useState('');
   const [url, setUrl] = useState('');
-  const [website, setWebsite] = useState(''); // honeypot — humans never see this
+  // Honeypot. Named "subject" rather than anything URL-ish so browser autofill
+  // won't populate it and cost a real visitor their signature.
+  const [subject, setSubject] = useState('');
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent'>('idle');
   const [error, setError] = useState<string | null>(null);
 
@@ -51,7 +53,7 @@ export function GuestbookPage({ initialEntries }: Props) {
       const response = await fetch('/api/guestbook', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, message, url, website }),
+        body: JSON.stringify({ name, message, url, subject }),
       });
       const data = await response.json();
 
@@ -61,7 +63,16 @@ export function GuestbookPage({ initialEntries }: Props) {
         return;
       }
 
-      if (data.entry) setEntries(current => [data.entry as GuestbookEntry, ...current]);
+      // The honeypot path also answers 200, with no entry. Confirming success
+      // only when an entry comes back stops a tripped trap from showing a
+      // human "thanks for signing!" for a message that was never stored.
+      if (!data.entry) {
+        setError('That didn’t go through — try again, or email me instead.');
+        setStatus('idle');
+        return;
+      }
+
+      setEntries(current => [data.entry as GuestbookEntry, ...current]);
       setName('');
       setMessage('');
       setUrl('');
@@ -143,13 +154,14 @@ export function GuestbookPage({ initialEntries }: Props) {
             bots that fill every field will populate it. */}
         <div aria-hidden="true" className="absolute w-px h-px -left-[9999px] overflow-hidden">
           <label>
-            Website
+            Subject
             <input
               type="text"
+              name="subject"
               tabIndex={-1}
               autoComplete="off"
-              value={website}
-              onChange={event => setWebsite(event.target.value)}
+              value={subject}
+              onChange={event => setSubject(event.target.value)}
             />
           </label>
         </div>

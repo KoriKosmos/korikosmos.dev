@@ -32,7 +32,10 @@ export async function getCounts(slug: string): Promise<ReactionCounts> {
 /** Increment one emoji for one post and return the post's updated counts. */
 export async function addReaction(slug: string, emoji: string): Promise<ReactionCounts> {
   const next = await updateJson<ReactionFile>(FILE, EMPTY, current => {
-    const counts = withDefaults(current[slug]);
+    // Spread the stored counts first so an emoji dropped from REACTIONS keeps
+    // its tally on disk (unserved, but recoverable if it's ever restored)
+    // rather than being erased by the next reaction on that post.
+    const counts = { ...current[slug], ...withDefaults(current[slug]) };
     counts[emoji] = (counts[emoji] ?? 0) + 1;
     return { ...current, [slug]: counts };
   });

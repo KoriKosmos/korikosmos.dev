@@ -32,7 +32,12 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
 
   // Honeypot: a field hidden from humans via CSS. Bots that fill every input
   // get a 200 with no write, so they have nothing to retry against.
-  if (typeof body?.website === 'string' && body.website.trim() !== '') {
+  //
+  // Deliberately NOT named "website"/"url" — browser autofill heuristics target
+  // URL-ish field names regardless of `autocomplete="off"`, and the form already
+  // has a legitimate site field. A false positive here silently drops a real
+  // signature, so the trap name must be one no autofiller recognises.
+  if (typeof body?.subject === 'string' && body.subject.trim() !== '') {
     return json({ ok: true, entry: null });
   }
 
