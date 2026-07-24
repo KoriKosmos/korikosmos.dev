@@ -169,6 +169,11 @@ pnpm-debug.log*
 pnpm-lock.yaml
 pnpm-workspace.yaml
 
+# Visitor-submitted runtime data. Created on first write and persisted in the
+# Docker volume mounted at /app/data — it must never ride along in a commit.
+data/guestbook.json
+data/reactions.json
+
 # design-sync (claude.ai/design) — staged scripts + generated build output
 .ds-sync/
 ds-bundle/

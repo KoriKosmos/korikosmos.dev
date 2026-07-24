@@ -1,0 +1,17 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { GuestbookPage } from '../page-components/GuestbookPage.tsx';
+import { getEntries } from '../lib/guestbook';
+
+// Read the store directly rather than fetching /api/guestbook: an SSR
+// self-fetch would target the container's internal origin, not the canonical
+// one (see src/middleware.ts for the same class of problem).
+const entries = await getEntries();
+---
+
+<Layout
+  title="Guestbook"
+  description="Sign the guestbook — say hello, leave a link, tell me what you're working on."
+>
+  <GuestbookPage client:load initialEntries={entries} />
+</Layout>
