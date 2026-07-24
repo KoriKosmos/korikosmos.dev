@@ -1,12 +1,14 @@
 import type { APIRoute } from 'astro';
 import { getCollection } from 'astro:content';
-import { addReaction, getCounts, isValidEmoji } from '../../../lib/reactions';
+import { adjustReaction, getCounts, isValidEmoji } from '../../../lib/reactions';
 import { checkRateLimit, getClientKey } from '../../../lib/rateLimit';
 
 export const prerender = false;
 
-/** Reactions are one click, so the cooldown only needs to blunt hold-to-repeat. */
-const COOLDOWN_MS = 1_000;
+// Reactions toggle, so a burst is legitimate — tapping a few emoji, or undoing
+// one straight away, must not trip the limiter. Cap sustained writes instead.
+const WINDOW_MS = 10_000;
+const MAX_WRITES_PER_WINDOW = 12;
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -43,7 +45,11 @@ export const GET: APIRoute = async ({ params }) => {
   }
 };
 
-export const POST: APIRoute = async ({ params, request, clientAddress }) => {
+/** POST adds a reaction, DELETE takes it back; both share this path. */
+const handleWrite = async (
+  { params, request, clientAddress }: Parameters<APIRoute>[0],
+  delta: 1 | -1
+) => {
   const slug = await knownSlug(params.slug);
   if (!slug) return json({ error: 'Unknown post.' }, 404);
 
@@ -57,14 +63,18 @@ export const POST: APIRoute = async ({ params, request, clientAddress }) => {
   if (!isValidEmoji(body?.emoji)) return json({ error: 'Unknown reaction.' }, 400);
 
   const key = getClientKey(request, clientAddress);
-  if (!checkRateLimit('reactions', key, COOLDOWN_MS)) {
+  if (!checkRateLimit('reactions', key, WINDOW_MS, MAX_WRITES_PER_WINDOW)) {
     return json({ error: 'Slow down a little.' }, 429);
   }
 
   try {
-    return json({ ok: true, counts: await addReaction(slug, body.emoji) });
+    return json({ ok: true, counts: await adjustReaction(slug, body.emoji, delta) });
   } catch (error) {
     console.error('[reactions] write failed:', error);
     return json({ error: 'Could not save your reaction.' }, 500);
   }
 };
+
+export const POST: APIRoute = context => handleWrite(context, 1);
+
+export const DELETE: APIRoute = context => handleWrite(context, -1);

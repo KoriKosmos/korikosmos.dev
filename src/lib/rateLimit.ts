@@ -22,13 +22,22 @@ export function getClientKey(request: Request, clientAddress?: string): string {
   return request.headers.get('x-real-ip')?.trim() || clientAddress || 'unknown';
 }
 
-const buckets = new Map<string, Map<string, number>>();
+const buckets = new Map<string, Map<string, number[]>>();
 
 /**
- * Returns `true` if the caller may write, `false` if they're inside the
- * cooldown window. Records the timestamp on success.
+ * Sliding window: returns `true` if the caller has made fewer than `limit`
+ * writes in the last `windowMs`, recording the timestamp on success.
+ *
+ * `limit` exists because reactions are toggleable — someone tapping three
+ * emoji, or undoing one straight away, is normal use and must not 429. A
+ * burst allowance permits that while still capping sustained flooding.
  */
-export function checkRateLimit(bucket: string, key: string, windowMs: number): boolean {
+export function checkRateLimit(
+  bucket: string,
+  key: string,
+  windowMs: number,
+  limit = 1
+): boolean {
   let hits = buckets.get(bucket);
   if (!hits) {
     hits = new Map();
@@ -36,17 +45,22 @@ export function checkRateLimit(bucket: string, key: string, windowMs: number): b
   }
 
   const now = Date.now();
-  const last = hits.get(key);
-  if (last !== undefined && now - last < windowMs) return false;
+  const recent = (hits.get(key) ?? []).filter(ts => now - ts < windowMs);
+  if (recent.length >= limit) {
+    hits.set(key, recent);
+    return false;
+  }
+
+  recent.push(now);
+  hits.set(key, recent);
 
   // Opportunistic sweep so a long-running process doesn't accumulate an entry
   // per unique client forever.
   if (hits.size > 5000) {
-    for (const [k, ts] of hits) {
-      if (now - ts >= windowMs) hits.delete(k);
+    for (const [k, timestamps] of hits) {
+      if (timestamps.every(ts => now - ts >= windowMs)) hits.delete(k);
     }
   }
 
-  hits.set(key, now);
   return true;
 }

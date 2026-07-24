@@ -48,13 +48,18 @@ export function PostReactions({ slug }: Props) {
     };
   }, [slug]);
 
-  async function react(emoji: string) {
-    if (pending || reacted.includes(emoji)) return;
+  /** Toggle: react if this browser hasn't, take it back if it has. */
+  async function toggle(emoji: string) {
+    if (pending) return;
+    const removing = reacted.includes(emoji);
     setPending(emoji);
 
-    // Optimistic bump so the tap feels instant; reconciled from the response.
-    setCounts(current => ({ ...(current ?? {}), [emoji]: (current?.[emoji] ?? 0) + 1 }));
-    const next = [...reacted, emoji];
+    // Optimistic update so the tap feels instant; reconciled from the response.
+    setCounts(current => ({
+      ...(current ?? {}),
+      [emoji]: Math.max(0, (current?.[emoji] ?? 0) + (removing ? -1 : 1)),
+    }));
+    const next = removing ? reacted.filter(item => item !== emoji) : [...reacted, emoji];
     setReacted(next);
     try {
       localStorage.setItem(storageKey(slug), JSON.stringify(next));
@@ -64,14 +69,29 @@ export function PostReactions({ slug }: Props) {
 
     try {
       const response = await fetch(`/api/reactions/${encodeURIComponent(slug)}`, {
-        method: 'POST',
+        method: removing ? 'DELETE' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ emoji }),
       });
       const data = await response.json();
-      if (response.ok && data?.counts) setCounts(data.counts as ReactionCounts);
+      if (response.ok && data?.counts) {
+        setCounts(data.counts as ReactionCounts);
+      } else {
+        // Rejected (rate limit, server error) — put the button back the way it
+        // was rather than leaving the optimistic state lying about the total.
+        setCounts(current => ({
+          ...(current ?? {}),
+          [emoji]: Math.max(0, (current?.[emoji] ?? 0) + (removing ? 1 : -1)),
+        }));
+        setReacted(reacted);
+        try {
+          localStorage.setItem(storageKey(slug), JSON.stringify(reacted));
+        } catch {
+          /* Best effort. */
+        }
+      }
     } catch {
-      /* Keep the optimistic value; the next page load will correct it. */
+      /* Network blip: keep the optimistic value, the next load will correct it. */
     } finally {
       setPending(null);
     }
@@ -89,14 +109,14 @@ export function PostReactions({ slug }: Props) {
             <button
               key={emoji}
               type="button"
-              onClick={() => react(emoji)}
-              disabled={active || pending !== null}
+              onClick={() => toggle(emoji)}
+              disabled={pending !== null}
               aria-pressed={active}
-              aria-label={`${label} (${counts?.[emoji] ?? 0} so far)`}
-              title={label}
-              className={`flex items-center gap-2 rounded-full px-4 py-2 shadow transition-transform disabled:cursor-default ${
+              aria-label={`${label} (${counts?.[emoji] ?? 0} so far)${active ? ' — click to undo' : ''}`}
+              title={active ? `${label} — click to undo` : label}
+              className={`flex items-center gap-2 rounded-full px-4 py-2 shadow transition-transform disabled:opacity-70 ${
                 active
-                  ? 'bg-primary text-primary-content'
+                  ? 'bg-primary text-primary-content hover:-translate-y-0.5 hover:shadow-lg'
                   : 'bg-base-200 hover:-translate-y-0.5 hover:shadow-lg'
               }`}
             >
