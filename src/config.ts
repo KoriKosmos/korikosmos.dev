@@ -30,7 +30,8 @@ export const NAV_ITEMS: NavItem[] = [
       { href: '/now', label: 'Now' },
       { href: '/uses', label: 'Uses' },
       { href: '/links', label: 'Links' },
-      { href: '/guestbook', label: 'Guestbook' },
+      // The guestbook lives on the homepage, not its own route.
+      { href: '/#guestbook', label: 'Guestbook' },
     ],
   },
   {

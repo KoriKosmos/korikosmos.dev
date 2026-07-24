@@ -86,11 +86,12 @@ export function GuestbookPage({ initialEntries }: Props) {
   const remaining = MAX_MESSAGE_LENGTH - message.length;
 
   return (
-    <section className="my-8 space-y-10">
+    // Lives on the homepage, where TypingHeading is the h1 — hence h2 here.
+    <section id="guestbook" className="my-8 space-y-8 text-left scroll-mt-8">
       <header>
-        <h1 className="text-5xl font-extrabold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent inline-block">
+        <h2 className="text-4xl font-extrabold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent inline-block">
           Guestbook
-        </h1>
+        </h2>
         <p className="mt-2 text-base-content/60">
           Say hello, leave a link, tell me what you’re working on. No account, no tracking — just
           the old web.
@@ -98,7 +99,7 @@ export function GuestbookPage({ initialEntries }: Props) {
       </header>
 
       <form onSubmit={handleSubmit} className="bg-base-200 rounded-xl p-6 shadow space-y-4">
-        <h2 className="text-2xl font-bold">Sign the guestbook</h2>
+        <h3 className="text-2xl font-bold">Sign the guestbook</h3>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="block">
@@ -188,11 +189,11 @@ export function GuestbookPage({ initialEntries }: Props) {
       </form>
 
       <div>
-        <h2 className="text-2xl font-bold mb-4">
+        <h3 className="text-2xl font-bold mb-4">
           {entries.length === 0
             ? 'No signatures yet'
             : `${entries.length} ${entries.length === 1 ? 'signature' : 'signatures'}`}
-        </h2>
+        </h3>
 
         {entries.length === 0 ? (
           <p className="text-base-content/60">Be the first to sign — the page is yours.</p>
