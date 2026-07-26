@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 import { getCollection } from 'astro:content';
 import { adjustReaction, getCounts, isValidEmoji } from '../../../lib/reactions';
 import { checkRateLimit, getClientKey } from '../../../lib/rateLimit';
+import { isSameOrigin } from '../../../lib/sameOrigin';
 
 export const prerender = false;
 
@@ -9,6 +10,8 @@ export const prerender = false;
 // one straight away, must not trip the limiter. Cap sustained writes instead.
 const WINDOW_MS = 10_000;
 const MAX_WRITES_PER_WINDOW = 12;
+/** An emoji count needs a few dozen bytes; anything larger is not a reaction. */
+const MAX_BODY_BYTES = 1024;
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -47,15 +50,24 @@ export const GET: APIRoute = async ({ params }) => {
 
 /** POST adds a reaction, DELETE takes it back; both share this path. */
 const handleWrite = async (
-  { params, request, clientAddress }: Parameters<APIRoute>[0],
+  { params, request, site, url, clientAddress }: Parameters<APIRoute>[0],
   delta: 1 | -1
 ) => {
+  // Same guard as the guestbook: a cross-origin text/plain form can post JSON
+  // with no preflight, and reactions are a public counter anyone could inflate.
+  if (!isSameOrigin(request, site, url)) {
+    return json({ error: 'React from the post page, please.' }, 403);
+  }
+
   const slug = await knownSlug(params.slug);
   if (!slug) return json({ error: 'Unknown post.' }, 404);
 
+  const raw = await request.text();
+  if (raw.length > MAX_BODY_BYTES) return json({ error: 'Body too large.' }, 413);
+
   let body: any;
   try {
-    body = await request.json();
+    body = JSON.parse(raw);
   } catch {
     return json({ error: 'Invalid JSON body.' }, 400);
   }

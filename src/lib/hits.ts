@@ -19,20 +19,31 @@ const lock = new Mutex();
 /** Fallback when the data dir isn't writable, so the counter still renders. */
 let memoryCount = 0;
 let persistenceBroken = false;
+/**
+ * Last value we read or wrote, or null before the first read.
+ *
+ * This process is the only writer, so once the file has been read the number
+ * in memory is authoritative — and it saves a disk read on every retro page
+ * view by a visitor who is already inside their session window.
+ */
+let cachedCount: number | null = null;
 
 async function readCount(): Promise<number> {
+  if (cachedCount !== null) return cachedCount;
   try {
     const raw = await fs.readFile(HITS_PATH, 'utf-8');
     const parsed = JSON.parse(raw);
-    return typeof parsed?.count === 'number' && parsed.count >= 0 ? parsed.count : 0;
+    cachedCount = typeof parsed?.count === 'number' && parsed.count >= 0 ? parsed.count : 0;
   } catch {
-    return 0;
+    cachedCount = 0;
   }
+  return cachedCount;
 }
 
 /** Current count without incrementing. */
 export async function getHits(): Promise<number> {
   if (persistenceBroken) return memoryCount;
+  if (cachedCount !== null) return cachedCount;
   return lock.runExclusive(readCount);
 }
 
@@ -48,6 +59,7 @@ export async function bumpHits(): Promise<number> {
       await fs.writeFile(temp, JSON.stringify({ count: next }, null, 2));
       await fs.rename(temp, HITS_PATH);
       memoryCount = next;
+      cachedCount = next;
       return next;
     } catch (error) {
       console.error('[hits] persistence unavailable, falling back to memory', error);

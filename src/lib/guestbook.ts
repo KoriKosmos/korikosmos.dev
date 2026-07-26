@@ -27,7 +27,15 @@ export interface GuestbookEntry {
 export const NAME_MAX = 32;
 export const MESSAGE_MAX = 500;
 export const URL_MAX = 200;
-/** Keep the file (and the page) bounded. */
+/**
+ * Keep the file (and the page) bounded.
+ *
+ * This cap *rejects* rather than evicts. The obvious `entries.slice(-MAX)` is
+ * a data-loss bug on an unauthenticated endpoint: 200 junk submissions would
+ * silently and permanently push out every real signature. Refusing the write
+ * instead means the worst a flood can do is fill the book, which I can undo by
+ * pruning the file — nothing anyone wrote is destroyed.
+ */
 const MAX_ENTRIES = 200;
 
 /**
@@ -98,12 +106,17 @@ export async function signGuestbook(input: {
 
   return lock.runExclusive(async () => {
     const entries = await readEntries();
+    if (entries.length >= MAX_ENTRIES) {
+      return {
+        ok: false as const,
+        error: 'The guestbook is full! Email me and I will make room.',
+      };
+    }
     entries.push(entry);
-    const trimmed = entries.slice(-MAX_ENTRIES);
     try {
       await fs.mkdir(DATA_DIR, { recursive: true });
       const temp = `${GUESTBOOK_PATH}.tmp`;
-      await fs.writeFile(temp, JSON.stringify({ entries: trimmed }, null, 2));
+      await fs.writeFile(temp, JSON.stringify({ entries }, null, 2));
       await fs.rename(temp, GUESTBOOK_PATH);
     } catch (error) {
       console.error('[guestbook] write failed', error);
@@ -111,7 +124,7 @@ export async function signGuestbook(input: {
     }
     return {
       ok: true as const,
-      entries: [...trimmed].sort((a, b) => (a.date < b.date ? 1 : -1)),
+      entries: [...entries].sort((a, b) => (a.date < b.date ? 1 : -1)),
     };
   });
 }

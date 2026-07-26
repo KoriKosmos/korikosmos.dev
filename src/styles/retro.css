@@ -112,8 +112,11 @@
   cursor: var(--rt-cursor-pointer);
 }
 [data-skin='retro'] :where(a:visited) { color: var(--rt-visited); }
+/* Hover ink is its own variable, not --rt-accent: the accent is tuned to read
+   against the page, and on the pale hover plate it dropped to 2.5:1 in kawaii
+   — i.e. hovering a link made it harder to read than leaving it alone. */
 [data-skin='retro'] :where(a:hover) {
-  color: var(--rt-accent);
+  color: var(--rt-link-hover-ink);
   background-color: var(--rt-link-hover-bg);
 }
 
@@ -133,8 +136,10 @@
   font-weight: bold;
 }
 
+/* --rt-focus, not --rt-accent: a focus indicator needs 3:1 against whatever it
+   sits on, and the kawaii/y2k accents only managed 2.6–2.9 against the page. */
 [data-skin='retro'] *:focus-visible {
-  outline: 3px dotted var(--rt-accent);
+  outline: 3px dotted var(--rt-focus);
   outline-offset: 1px;
 }
 
@@ -155,9 +160,20 @@
   --rt-link-hover-bg: #ffe0ef;
   --rt-accent: #ff4f9e;
   --rt-accent-2: #a06cff;
+  /* Ink for text sitting *on* the accents. Both are light enough here that
+     white fails (3.06 / 3.45), so the buttons take the dark plum instead. */
+  --rt-on-accent: #2b0d1c;
+  --rt-on-accent-2: #2b0d1c;
+  --rt-link-hover-ink: #8c0048;
+  --rt-focus: #8c0048;
+  --rt-heading-ink: #e0006f;
+  --rt-rainbow: linear-gradient(
+    90deg,
+    #b80000, #9c4600, #6e5600, #00662b, #005f9e, #5b2fd6, #a3007f, #b80000
+  );
   --rt-bevel-light: #ffffff;
   --rt-bevel-dark: #d59ab8;
-  --rt-title-bar: linear-gradient(90deg, #ff5fa8, #ffa8d4);
+  --rt-title-bar: linear-gradient(90deg, #c70063, #e0006f);
   --rt-title-ink: #ffffff;
   --rt-counter-bg: #2b0d1c;
   --rt-counter-ink: #ff8ec4;
@@ -177,9 +193,21 @@
   --rt-link-hover-bg: #303070;
   --rt-accent: #ffff00;
   --rt-accent-2: #00ff9c;
+  --rt-on-accent: #111144;
+  --rt-on-accent-2: #111144;
+  --rt-link-hover-ink: #ffff00;
+  --rt-focus: #ffff00;
+  --rt-heading-ink: #ffff00;
+  /* Dark theme: the saturated stops are already legible, keep them loud. */
+  --rt-rainbow: linear-gradient(
+    90deg,
+    #ff2d2d, #ff8c00, #ffd700, #00e05c, #00b0ff, #a98cff, #ff5fd2, #ff2d2d
+  );
   --rt-bevel-light: #6666bb;
   --rt-bevel-dark: #000033;
-  --rt-title-bar: linear-gradient(90deg, #2222aa, #6666ff);
+  /* Second stop pulled back from #6666ff, where the yellow caption fell to
+     3.98 against a 0.85em bold title bar. */
+  --rt-title-bar: linear-gradient(90deg, #2222aa, #5555ee);
   --rt-title-ink: #ffff00;
   --rt-counter-bg: #000000;
   --rt-counter-ink: #00ff66;
@@ -199,6 +227,15 @@
   --rt-link-hover-bg: #0d3a1e;
   --rt-accent: #00ff66;
   --rt-accent-2: #19d3ff;
+  --rt-on-accent: #021206;
+  --rt-on-accent-2: #021206;
+  --rt-link-hover-ink: #00ff66;
+  --rt-focus: #00ff66;
+  --rt-heading-ink: #00ff66;
+  --rt-rainbow: linear-gradient(
+    90deg,
+    #ff2d2d, #ff8c00, #ffd700, #00e05c, #00b0ff, #a98cff, #ff5fd2, #ff2d2d
+  );
   --rt-bevel-light: #2f7a4a;
   --rt-bevel-dark: #021206;
   --rt-title-bar: linear-gradient(90deg, #04361c, #0a7a3c);
@@ -221,9 +258,20 @@
   --rt-link-hover-bg: #cfe0ff;
   --rt-accent: #0066ff;
   --rt-accent-2: #00c2ff;
+  --rt-on-accent: #ffffff;
+  /* Cyan is far too light for white text (2.07). */
+  --rt-on-accent-2: #06243b;
+  --rt-link-hover-ink: #00308f;
+  --rt-focus: #00308f;
+  --rt-heading-ink: #0052d6;
+  --rt-rainbow: linear-gradient(
+    90deg,
+    #b80000, #9c4600, #6e5600, #00662b, #005f9e, #5b2fd6, #a3007f, #b80000
+  );
   --rt-bevel-light: #ffffff;
   --rt-bevel-dark: #7c88a0;
-  --rt-title-bar: linear-gradient(90deg, #000080, #1084d0);
+  /* Second stop darkened from #1084d0 (white caption was 4.01). */
+  --rt-title-bar: linear-gradient(90deg, #000080, #0a63a8);
   --rt-title-ink: #ffffff;
   --rt-counter-bg: #0a0a1a;
   --rt-counter-ink: #00c2ff;
@@ -326,7 +374,7 @@
   font-family: var(--rt-font-alt);
   font-size: 2em;
   text-align: center;
-  color: var(--rt-accent);
+  color: var(--rt-heading-ink);
   text-shadow:
     2px 2px 0 var(--rt-bevel-dark),
     -1px -1px 0 var(--rt-bevel-light);
@@ -342,11 +390,11 @@
   margin: 1em 0 0.6em;
 }
 
+/* The stops are per-theme (§2). A single bright ramp looked right on the dark
+   themes and vanished on the light ones — #ffd700 on kawaii's near-white panel
+   is 1.36:1 — so the light themes get a darkened, equally rainbow ramp. */
 .rt-rainbow {
-  background-image: linear-gradient(
-    90deg,
-    #ff0000, #ff8c00, #ffd700, #00c853, #00b0ff, #7c4dff, #ff00c8, #ff0000
-  );
+  background-image: var(--rt-rainbow);
   background-size: 200% 100%;
   -webkit-background-clip: text;
   background-clip: text;
@@ -429,9 +477,9 @@
 .rt-btn:active { border-style: inset; }
 .rt-btn--primary {
   background: var(--rt-accent);
-  color: #ffffff;
+  color: var(--rt-on-accent);
 }
-.rt-btn--primary:hover { background: var(--rt-accent-2); color: #ffffff; }
+.rt-btn--primary:hover { background: var(--rt-accent-2); color: var(--rt-on-accent-2); }
 
 .rt-field {
   display: block;
@@ -743,7 +791,7 @@ a:hover > .rt-btn88 { border-color: var(--rt-accent); }
   margin: 0;
   padding: 6px 12px;
   background: var(--rt-accent);
-  color: #ffffff;
+  color: var(--rt-on-accent);
 }
 
 /* Fixed corner widgets (skin toggle, retro theme picker, music box) */
@@ -841,7 +889,7 @@ a:hover > .rt-btn88 { border-color: var(--rt-accent); }
 }
 .rt-island [class*='bg-accent'] {
   background-color: var(--rt-accent) !important;
-  color: #ffffff !important;
+  color: var(--rt-on-accent) !important;
   border: 2px outset var(--rt-bevel-light);
 }
 
@@ -877,7 +925,7 @@ a:hover > .rt-btn88 { border-color: var(--rt-accent); }
    state here, with a caret as well as colour (never colour alone). */
 .rt-island .period-btn.active {
   background: var(--rt-accent) !important;
-  color: #ffffff !important;
+  color: var(--rt-on-accent) !important;
   border-style: inset !important;
 }
 .rt-island .period-btn.active::before { content: '\25B6\00a0'; }
@@ -942,10 +990,7 @@ a:hover > .rt-btn88 { border-color: var(--rt-accent); }
 /* Tunes hero title keeps its bg-clip-text mask; swap the DaisyUI gradient for
    the house rainbow so it reads as WordArt. Section 18 stops the animation. */
 .rt-island .bg-clip-text {
-  background-image: linear-gradient(
-    90deg,
-    #ff0000, #ff8c00, #ffd700, #00c853, #00b0ff, #7c4dff, #ff00c8, #ff0000
-  ) !important;
+  background-image: var(--rt-rainbow) !important;
   background-size: 200% 100%;
   animation: rt-rainbow-slide 6s linear infinite;
   font-family: var(--rt-font-alt);
