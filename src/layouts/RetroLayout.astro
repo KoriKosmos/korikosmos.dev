@@ -11,6 +11,7 @@ import OnekoToggle from "../components/OnekoToggle.tsx";
 import RetroChrome from "../retro-components/RetroChrome.tsx";
 import SkinToggle from "../retro-components/SkinToggle.tsx";
 import { NAV_ITEMS, SITE_TITLE, SITE_DESCRIPTION } from "../config";
+import { DEFAULT_RETRO_THEME, RETRO_THEMES } from "../lib/skin";
 
 const {
 	title = SITE_TITLE,
@@ -65,7 +66,7 @@ const BUTTONS = [
 const LAST_UPDATED = "26 July 2026";
 ---
 
-<html lang="en" data-skin="retro" data-retro-theme="kawaii">
+<html lang="en" data-skin="retro" data-retro-theme={DEFAULT_RETRO_THEME}>
 <head>
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -88,24 +89,27 @@ const LAST_UPDATED = "26 July 2026";
 	<link rel="preconnect" href="https://lastfm.freetls.fastly.net" crossorigin />
 
 	<!-- Critical background per retro theme, so the first paint isn't the
-	     modern skin's dark grey before retro.css arrives -->
+	     modern skin's dark grey before retro.css arrives. The bare selector
+	     carries the default (y2k) for a first visit with no attribute yet —
+	     keep it in step with DEFAULT_RETRO_THEME. -->
 	<style is:inline>
-		html[data-skin="retro"] { background-color: #ffe9f4; }
+		html[data-skin="retro"] { background-color: #b8c2d4; }
+		html[data-skin="retro"][data-retro-theme="kawaii"] { background-color: #ffe9f4; }
 		html[data-skin="retro"][data-retro-theme="geocities"] { background-color: #000018; }
 		html[data-skin="retro"][data-retro-theme="cyber"] { background-color: #030b05; }
 		html[data-skin="retro"][data-retro-theme="y2k"] { background-color: #b8c2d4; }
 	</style>
 
-	<!-- Apply the saved retro colour scheme before first paint -->
-	<script is:inline>
-		(() => {
-			const allowed = ["kawaii", "geocities", "cyber", "y2k"];
-			const stored = localStorage.getItem("retro-theme");
-			document.documentElement.setAttribute(
-				"data-retro-theme",
-				allowed.includes(stored) ? stored : "kawaii",
-			);
-		})();
+	<!-- Apply the saved retro colour scheme before first paint. The allowlist
+	     and fallback come from src/lib/skin.ts via define:vars rather than being
+	     retyped here, which is how they drifted from it last time. -->
+	<script is:inline define:vars={{ allowed: RETRO_THEMES, fallback: DEFAULT_RETRO_THEME }}>
+		// define:vars already wraps this in its own function scope.
+		const stored = localStorage.getItem("retro-theme");
+		document.documentElement.setAttribute(
+			"data-retro-theme",
+			allowed.includes(stored) ? stored : fallback,
+		);
 	</script>
 </head>
 <body>

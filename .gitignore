@@ -177,5 +177,9 @@ ds-bundle/
 .design-sync/node_modules
 .claude/
 
-# Runtime-written site data (hit counter). The volume mount owns this, not git.
+# Runtime-written site data. The docker volume owns these, not git — they are
+# live on the server, and tracking them means every local dev run dirties the
+# working tree with whatever was typed into the guestbook.
 data/hits.json
+data/guestbook.json
+data/reactions.json

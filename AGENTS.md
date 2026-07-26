@@ -154,7 +154,7 @@ For Decap CMS OAuth:
 - Tetris game supports on-screen mobile controls for touch devices.
 - Tetris shows the next piece and lets me hold one with C or Shift.
 - The site has a "webcore mode" toggle: one click swaps the whole thing for a Web 1.0 personal homepage — tiled backgrounds, 88x31 buttons, blinkies, a marquee, a real hit counter, a webring, a waving cat mascot, and a guestbook. It is meant to feel like a different site I made in 2003, not like a theme.
-- Retro mode has four moods of its own: kawaii (pink, the default), geocities (starfield on navy), cyber (green-on-black terminal), and y2k (chrome and Windows blue).
+- Retro mode has four moods of its own: y2k (chrome and Windows blue, the default), kawaii (pink), geocities (starfield on navy), and cyber (green-on-black terminal).
 - Every retro graphic is drawn by `npm run gen:retro` rather than downloaded, so nothing is hotlinked from a dead GeoCities mirror.
 - The guestbook is real and persistent, and it is the one thing I most want people to actually use.
 - The nostalgia stops at accessibility: reduced motion silences everything that blinks, scrolls, sparkles or rainbows, the chiptune never autoplays, and every sub-theme is checked for WCAG contrast rather than eyeballed.

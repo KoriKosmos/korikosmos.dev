@@ -56,7 +56,7 @@ A production build **without** those env vars ships no admin routes at all.
 
 - **Webcore mode** — a full Web 1.0 skin behind a toggle:
   - A `kk-skin` cookie, resolved in `src/middleware.ts` before anything renders. `src/layouts/Layout.astro` is a dispatcher that picks `ModernLayout.astro` or `RetroLayout.astro`, and each route renders either a `src/page-components/*` or a `src/retro-components/Retro*` body.
-  - Four sub-themes of its own — kawaii, geocities, cyber, y2k — switched from the retro control panel and remembered in `localStorage`.
+  - Four sub-themes of its own — y2k (the default), kawaii, geocities, cyber — switched from the retro control panel and remembered in `localStorage`.
   - Every graphic is generated, not hotlinked: `npm run gen:retro` draws all 35 assets in `public/retro/` as animated SVG. The output is committed, so the build never runs the script.
   - The three interactive islands (Tetris, Rock Paper Scissors, Tunes) are the same components, wrapped in `RetroIslandShell.astro` and restyled from outside — not forked.
   - Reduced motion stops everything that blinks, scrolls, sparkles or rainbows, the chiptune never autoplays, and every sub-theme's colour pairs are checked against WCAG contrast ratios.
