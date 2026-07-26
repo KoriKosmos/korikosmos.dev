@@ -1,27 +1,57 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import { getCollection, getEntryBySlug } from 'astro:content';
+import { getEntry } from 'astro:content';
+import { isRetro } from '../../lib/skin';
 import { BlogPostPage } from '../../page-components/BlogPostPage.tsx';
-import PostReactions from '../../page-components/PostReactions.tsx';
+import { PostReactions } from '../../page-components/PostReactions.tsx';
+import { RetroBlogPostPage } from '../../retro-components/RetroBlogPostPage.tsx';
+import RetroIslandShell from '../../retro-components/RetroIslandShell.astro';
 
-export const prerender = true;
-
-export async function getStaticPaths() {
-  const posts = await getCollection('blog');
-  return posts.map(p => ({ params: { slug: p.slug } }));
-}
-
+// Server-rendered, not prerendered: the skin lives in a request cookie, and a
+// build-time render has no request to read it from. Content collections are
+// in-memory at runtime, so rendering per request costs effectively nothing.
+//
+// getEntry, not getEntryBySlug: the latter is deprecated and *throws* for these
+// collections rather than returning undefined, so the miss branch below was
+// unreachable and an unknown slug 500'd with an empty body. That was invisible
+// while this route was prerendered — getStaticPaths only ever fed it real
+// slugs — and became reachable the moment it went SSR.
 const { slug } = Astro.params;
-const post = await getEntryBySlug('blog', slug);
+const post = slug ? await getEntry('blog', slug) : undefined;
+// Rewrite rather than returning a bare 404 Response, so a mistyped URL gets the
+// site's real 404 page (in whichever skin) instead of a blank body.
+if (!post) return Astro.rewrite('/404');
+
 const { Content } = await post.render();
+const retro = isRetro(Astro);
 ---
 
 <Layout title={post.data.title} description={post.data.description} image={`/og/blog/${slug}.png`}>
-  <BlogPostPage title={post.data.title}>
-    <Content />
-  </BlogPostPage>
-  {/* Sibling of the post, not a child: `client:*` is an Astro-template
-      directive (BlogPostPage is React and couldn't apply it), and keeping the
-      bar outside `.prose` stops typography styles restyling the buttons. */}
-  <PostReactions client:load slug={slug} />
+  {retro ? (
+    <>
+      <RetroBlogPostPage
+        title={post.data.title}
+        description={post.data.description}
+        pubDate={post.data.pubDate.toISOString()}
+        updatedDate={post.data.updatedDate?.toISOString()}
+      >
+        <Content />
+      </RetroBlogPostPage>
+      <RetroIslandShell
+        title="REACTIONS.EXE"
+        blinkie="kawaii"
+        blinkieAlt="Leave a reaction"
+        notes={["Click a face to react. Click it again to take it back."]}
+      >
+        <PostReactions client:load slug={slug!} />
+      </RetroIslandShell>
+    </>
+  ) : (
+    <>
+      <BlogPostPage title={post.data.title}>
+        <Content />
+      </BlogPostPage>
+      <PostReactions client:load slug={slug!} />
+    </>
+  )}
 </Layout>

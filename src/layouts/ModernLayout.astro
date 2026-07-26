@@ -1,0 +1,182 @@
+---
+// The original (and default) skin. Layout.astro dispatches here when the
+// kk-skin cookie is absent or "modern"; see RetroLayout.astro for the Web 1.0
+// shell and src/lib/skin.ts for how the choice is made.
+import "../styles/global.css";
+import { ClientRouter } from "astro:transitions";
+import { getCollection } from "astro:content";
+import OnekoToggle from "../components/OnekoToggle.tsx";
+import ThemeBar from "../components/ThemeBar.tsx";
+import ConstellationField from "../page-components/ConstellationField.tsx";
+import CommandPalette from "../page-components/CommandPalette.tsx";
+import NavigationProgress from "../page-components/NavigationProgress.tsx";
+import SkinToggle from "../retro-components/SkinToggle.tsx";
+import type { PaletteLink } from "../page-components/CommandPalette.tsx";
+import { NAV_ITEMS, SITE_TITLE, SITE_DESCRIPTION } from "../config";
+
+const {
+	title = SITE_TITLE,
+	description = SITE_DESCRIPTION,
+	image,
+	isWide = false,
+} = Astro.props;
+
+const formattedTitle = title === SITE_TITLE ? SITE_TITLE : `${title} | ${SITE_TITLE}`;
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+const socialImage = new URL(image ?? '/og/site.png', Astro.site);
+
+const isActive = (href: string) =>
+	Astro.url.pathname === href || Astro.url.pathname.startsWith(`${href}/`);
+
+const [paletteBlog, paletteProjects] = await Promise.all([
+	getCollection("blog"),
+	getCollection("projects"),
+]);
+const paletteLinks: PaletteLink[] = [
+	{ label: "Home", href: "/", section: "Pages" },
+	...NAV_ITEMS.flatMap(item => ("items" in item ? item.items : [item])).map(link => ({
+		label: link.label,
+		href: link.href,
+		section: "Pages",
+		reload: link.reload,
+	})),
+	...paletteBlog.map(post => ({
+		label: post.data.title,
+		href: `/blog/${post.slug}`,
+		section: "Blog",
+		keywords: post.data.description,
+	})),
+	...paletteProjects.map(project => ({
+		label: project.data.title,
+		href: `/portfolio/${project.slug}`,
+		section: "Projects",
+		keywords: project.data.summary,
+	})),
+];
+---
+
+<!-- bg-base-100 lives on <html>, not <body>, so fixed -z-10 layers (homepage starfield) can paint above it -->
+<html lang="en" class="bg-base-100" data-skin="modern">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>{formattedTitle}</title>
+	<meta name="description" content={description} />
+	<link rel="canonical" href={canonicalURL} />
+	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+	<meta name="generator" content={Astro.generator} />
+
+	<!-- Open Graph -->
+	<meta property="og:type" content="website" />
+	<meta property="og:url" content={canonicalURL} />
+	<meta property="og:title" content={formattedTitle} />
+	<meta property="og:description" content={description} />
+	<meta property="og:image" content={socialImage} />
+
+	<!-- Twitter Card -->
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content={formattedTitle} />
+	<meta name="twitter:description" content={description} />
+	<meta name="twitter:image" content={socialImage} />
+
+	<!-- Preconnect -->
+	<link rel="preconnect" href="https://lastfm.freetls.fastly.net" crossorigin />
+
+	<!-- Critical theme backgrounds: correct paint even before the stylesheet loads -->
+	<style is:inline>
+		html { background-color: #111827; }
+		html[data-theme="light"] { background-color: #F3F4F6; }
+		html[data-theme="forest"] { background-color: #101B14; }
+		html[data-theme="batman"] { background-color: #000000; }
+		html[data-theme="spider-man"] { background-color: #10163A; }
+	</style>
+
+	<!-- Apply saved theme before first paint, and re-apply after every client-side navigation -->
+	<script is:inline>
+		(() => {
+			const applyTheme = () => {
+				let theme = localStorage.getItem("theme") || "dark";
+				if (theme === "spiderman") theme = "spider-man"; // pre-rename stored value
+				document.documentElement.setAttribute("data-theme", theme);
+			};
+			applyTheme();
+			if (!window.__themeSwapHooked) {
+				window.__themeSwapHooked = true;
+				document.addEventListener("astro:after-swap", applyTheme);
+			}
+		})();
+	</script>
+
+	<ClientRouter />
+</head>
+<body class="font-sans text-base-content min-h-screen flex flex-col">
+<ConstellationField client:load transition:persist="constellation" />
+<a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-content focus:rounded">
+	Skip to content
+</a>
+<!-- Right padding keeps nav links clear of the fixed ThemeBar (search button +
+     5 swatches) in the top-right corner. relative z-30 lifts the header's
+     stacking context above page content so dropdown menus aren't covered by
+     z-indexed elements in <main> -->
+<header class="relative z-30 p-4 pr-52 sm:pr-60 border-b border-base-content/10 shrink-0" transition:name="site-header">
+	<nav class="flex flex-wrap items-center gap-x-4 gap-y-1 sm:gap-x-6" aria-label="Primary">
+		<a
+			href="/"
+			class="text-lg font-extrabold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent"
+			aria-current={Astro.url.pathname === "/" ? "page" : undefined}
+		>
+			{SITE_TITLE}
+		</a>
+		{
+			NAV_ITEMS.map(item =>
+				"items" in item ? (
+					<div class="dropdown dropdown-hover">
+						<div
+							tabindex="0"
+							role="button"
+							class={`nav-link cursor-pointer select-none ${item.items.some(l => isActive(l.href)) ? "text-primary" : ""}`}
+						>
+							{item.label}
+							<svg class="inline-block w-3 h-3 ml-0.5 opacity-60" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+								<path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.17l3.71-3.94a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z" clip-rule="evenodd" />
+							</svg>
+						</div>
+						<ul tabindex="0" class="dropdown-content menu bg-base-200 rounded-box z-50 mt-1 w-40 p-2 shadow-lg">
+							{item.items.map(link => (
+								<li>
+									<a href={link.href} class={isActive(link.href) ? "active" : ""} aria-current={isActive(link.href) ? "page" : undefined}>
+										{link.label}
+									</a>
+								</li>
+							))}
+						</ul>
+					</div>
+				) : (
+					<a
+						href={item.href}
+						class={`nav-link ${isActive(item.href) ? "text-primary" : ""}`}
+						aria-current={isActive(item.href) ? "page" : undefined}
+						data-astro-reload={item.reload ? true : undefined}
+					>
+						{item.label}
+					</a>
+				)
+			)
+		}
+	</nav>
+</header>
+
+<main id="main-content" class={`${isWide ? 'max-w-7xl' : 'max-w-3xl'} mx-auto px-4 flex-grow flex flex-col justify-center w-full pb-32`}>
+	<slot />
+</main>
+
+<footer class="text-center text-sm text-base-content/60 p-6 shrink-0" transition:name="site-footer">
+	&copy; {new Date().getFullYear()} Maan &ndash; KoriKosmos
+</footer>
+<OnekoToggle client:load transition:persist="oneko-toggle" />
+<ThemeBar client:load transition:persist="theme-bar" />
+<SkinToggle client:load skin="modern" transition:persist="skin-toggle" />
+<CommandPalette client:load transition:persist="command-palette" links={paletteLinks} />
+<NavigationProgress client:load transition:persist="navigation-progress" />
+</body>
+</html>

@@ -1,8 +1,12 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { isRetro } from '../lib/skin';
 import { NotFoundPage } from '../page-components/NotFoundPage.tsx';
+import { RetroNotFoundPage } from '../retro-components/RetroNotFoundPage.tsx';
+
+const retro = isRetro(Astro);
 ---
 
 <Layout title="Page Not Found" description="The page you're looking for doesn't exist.">
-  <NotFoundPage />
+  {retro ? <RetroNotFoundPage /> : <NotFoundPage />}
 </Layout>

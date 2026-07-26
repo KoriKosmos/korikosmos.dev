@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="12" viewBox="0 0 120 12"><style>.b { animation: slide 3s linear infinite; } @keyframes slide { to { transform: translateX(-60px); } }@media (prefers-reduced-motion: reduce){*{animation:none!important;}}</style>
+     <defs><linearGradient id="r" x1="0" x2="1">
+       <stop offset="0%" stop-color="#ff0000"/><stop offset="16%" stop-color="#ff8c00"/>
+       <stop offset="33%" stop-color="#ffd700"/><stop offset="50%" stop-color="#00c853"/>
+       <stop offset="66%" stop-color="#00b0ff"/><stop offset="83%" stop-color="#7c4dff"/>
+       <stop offset="100%" stop-color="#ff0000"/>
+     </linearGradient></defs>
+     <g class="b"><rect x="-60" width="240" height="12" fill="url(#r)"/></g></svg>

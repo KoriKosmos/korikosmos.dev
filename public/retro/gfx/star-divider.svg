@@ -1,0 +1,2 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="28" height="14" viewBox="0 0 28 14"><style>.s { animation: tw 1.6s ease-in-out infinite; transform-origin: 14px 7px; } @keyframes tw { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }@media (prefers-reduced-motion: reduce){*{animation:none!important;}}</style>
+     <path class="s" d="M14 1 L16.2 5.6 L21.4 6.3 L17.7 10 L18.6 15 L14 12.6 L9.4 15 L10.3 10 L6.6 6.3 L11.8 5.6 Z" fill="#ffd700" stroke="#c89b00" stroke-width="0.6"/></svg>

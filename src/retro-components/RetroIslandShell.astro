@@ -1,0 +1,49 @@
+---
+// Retro chrome around an interactive island (Tetris, Rock Paper Scissors,
+// Tunes).
+//
+// These three are wrapped rather than rewritten. src/lib/tetris.js and
+// rockPaperScissors.ts drive their DOM through document.getElementById against
+// the exact markup in Tetris.tsx / RockPaperScissors.tsx, and Tunes.tsx holds
+// 359 lines of polling state — a retro fork of that markup would render fine
+// and silently stop working. So the island renders unchanged and retro.css
+// restyles it in place (see the "interactive islands" section there).
+//
+// This is an .astro component, not React: Astro pre-renders content slotted
+// into a framework component to static HTML, which would strip the island's
+// hydration. Astro-to-Astro slots pass it through intact.
+interface Props {
+  /** Window title bar text. */
+  title: string;
+  /** Blinkie shown above the island, from public/retro/blinkies/. */
+  blinkie?: string;
+  blinkieAlt?: string;
+  /** Lines of period-appropriate preamble. */
+  notes?: string[];
+}
+
+const { title, blinkie, blinkieAlt = '', notes = [] } = Astro.props;
+---
+
+<div class="rt-panel">
+  <div class="rt-panel__title">{title}</div>
+  <div class="rt-panel__body">
+    {blinkie && (
+      <p class="rt-center">
+        <img class="rt-blinkie" src={`/retro/blinkies/${blinkie}.svg`} alt={blinkieAlt} width="150" height="20" />
+      </p>
+    )}
+    {notes.length > 0 && (
+      <div class="rt-inset rt-small" style="margin-bottom:10px">
+        {notes.map(note => <p style="margin:0 0 4px">{note}</p>)}
+      </div>
+    )}
+    <div class="rt-island">
+      <slot />
+    </div>
+    <div class="rt-hr"></div>
+    <p class="rt-center rt-note" style="margin:0">
+      This applet requires a modern browser. If nothing happens, try turning it off and on again.
+    </p>
+  </div>
+</div>

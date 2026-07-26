@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="72" height="72" viewBox="0 0 72 72"><style>.blink { animation: bl 4s steps(1,end) infinite; } @keyframes bl { 0%,94% { transform: scaleY(1); } 95%,100% { transform: scaleY(0.1); } } .float { animation: fl 3s ease-in-out infinite; } @keyframes fl { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } } .tail { animation: tw 1.8s ease-in-out infinite; transform-origin: 58px 54px; } @keyframes tw { 0%,100% { transform: rotate(-8deg); } 50% { transform: rotate(14deg); } }@media (prefers-reduced-motion: reduce){*{animation:none!important;}}</style>
+     <g class="float">
+       <path class="tail" d="M56 54 q12 -2 10 -14" stroke="#6b4a5c" stroke-width="5" fill="none" stroke-linecap="round"/>
+       <ellipse cx="36" cy="46" rx="22" ry="18" fill="#ffd9ea" stroke="#6b4a5c" stroke-width="2.5"/>
+       <path d="M18 30 L16 14 L30 22 Z" fill="#ffd9ea" stroke="#6b4a5c" stroke-width="2.5" stroke-linejoin="round"/>
+       <path d="M54 30 L56 14 L42 22 Z" fill="#ffd9ea" stroke="#6b4a5c" stroke-width="2.5" stroke-linejoin="round"/>
+       <g class="blink" style="transform-origin:26px 42px"><ellipse cx="26" cy="42" rx="3.2" ry="4" fill="#3a2230"/></g>
+       <g class="blink" style="transform-origin:46px 42px"><ellipse cx="46" cy="42" rx="3.2" ry="4" fill="#3a2230"/></g>
+       <circle cx="27.4" cy="40.6" r="1.1" fill="#ffffff"/>
+       <circle cx="47.4" cy="40.6" r="1.1" fill="#ffffff"/>
+       <path d="M33 50 q3 3 6 0" stroke="#3a2230" stroke-width="2" fill="none" stroke-linecap="round"/>
+       <ellipse cx="17" cy="49" rx="4" ry="2.6" fill="#ff9ec4" opacity="0.75"/>
+       <ellipse cx="55" cy="49" rx="4" ry="2.6" fill="#ff9ec4" opacity="0.75"/>
+     </g></svg>

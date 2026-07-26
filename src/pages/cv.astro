@@ -1,11 +1,18 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import cvData from '../data/cv.json';
+import { isRetro } from '../lib/skin';
 import { CvPage } from '../page-components/CvPage.tsx';
+import { RetroCvPage } from '../retro-components/RetroCvPage.tsx';
 
 const { personal, sections } = cvData;
+const retro = isRetro(Astro);
 ---
 
 <Layout title="CV" description="CV and professional background of Maan.">
-  <CvPage personal={personal} sections={sections} />
+  {retro ? (
+    <RetroCvPage personal={personal} sections={sections} />
+  ) : (
+    <CvPage personal={personal} sections={sections} />
+  )}
 </Layout>

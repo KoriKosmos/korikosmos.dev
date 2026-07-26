@@ -1,17 +1,32 @@
 ---
 import Layout from "../layouts/Layout.astro";
+import { getCollection } from "astro:content";
+import { isRetro } from "../lib/skin";
 import { TypingHeading } from "../page-components/TypingHeading.tsx";
-import { GuestbookPage } from "../page-components/GuestbookPage.tsx";
-import { getEntries } from "../lib/guestbook";
+import { RetroHomePage } from "../retro-components/RetroHomePage.tsx";
 
-// Read the store directly rather than fetching /api/guestbook: an SSR
-// self-fetch would target the container's internal origin, not the canonical
-// one (see src/middleware.ts for the same class of problem).
-const guestbookEntries = await getEntries();
+const retro = isRetro(Astro);
+
+// Only the retro homepage needs these — it's a 2004 front page, so it lists
+// everything on the site rather than linking to four cards.
+const [posts, projects] = retro
+	? await Promise.all([getCollection("blog"), getCollection("projects")])
+	: [[], []];
 ---
 
 <Layout description="Personal portfolio, blog, and games hub by Maan.">
-	<section class="text-center pt-20 pb-12">
+	{retro ? (
+		<RetroHomePage
+			posts={posts.map(p => ({
+				slug: p.slug,
+				title: p.data.title,
+				description: p.data.description,
+				pubDate: p.data.pubDate.toISOString(),
+			}))}
+			projects={projects.map(p => ({ slug: p.slug, title: p.data.title, summary: p.data.summary }))}
+		/>
+	) : (
+	<section class="text-center py-20">
 		<TypingHeading client:load />
 		<p class="text-xl mb-10 text-base-content/70">
 			Welcome to my personal space on the internet.
@@ -53,5 +68,5 @@ const guestbookEntries = await getEntries();
 			</a>
 		</div>
 	</section>
-	<GuestbookPage client:load initialEntries={guestbookEntries} />
+	)}
 </Layout>

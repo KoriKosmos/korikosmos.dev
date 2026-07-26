@@ -1,8 +1,27 @@
 ---
 import Layout from '../../layouts/Layout.astro';
+import { isRetro } from '../../lib/skin';
 import { RockPaperScissors } from '../../page-components/RockPaperScissors.tsx';
+import RetroIslandShell from '../../retro-components/RetroIslandShell.astro';
+
+const retro = isRetro(Astro);
 ---
 
 <Layout title="Rock Paper Scissors" description="Challenge the CPU in Rock Paper Scissors with a global leaderboard.">
-  <RockPaperScissors client:load />
+  {retro ? (
+    <RetroIslandShell
+      title="ROSHAMBO.EXE"
+      blinkie="kawaii"
+      blinkieAlt="Kawaii"
+      notes={[
+        '★ Pick rock, paper, or scissors. The CPU is completely fair.',
+        '★ It will ask for your name in a pop-up box. This is normal for 2004.',
+        '★ Wins and losses go on the global scoreboard.',
+      ]}
+    >
+      <RockPaperScissors client:load />
+    </RetroIslandShell>
+  ) : (
+    <RockPaperScissors client:load />
+  )}
 </Layout>

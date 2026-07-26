@@ -1,0 +1,1021 @@
+/* ===========================================================================
+   retro.css — the Web 1.0 / webcore skin.
+
+   Both stylesheets ship on every page: Layout.astro statically imports both
+   shells, so Astro bundles global.css (Tailwind + DaisyUI) alongside this file
+   regardless of which one renders.
+
+   So anything that could collide with Tailwind — the element-level un-reset in
+   section 1, and the island overrides in section 17 — is scoped under
+   [data-skin="retro"]. The rt-* component classes are not, and don't need to
+   be: the prefix is already unique, and only the retro shell emits them.
+
+   Section 1 is an *un-reset*. Tailwind's Preflight strips exactly the browser
+   defaults this aesthetic is built on — list bullets, heading sizes, table and
+   hr borders, inline images — so they have to be handed back explicitly.
+
+   THIS FILE IS THE SHARED VOCABULARY. Retro page components use these classes;
+   they do not invent their own. Add primitives here, centrally, or the pages
+   drift into mutually incompatible dialects.
+   =========================================================================== */
+
+/* ---------------------------------------------------------------------------
+   1. Un-reset — undo Tailwind Preflight inside the retro skin
+--------------------------------------------------------------------------- */
+[data-skin='retro'] {
+  --rt-font-body: 'Comic Sans MS', 'Comic Sans', 'Chalkboard SE', 'Trebuchet MS', cursive, sans-serif;
+  --rt-font-alt: Verdana, Geneva, 'DejaVu Sans', sans-serif;
+  --rt-font-serif: 'Times New Roman', Times, serif;
+  --rt-font-mono: 'Courier New', Courier, 'DejaVu Sans Mono', monospace;
+}
+
+[data-skin='retro'] body {
+  font-family: var(--rt-font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--rt-ink);
+  background-color: var(--rt-bg);
+  background-image: var(--rt-tile);
+  background-repeat: repeat;
+  background-attachment: fixed;
+  cursor: var(--rt-cursor);
+}
+
+/* The element selectors below are wrapped in :where() so the whole un-reset
+   sits at exactly one-class specificity (0,1,0). That is high enough to beat
+   Tailwind Preflight's bare-element rules (0,0,1), and low enough that every
+   rt-* class in sections 3+ wins on source order. Without :where(), a plain
+   `[data-skin='retro'] h2` (0,1,1) outranks `.rt-subhead` (0,1,0) — headings,
+   .rt-btn links, and the list-style:none on .rt-badges / .rt-cardgrid / .rt-nav
+   all silently lose to the reset that is supposed to be their floor. */
+[data-skin='retro'] :where(h1, h2, h3, h4, h5, h6) {
+  font-weight: bold;
+  margin: 0.5em 0 0.4em;
+  line-height: 1.2;
+}
+[data-skin='retro'] :where(h1) { font-size: 2em; }
+[data-skin='retro'] :where(h2) { font-size: 1.5em; }
+[data-skin='retro'] :where(h3) { font-size: 1.25em; }
+[data-skin='retro'] :where(h4) { font-size: 1.05em; }
+[data-skin='retro'] :where(h5) { font-size: 0.95em; }
+[data-skin='retro'] :where(h6) { font-size: 0.9em; }
+
+[data-skin='retro'] :where(p) { margin: 0 0 0.9em; }
+
+[data-skin='retro'] :where(ul, ol) {
+  margin: 0 0 0.9em;
+  padding-left: 2.2em;
+}
+[data-skin='retro'] :where(ul) { list-style: disc outside; }
+[data-skin='retro'] :where(ol) { list-style: decimal outside; }
+[data-skin='retro'] :where(ul ul) { list-style: circle outside; }
+[data-skin='retro'] :where(li) { margin: 0.15em 0; }
+
+[data-skin='retro'] :where(blockquote) {
+  margin: 0 0 0.9em 1.2em;
+  padding-left: 0.8em;
+  border-left: 4px ridge var(--rt-accent);
+  font-style: italic;
+}
+
+[data-skin='retro'] :where(hr) {
+  border: 0;
+  border-top: 2px groove var(--rt-bevel-dark);
+  margin: 1em 0;
+}
+
+[data-skin='retro'] :where(img) {
+  display: inline-block;
+  vertical-align: middle;
+  max-width: 100%;
+  height: auto;
+}
+
+[data-skin='retro'] :where(table) {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+[data-skin='retro'] :where(b, strong) { font-weight: bold; }
+[data-skin='retro'] :where(i, em) { font-style: italic; }
+[data-skin='retro'] :where(u) { text-decoration: underline; }
+[data-skin='retro'] :where(small) { font-size: 0.8em; }
+
+[data-skin='retro'] :where(code, pre, kbd, samp) {
+  font-family: var(--rt-font-mono);
+  font-size: 0.95em;
+}
+
+[data-skin='retro'] :where(a) {
+  color: var(--rt-link);
+  text-decoration: underline;
+  cursor: var(--rt-cursor-pointer);
+}
+[data-skin='retro'] :where(a:visited) { color: var(--rt-visited); }
+/* Hover ink is its own variable, not --rt-accent: the accent is tuned to read
+   against the page, and on the pale hover plate it dropped to 2.5:1 in kawaii
+   — i.e. hovering a link made it harder to read than leaving it alone. */
+[data-skin='retro'] :where(a:hover) {
+  color: var(--rt-link-hover-ink);
+  background-color: var(--rt-link-hover-bg);
+}
+
+[data-skin='retro'] :where(button, input, select, textarea) {
+  font-family: var(--rt-font-alt);
+  font-size: 1em;
+  cursor: var(--rt-cursor-pointer);
+}
+
+[data-skin='retro'] :where(fieldset) {
+  border: 2px groove var(--rt-bevel-light);
+  padding: 0.6em 0.9em;
+  margin: 0 0 1em;
+}
+[data-skin='retro'] :where(legend) {
+  padding: 0 0.4em;
+  font-weight: bold;
+}
+
+/* --rt-focus, not --rt-accent: a focus indicator needs 3:1 against whatever it
+   sits on, and the kawaii/y2k accents only managed 2.6–2.9 against the page. */
+[data-skin='retro'] *:focus-visible {
+  outline: 3px dotted var(--rt-focus);
+  outline-offset: 1px;
+}
+
+/* ---------------------------------------------------------------------------
+   2. Retro sub-themes — set on <html data-retro-theme="...">
+   Defaults live on [data-skin="retro"] so a missing attribute still renders.
+--------------------------------------------------------------------------- */
+[data-skin='retro'][data-retro-theme='kawaii'] {
+  --rt-bg: #ffe9f4;
+  --rt-tile: url('/retro/tiles/hearts.svg');
+  --rt-panel: #fffafd;
+  --rt-panel-alt: #ffeff7;
+  --rt-ink: #4a2c3d;
+  --rt-ink-soft: #8a6478;
+  --rt-link: #d6006e;
+  --rt-visited: #9b30a0;
+  --rt-link-hover-bg: #ffe0ef;
+  --rt-accent: #ff4f9e;
+  --rt-accent-2: #a06cff;
+  /* Ink for text sitting *on* the accents. Both are light enough here that
+     white fails (3.06 / 3.45), so the buttons take the dark plum instead. */
+  --rt-on-accent: #2b0d1c;
+  --rt-on-accent-2: #2b0d1c;
+  --rt-link-hover-ink: #8c0048;
+  --rt-focus: #8c0048;
+  --rt-heading-ink: #e0006f;
+  --rt-rainbow: linear-gradient(
+    90deg,
+    #b80000, #9c4600, #6e5600, #00662b, #005f9e, #5b2fd6, #a3007f, #b80000
+  );
+  --rt-bevel-light: #ffffff;
+  --rt-bevel-dark: #d59ab8;
+  --rt-title-bar: linear-gradient(90deg, #c70063, #e0006f);
+  --rt-title-ink: #ffffff;
+  --rt-counter-bg: #2b0d1c;
+  --rt-counter-ink: #ff8ec4;
+  --rt-marquee-bg: #ffd6ea;
+  --rt-shadow: rgba(214, 0, 110, 0.25);
+}
+
+[data-skin='retro'][data-retro-theme='geocities'] {
+  --rt-bg: #000018;
+  --rt-tile: url('/retro/tiles/stars.svg');
+  --rt-panel: #111144;
+  --rt-panel-alt: #1a1a5c;
+  --rt-ink: #e8e8ff;
+  --rt-ink-soft: #a8a8d8;
+  --rt-link: #66ccff;
+  --rt-visited: #cc99ff;
+  --rt-link-hover-bg: #303070;
+  --rt-accent: #ffff00;
+  --rt-accent-2: #00ff9c;
+  --rt-on-accent: #111144;
+  --rt-on-accent-2: #111144;
+  --rt-link-hover-ink: #ffff00;
+  --rt-focus: #ffff00;
+  --rt-heading-ink: #ffff00;
+  /* Dark theme: the saturated stops are already legible, keep them loud. */
+  --rt-rainbow: linear-gradient(
+    90deg,
+    #ff2d2d, #ff8c00, #ffd700, #00e05c, #00b0ff, #a98cff, #ff5fd2, #ff2d2d
+  );
+  --rt-bevel-light: #6666bb;
+  --rt-bevel-dark: #000033;
+  /* Second stop pulled back from #6666ff, where the yellow caption fell to
+     3.98 against a 0.85em bold title bar. */
+  --rt-title-bar: linear-gradient(90deg, #2222aa, #5555ee);
+  --rt-title-ink: #ffff00;
+  --rt-counter-bg: #000000;
+  --rt-counter-ink: #00ff66;
+  --rt-marquee-bg: #000044;
+  --rt-shadow: rgba(0, 0, 0, 0.6);
+}
+
+[data-skin='retro'][data-retro-theme='cyber'] {
+  --rt-bg: #030b05;
+  --rt-tile: url('/retro/tiles/matrix.svg');
+  --rt-panel: #06180d;
+  --rt-panel-alt: #0a2414;
+  --rt-ink: #b6ffcb;
+  --rt-ink-soft: #6cc98a;
+  --rt-link: #00ff66;
+  --rt-visited: #19d3ff;
+  --rt-link-hover-bg: #0d3a1e;
+  --rt-accent: #00ff66;
+  --rt-accent-2: #19d3ff;
+  --rt-on-accent: #021206;
+  --rt-on-accent-2: #021206;
+  --rt-link-hover-ink: #00ff66;
+  --rt-focus: #00ff66;
+  --rt-heading-ink: #00ff66;
+  --rt-rainbow: linear-gradient(
+    90deg,
+    #ff2d2d, #ff8c00, #ffd700, #00e05c, #00b0ff, #a98cff, #ff5fd2, #ff2d2d
+  );
+  --rt-bevel-light: #2f7a4a;
+  --rt-bevel-dark: #021206;
+  --rt-title-bar: linear-gradient(90deg, #04361c, #0a7a3c);
+  --rt-title-ink: #b6ffcb;
+  --rt-counter-bg: #000000;
+  --rt-counter-ink: #00ff66;
+  --rt-marquee-bg: #04220f;
+  --rt-shadow: rgba(0, 255, 102, 0.2);
+}
+
+/* y2k is the default, so it also carries the bare no-attribute selector —
+   see DEFAULT_RETRO_THEME in src/lib/skin.ts. */
+[data-skin='retro'],
+[data-skin='retro'][data-retro-theme='y2k'] {
+  --rt-bg: #b8c2d4;
+  --rt-tile: url('/retro/tiles/chrome.svg');
+  --rt-panel: #e9edf5;
+  --rt-panel-alt: #d6dcea;
+  --rt-ink: #101c33;
+  --rt-ink-soft: #4a5a78;
+  --rt-link: #0033cc;
+  --rt-visited: #6633cc;
+  --rt-link-hover-bg: #cfe0ff;
+  --rt-accent: #0066ff;
+  --rt-accent-2: #00c2ff;
+  --rt-on-accent: #ffffff;
+  /* Cyan is far too light for white text (2.07). */
+  --rt-on-accent-2: #06243b;
+  --rt-link-hover-ink: #00308f;
+  --rt-focus: #00308f;
+  --rt-heading-ink: #0052d6;
+  --rt-rainbow: linear-gradient(
+    90deg,
+    #b80000, #9c4600, #6e5600, #00662b, #005f9e, #5b2fd6, #a3007f, #b80000
+  );
+  --rt-bevel-light: #ffffff;
+  --rt-bevel-dark: #7c88a0;
+  /* Second stop darkened from #1084d0 (white caption was 4.01). */
+  --rt-title-bar: linear-gradient(90deg, #000080, #0a63a8);
+  --rt-title-ink: #ffffff;
+  --rt-counter-bg: #0a0a1a;
+  --rt-counter-ink: #00c2ff;
+  --rt-marquee-bg: #c8d2e4;
+  --rt-shadow: rgba(16, 28, 51, 0.35);
+}
+
+/* Cursors are shared across themes — pixel arrow + pixel hand, inlined so they
+   need no extra request. Fall back to the OS cursor where unsupported. */
+[data-skin='retro'] {
+  --rt-cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M3 1.5 L3 19.5 L7.7 15.2 L10.6 21.8 L13.9 20.3 L11 13.9 L17.5 13.6 Z' fill='%23ffffff' stroke='%23000000' stroke-width='1.5' stroke-linejoin='miter'/%3E%3C/svg%3E")
+    3 2, auto;
+  --rt-cursor-pointer: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 26 26'%3E%3Cpath d='M9 2 L9 12 L7.5 10.5 L4.5 12.5 L8 18 L9.5 23 L19 23 L21 13 L21 9 L18.5 9 L18.5 7.5 L16 7.5 L16 6 L13.5 6 L13.5 2 Z' fill='%23ffffff' stroke='%23000000' stroke-width='1.5' stroke-linejoin='miter'/%3E%3C/svg%3E")
+    8 2, pointer;
+}
+
+/* ---------------------------------------------------------------------------
+   3. Page scaffold
+--------------------------------------------------------------------------- */
+.rt-page {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 12px 10px 40px;
+}
+
+/* The classic three-column table layout. Collapses to stacked blocks on
+   narrow screens — 2004 didn't have to care, this site does. */
+.rt-shell {
+  width: 100%;
+  margin-top: 10px;
+}
+.rt-shell > tbody > tr > td {
+  vertical-align: top;
+  padding: 0 6px;
+}
+.rt-col-left { width: 190px; }
+.rt-col-right { width: 170px; }
+.rt-col-main { width: auto; }
+
+@media (max-width: 860px) {
+  .rt-shell,
+  .rt-shell > tbody,
+  .rt-shell > tbody > tr,
+  .rt-shell > tbody > tr > td {
+    display: block;
+    width: auto !important;
+  }
+  .rt-shell > tbody > tr > td { padding: 0; }
+}
+
+/* ---------------------------------------------------------------------------
+   4. Panels — the beveled window boxes everything sits in
+--------------------------------------------------------------------------- */
+.rt-panel {
+  background: var(--rt-panel);
+  border: 3px outset var(--rt-bevel-light);
+  border-right-color: var(--rt-bevel-dark);
+  border-bottom-color: var(--rt-bevel-dark);
+  margin-bottom: 14px;
+  box-shadow: 3px 3px 0 var(--rt-shadow);
+}
+
+.rt-panel__title {
+  background: var(--rt-title-bar);
+  color: var(--rt-title-ink);
+  font-family: var(--rt-font-alt);
+  font-weight: bold;
+  font-size: 0.85em;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-bottom: 2px solid var(--rt-bevel-dark);
+}
+.rt-panel__title::after {
+  content: '_ □ ×';
+  margin-left: auto;
+  font-family: var(--rt-font-mono);
+  opacity: 0.85;
+  letter-spacing: 0.1em;
+}
+/* Panels that shouldn't pretend to be OS windows. */
+.rt-panel__title--plain::after { content: none; }
+
+.rt-panel__body { padding: 10px 12px; }
+
+/* Sunken well — for quotes, counters, code, "screens" */
+.rt-inset {
+  background: var(--rt-panel-alt);
+  border: 2px inset var(--rt-bevel-dark);
+  padding: 8px 10px;
+}
+
+/* ---------------------------------------------------------------------------
+   5. Headings & text decoration
+--------------------------------------------------------------------------- */
+.rt-heading {
+  font-family: var(--rt-font-alt);
+  font-size: 2em;
+  text-align: center;
+  color: var(--rt-heading-ink);
+  text-shadow:
+    2px 2px 0 var(--rt-bevel-dark),
+    -1px -1px 0 var(--rt-bevel-light);
+  margin: 0.2em 0 0.5em;
+}
+
+.rt-subhead {
+  font-family: var(--rt-font-alt);
+  font-size: 1.2em;
+  color: var(--rt-accent-2);
+  border-bottom: 2px dashed var(--rt-accent);
+  padding-bottom: 2px;
+  margin: 1em 0 0.6em;
+}
+
+/* The stops are per-theme (§2). A single bright ramp looked right on the dark
+   themes and vanished on the light ones — #ffd700 on kawaii's near-white panel
+   is 1.36:1 — so the light themes get a darkened, equally rainbow ramp. */
+.rt-rainbow {
+  background-image: var(--rt-rainbow);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: rt-rainbow-slide 6s linear infinite;
+  font-weight: bold;
+}
+@keyframes rt-rainbow-slide {
+  to { background-position: -200% 0; }
+}
+
+.rt-glow { text-shadow: 0 0 6px var(--rt-accent), 0 0 12px var(--rt-accent); }
+
+/* <blink> is dead in every browser; this is the CSS wake. */
+.rt-blink { animation: rt-blink 1.1s steps(1, end) infinite; }
+@keyframes rt-blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+.rt-wobble { display: inline-block; animation: rt-wobble 2.4s ease-in-out infinite; }
+@keyframes rt-wobble {
+  0%, 100% { transform: rotate(-3deg); }
+  50% { transform: rotate(3deg); }
+}
+
+.rt-comic { font-family: var(--rt-font-body); }
+.rt-alt { font-family: var(--rt-font-alt); }
+.rt-serif { font-family: var(--rt-font-serif); }
+.rt-mono { font-family: var(--rt-font-mono); }
+.rt-center { text-align: center; }
+.rt-small { font-size: 0.8em; }
+.rt-soft { color: var(--rt-ink-soft); }
+.rt-note {
+  font-size: 0.8em;
+  color: var(--rt-ink-soft);
+  font-style: italic;
+}
+
+/* ---------------------------------------------------------------------------
+   6. Dividers
+--------------------------------------------------------------------------- */
+.rt-hr {
+  height: 12px;
+  border: 0;
+  margin: 14px 0;
+  background: url('/retro/gfx/rainbow-bar.svg') repeat-x center / auto 12px;
+}
+.rt-hr--stars {
+  background-image: url('/retro/gfx/star-divider.svg');
+  background-size: auto 14px;
+  height: 14px;
+}
+.rt-hr--hearts {
+  background-image: url('/retro/gfx/heart-divider.svg');
+  background-size: auto 14px;
+  height: 14px;
+}
+
+/* ---------------------------------------------------------------------------
+   7. Buttons & controls
+--------------------------------------------------------------------------- */
+.rt-btn {
+  display: inline-block;
+  font-family: var(--rt-font-alt);
+  font-size: 0.9em;
+  font-weight: bold;
+  color: var(--rt-ink);
+  background: var(--rt-panel-alt);
+  border: 3px outset var(--rt-bevel-light);
+  border-right-color: var(--rt-bevel-dark);
+  border-bottom-color: var(--rt-bevel-dark);
+  padding: 4px 12px;
+  text-decoration: none;
+}
+.rt-btn:hover {
+  background: var(--rt-link-hover-bg);
+  color: var(--rt-ink);
+}
+.rt-btn:active { border-style: inset; }
+.rt-btn--primary {
+  background: var(--rt-accent);
+  color: var(--rt-on-accent);
+}
+.rt-btn--primary:hover { background: var(--rt-accent-2); color: var(--rt-on-accent-2); }
+
+.rt-field {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  background: #ffffff;
+  color: #111111;
+  border: 2px inset var(--rt-bevel-dark);
+  padding: 4px 6px;
+  font-family: var(--rt-font-alt);
+}
+.rt-label {
+  display: block;
+  font-family: var(--rt-font-alt);
+  font-size: 0.85em;
+  font-weight: bold;
+  margin: 0.5em 0 0.2em;
+}
+
+/* ---------------------------------------------------------------------------
+   8. Navigation (sidebar link list)
+--------------------------------------------------------------------------- */
+.rt-nav { list-style: none; margin: 0; padding: 0; }
+.rt-nav li { margin: 0; border-bottom: 1px dotted var(--rt-bevel-dark); }
+.rt-nav li:last-child { border-bottom: 0; }
+.rt-nav a {
+  display: block;
+  padding: 4px 6px 4px 20px;
+  font-family: var(--rt-font-alt);
+  font-size: 0.9em;
+  text-decoration: none;
+  background: url('/retro/gfx/bullet.svg') no-repeat 4px center / 11px 11px;
+}
+.rt-nav a:hover {
+  background-color: var(--rt-link-hover-bg);
+  text-decoration: underline;
+}
+.rt-nav a[aria-current='page'] {
+  font-weight: bold;
+  color: var(--rt-accent);
+  background-color: var(--rt-panel-alt);
+}
+.rt-nav__group {
+  font-family: var(--rt-font-alt);
+  font-size: 0.72em;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--rt-ink-soft);
+  padding: 6px 6px 2px;
+  border-bottom: 0;
+}
+
+/* ---------------------------------------------------------------------------
+   9. Marquees
+--------------------------------------------------------------------------- */
+.rt-marquee {
+  background: var(--rt-marquee-bg);
+  border: 2px inset var(--rt-bevel-dark);
+  font-family: var(--rt-font-alt);
+  font-size: 0.85em;
+  padding: 3px 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+/* CSS marquee for the cases where a real <marquee> element isn't wanted. */
+.rt-marquee__track {
+  display: inline-block;
+  padding-left: 100%;
+  animation: rt-marquee 22s linear infinite;
+}
+@keyframes rt-marquee {
+  to { transform: translateX(-100%); }
+}
+
+/* ---------------------------------------------------------------------------
+   10. Badges, blinkies, stamps, awards
+--------------------------------------------------------------------------- */
+.rt-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: center;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.rt-badges li { margin: 0; }
+
+/* The 88×31 — the unit of currency of the old web. */
+.rt-btn88 {
+  display: block;
+  width: 88px;
+  height: 31px;
+  image-rendering: pixelated;
+  border: 1px solid var(--rt-bevel-dark);
+}
+a:hover > .rt-btn88 { border-color: var(--rt-accent); }
+
+.rt-blinkie {
+  display: block;
+  height: 20px;
+  width: auto;
+  image-rendering: pixelated;
+  margin: 3px auto;
+}
+
+.rt-stamp {
+  display: inline-block;
+  image-rendering: pixelated;
+  margin: 2px;
+}
+
+.rt-pixel { image-rendering: pixelated; }
+
+.rt-award {
+  display: block;
+  margin: 0 auto 6px;
+  max-width: 120px;
+}
+
+/* ---------------------------------------------------------------------------
+   11. Hit counter (odometer)
+--------------------------------------------------------------------------- */
+.rt-counter {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  background: var(--rt-counter-bg);
+  border: 2px inset var(--rt-bevel-dark);
+}
+.rt-counter__digit {
+  font-family: var(--rt-font-mono);
+  font-weight: bold;
+  font-size: 1.1em;
+  line-height: 1;
+  color: var(--rt-counter-ink);
+  background: rgba(255, 255, 255, 0.06);
+  padding: 3px 4px;
+  min-width: 0.9em;
+  text-align: center;
+  text-shadow: 0 0 5px currentColor;
+}
+
+/* ---------------------------------------------------------------------------
+   12. Webring
+--------------------------------------------------------------------------- */
+.rt-webring {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-family: var(--rt-font-alt);
+  font-size: 0.8em;
+  flex-wrap: wrap;
+}
+.rt-webring a { text-decoration: none; font-weight: bold; }
+.rt-webring a:hover { text-decoration: underline; }
+
+/* ---------------------------------------------------------------------------
+   13. Data tables & card grids
+--------------------------------------------------------------------------- */
+.rt-table {
+  width: 100%;
+  border: 2px inset var(--rt-bevel-dark);
+  background: var(--rt-panel);
+  font-family: var(--rt-font-alt);
+  font-size: 0.88em;
+}
+.rt-table th,
+.rt-table td {
+  border: 1px solid var(--rt-bevel-dark);
+  padding: 4px 7px;
+  text-align: left;
+}
+.rt-table th {
+  background: var(--rt-title-bar);
+  color: var(--rt-title-ink);
+  font-weight: bold;
+}
+.rt-table tbody tr:nth-child(even) { background: var(--rt-panel-alt); }
+
+.rt-cardgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 10px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.rt-cardgrid li { margin: 0; }
+
+.rt-card {
+  display: block;
+  height: 100%;
+  background: var(--rt-panel-alt);
+  border: 3px outset var(--rt-bevel-light);
+  border-right-color: var(--rt-bevel-dark);
+  border-bottom-color: var(--rt-bevel-dark);
+  padding: 8px 10px;
+  text-decoration: none;
+  color: var(--rt-ink);
+}
+.rt-card:hover {
+  background: var(--rt-link-hover-bg);
+  border-style: inset;
+}
+.rt-card__title {
+  font-family: var(--rt-font-alt);
+  font-weight: bold;
+  color: var(--rt-link);
+  margin: 0 0 3px;
+  font-size: 1.05em;
+}
+.rt-card__meta {
+  font-size: 0.78em;
+  color: var(--rt-ink-soft);
+  font-family: var(--rt-font-mono);
+}
+
+/* ---------------------------------------------------------------------------
+   14. Article typography (blog posts, project bodies, CV prose)
+--------------------------------------------------------------------------- */
+.rt-prose { font-family: var(--rt-font-alt); font-size: 0.95em; }
+.rt-prose h1,
+.rt-prose h2,
+.rt-prose h3 {
+  font-family: var(--rt-font-body);
+  color: var(--rt-accent-2);
+  border-bottom: 1px dashed var(--rt-bevel-dark);
+}
+.rt-prose img { border: 3px ridge var(--rt-accent); }
+.rt-prose pre {
+  background: var(--rt-counter-bg);
+  color: var(--rt-counter-ink);
+  border: 2px inset var(--rt-bevel-dark);
+  padding: 8px;
+  overflow-x: auto;
+}
+.rt-prose :not(pre) > code {
+  background: var(--rt-panel-alt);
+  border: 1px solid var(--rt-bevel-dark);
+  padding: 0 3px;
+}
+.rt-prose table { width: 100%; }
+.rt-prose th,
+.rt-prose td { border: 1px solid var(--rt-bevel-dark); padding: 3px 6px; }
+
+/* ---------------------------------------------------------------------------
+   15. Guestbook
+--------------------------------------------------------------------------- */
+.rt-gb-entry {
+  background: var(--rt-panel-alt);
+  border: 2px ridge var(--rt-bevel-light);
+  padding: 7px 10px;
+  margin-bottom: 8px;
+}
+.rt-gb-entry__head {
+  font-family: var(--rt-font-alt);
+  font-size: 0.82em;
+  color: var(--rt-ink-soft);
+  border-bottom: 1px dotted var(--rt-bevel-dark);
+  margin-bottom: 4px;
+  padding-bottom: 2px;
+}
+.rt-gb-entry__name { color: var(--rt-link); font-weight: bold; }
+.rt-gb-entry__body { white-space: pre-wrap; word-break: break-word; }
+
+/* ---------------------------------------------------------------------------
+   16. Utility bits
+--------------------------------------------------------------------------- */
+.rt-scroller {
+  max-height: 230px;
+  overflow-y: auto;
+  border: 2px inset var(--rt-bevel-dark);
+  background: var(--rt-panel-alt);
+  padding: 6px 8px;
+}
+.rt-stack > * + * { margin-top: 10px; }
+.rt-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.rt-construction {
+  display: block;
+  margin: 6px auto;
+  max-width: 180px;
+}
+.rt-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.rt-skip-link:focus {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 200;
+  width: auto;
+  height: auto;
+  clip: auto;
+  margin: 0;
+  padding: 6px 12px;
+  background: var(--rt-accent);
+  color: var(--rt-on-accent);
+}
+
+/* Fixed corner widgets (skin toggle, retro theme picker, music box) */
+.rt-dock {
+  position: fixed;
+  z-index: 90;
+  font-family: var(--rt-font-alt);
+  font-size: 0.78em;
+}
+.rt-dock--bl { bottom: 10px; left: 10px; }
+.rt-dock--tr { top: 10px; right: 10px; }
+
+.rt-swatches { display: flex; gap: 4px; }
+.rt-swatch {
+  width: 20px;
+  height: 20px;
+  border: 2px outset var(--rt-bevel-light);
+  padding: 0;
+  cursor: var(--rt-cursor-pointer);
+}
+.rt-swatch[aria-pressed='true'] { border-style: inset; outline: 2px solid var(--rt-accent); }
+
+/* Sparkle cursor trail (RetroChrome.tsx appends these to <body>) */
+.rt-sparkle {
+  position: fixed;
+  pointer-events: none;
+  z-index: 150;
+  width: 14px;
+  height: 14px;
+  animation: rt-sparkle-fade 700ms linear forwards;
+}
+@keyframes rt-sparkle-fade {
+  from { opacity: 1; transform: scale(1) rotate(0deg); }
+  to { opacity: 0; transform: scale(0.2) translateY(16px) rotate(140deg); }
+}
+
+/* ---------------------------------------------------------------------------
+   17. Interactive islands (Tetris, Rock Paper Scissors, Tunes)
+
+   These three keep their original Tailwind/DaisyUI markup — their logic drives
+   the DOM by id, so the markup can't be rewritten (see RetroIslandShell.astro).
+   Everything below restyles them in place from outside. `.rt-island` is the
+   wrapper RetroIslandShell puts around them.
+--------------------------------------------------------------------------- */
+.rt-island { font-family: var(--rt-font-alt); }
+
+/* The oneko toggle ships Tailwind classes and renders in both skins; DaisyUI's
+   colour vars resolve to the dark theme here (no data-theme is set), so it
+   needs bringing into the period. */
+[data-skin='retro'] #oneko-toggle {
+  font-family: var(--rt-font-alt);
+  font-size: 0.8em;
+  background-color: var(--rt-panel-alt) !important;
+  color: var(--rt-ink) !important;
+  border: 3px outset var(--rt-bevel-light);
+  border-right-color: var(--rt-bevel-dark);
+  border-bottom-color: var(--rt-bevel-dark);
+  border-radius: 0 !important;
+}
+[data-skin='retro'] #oneko-toggle:active { border-style: inset; }
+
+/* Island headings: the components hard-code `text-3xl font-bold` etc. Re-cut
+   them as .rt-heading / .rt-subhead without touching the markup. */
+.rt-island h1 {
+  font-family: var(--rt-font-alt);
+  font-size: 1.9em !important;
+  text-align: center;
+  color: var(--rt-accent);
+  text-shadow: 2px 2px 0 var(--rt-bevel-dark), -1px -1px 0 var(--rt-bevel-light);
+}
+.rt-island h2 {
+  font-family: var(--rt-font-alt);
+  font-size: 1.15em !important;
+  color: var(--rt-accent-2);
+  border-bottom: 2px dashed var(--rt-accent);
+  padding-bottom: 2px;
+}
+.rt-island h3 { font-family: var(--rt-font-alt); font-size: 1em !important; }
+
+/* 2003 had no border-radius. One sweep beats rounded/rounded-xl/-2xl/-3xl/-full
+   across all three islands without enumerating every utility. */
+.rt-island *,
+.rt-island *::before,
+.rt-island *::after { border-radius: 0 !important; }
+
+/* Surfaces. DaisyUI's colour vars resolve to the *dark* theme inside the retro
+   skin (no data-theme is set), so every bg-base and bg-neutral surface has to
+   be repainted or it fights the panel it sits in. Substring matching covers the
+   opacity variants (bg-base-200/50, bg-base-100/80, ...). */
+.rt-island [class*='bg-base-'],
+.rt-island [class*='bg-neutral'] {
+  background-color: var(--rt-panel-alt) !important;
+  border: 2px groove var(--rt-bevel-light);
+  backdrop-filter: none !important;
+}
+.rt-island [class*='bg-accent'] {
+  background-color: var(--rt-accent) !important;
+  color: var(--rt-on-accent) !important;
+  border: 2px outset var(--rt-bevel-light);
+}
+
+/* Ink. Same problem: dark-theme base-content on a light retro panel is
+   invisible. Accent-coloured section labels get the retro accents instead. */
+.rt-island [class*='text-base-content'],
+.rt-island [class*='text-neutral-content'] { color: var(--rt-ink) !important; }
+.rt-island [class*='text-base-content/4'],
+.rt-island [class*='text-base-content/6'],
+.rt-island [class*='text-base-content/8'] { color: var(--rt-ink-soft) !important; }
+.rt-island .text-primary { color: var(--rt-accent) !important; }
+.rt-island .text-secondary { color: var(--rt-accent-2) !important; }
+.rt-island .text-accent { color: var(--rt-link) !important; }
+.rt-island [class*='border-base-content'] { border-color: var(--rt-bevel-dark) !important; }
+
+/* Every island control becomes a beveled 3D button. */
+.rt-island button {
+  font-family: var(--rt-font-alt);
+  font-weight: bold;
+  color: var(--rt-ink) !important;
+  background: var(--rt-panel-alt) !important;
+  border: 3px outset var(--rt-bevel-light) !important;
+  border-right-color: var(--rt-bevel-dark) !important;
+  border-bottom-color: var(--rt-bevel-dark) !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+.rt-island button:hover { background: var(--rt-link-hover-bg) !important; }
+.rt-island button:active { border-style: inset !important; }
+
+/* Tunes' period switcher: its inline <style> tints the active button with
+   DaisyUI colours, which the rule above overrides — so re-mark the active
+   state here, with a caret as well as colour (never colour alone). */
+.rt-island .period-btn.active {
+  background: var(--rt-accent) !important;
+  color: var(--rt-on-accent) !important;
+  border-style: inset !important;
+}
+.rt-island .period-btn.active::before { content: '\25B6\00a0'; }
+
+/* Tetris canvases get a CRT bezel. content-box is deliberate: tetris.js sets
+   an explicit px style width/height, and border-box would scale the bitmap. */
+.rt-island canvas {
+  box-sizing: content-box;
+  background: var(--rt-counter-bg);
+  border: 6px inset var(--rt-bevel-dark);
+  image-rendering: pixelated;
+}
+.rt-island #board { border-width: 10px !important; }
+
+/* The username / game-over <dialog>s ship DaisyUI chrome — make them windows.
+   The [class] qualifier outranks the bg-base-* surface rule above, which would
+   otherwise repaint the border it sets. */
+.rt-island dialog[class] {
+  background: var(--rt-panel) !important;
+  color: var(--rt-ink) !important;
+  border: 4px outset var(--rt-bevel-light) !important;
+  border-right-color: var(--rt-bevel-dark) !important;
+  border-bottom-color: var(--rt-bevel-dark) !important;
+  box-shadow: 5px 5px 0 var(--rt-shadow) !important;
+}
+.rt-island dialog::backdrop { background: rgba(0, 0, 0, 0.55); }
+.rt-island input[type='text'] {
+  background: #ffffff !important;
+  color: #111111 !important;
+  border: 2px inset var(--rt-bevel-dark) !important;
+  font-family: var(--rt-font-alt);
+}
+
+/* Both games render their leaderboard into #leaderboard as plain <li>s; dress
+   the list as a sunken scoreboard (a real .rt-table isn't reachable from CSS). */
+.rt-island #leaderboard {
+  background: var(--rt-panel-alt);
+  border: 2px inset var(--rt-bevel-dark);
+  font-family: var(--rt-font-mono);
+  padding: 8px 8px 8px 34px;
+  margin-top: 6px;
+}
+.rt-island #leaderboard li { border-bottom: 1px dotted var(--rt-bevel-dark); padding: 2px 0; }
+.rt-island #leaderboard li:last-child { border-bottom: 0; }
+
+/* Rock-paper-scissors readout — the two lines the game writes into. */
+.rt-island #computerChoice,
+.rt-island #result {
+  font-family: var(--rt-font-mono);
+  font-weight: bold;
+  color: var(--rt-accent);
+  min-height: 1.4em;
+  margin: 0;
+}
+
+/* Tunes artwork: ridge frames like every 2003 photo album. The hero backdrop
+   copy is excluded — it's a blurred absolute-positioned layer, not a picture. */
+.rt-island img[class*='object-cover']:not([class*='blur']) {
+  border: 3px ridge var(--rt-accent);
+}
+
+/* Tunes hero title keeps its bg-clip-text mask; swap the DaisyUI gradient for
+   the house rainbow so it reads as WordArt. Section 18 stops the animation. */
+.rt-island .bg-clip-text {
+  background-image: var(--rt-rainbow) !important;
+  background-size: 200% 100%;
+  animation: rt-rainbow-slide 6s linear infinite;
+  font-family: var(--rt-font-alt);
+}
+
+/* ---------------------------------------------------------------------------
+   18. Reduced motion — the aesthetic is period-accurate, the accessibility
+   isn't. Everything that moves stops.
+--------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  [data-skin='retro'] *,
+  [data-skin='retro'] *::before,
+  [data-skin='retro'] *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  .rt-blink { opacity: 1 !important; }
+  .rt-rainbow {
+    background-position: 0 0;
+  }
+  .rt-marquee__track {
+    padding-left: 0;
+    animation: none;
+  }
+  .rt-sparkle { display: none; }
+}

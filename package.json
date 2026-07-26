@@ -7,7 +7,8 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "new-post": "node scripts/new-post.js"
+    "new-post": "node scripts/new-post.js",
+    "gen:retro": "node scripts/gen-retro-assets.mjs"
   },
   "dependencies": {
     "@astrojs/node": "^9.5.2",
@@ -32,5 +33,10 @@
     "daisyui": "^4.12.24",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.3.5"
-  }
+  },
+  "browserslist": [
+    "defaults",
+    "safari >= 15",
+    "ios_saf >= 15"
+  ]
 }

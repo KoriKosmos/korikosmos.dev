@@ -1,8 +1,27 @@
 ---
 import Layout from '../../layouts/Layout.astro';
+import { isRetro } from '../../lib/skin';
 import { Tetris } from '../../page-components/Tetris.tsx';
+import RetroIslandShell from '../../retro-components/RetroIslandShell.astro';
+
+const retro = isRetro(Astro);
 ---
 
 <Layout title="Tetris" description="Play Tetris in your browser with leaderboard support.">
-  <Tetris client:load />
+  {retro ? (
+    <RetroIslandShell
+      title="TETRIS.EXE"
+      blinkie="welcome"
+      blinkieAlt="Welcome"
+      notes={[
+        '★ Use the ARROW KEYS to move and rotate. SPACE drops.',
+        '★ High scores are saved to my server. No cheating!',
+        '★ Shareware version. Register today for 0 additional levels.',
+      ]}
+    >
+      <Tetris client:load />
+    </RetroIslandShell>
+  ) : (
+    <Tetris client:load />
+  )}
 </Layout>

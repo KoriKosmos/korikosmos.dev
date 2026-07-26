@@ -1,52 +1,7 @@
-// Ported from https://korikosmos.carrd.co — edit the LINKS data to add or remove entries.
+// Ported from https://korikosmos.carrd.co.
+// The data lives in src/data/links.ts because the retro skin renders it too.
 
-interface LinkItem {
-  label: string;
-  href: string;
-  detail?: string;
-}
-
-interface LinkSection {
-  title: string;
-  items: LinkItem[];
-}
-
-const LINKS: LinkSection[] = [
-  {
-    title: 'Social',
-    items: [
-      { label: 'Bluesky', href: 'https://bsky.app/profile/korikosmos.bsky.social' },
-      { label: 'Mastodon', href: 'https://urusai.social/@KoriKosmos' },
-      { label: 'Misskey', href: 'https://misskey.io/@KoriKosmos' },
-      { label: 'Twitter', href: 'https://twitter.com/KoriKosmos' },
-      { label: 'Instagram', href: 'https://www.instagram.com/korikosmos/' },
-      { label: 'Threads', href: 'https://www.threads.net/@korikosmos' },
-    ],
-  },
-  {
-    title: 'Watching, listening, playing',
-    items: [
-      { label: 'AniList', href: 'https://anilist.co/user/ZaneJulien/', detail: 'anime & manga' },
-      { label: 'Letterboxd', href: 'https://letterboxd.com/KoriKosmos/', detail: 'films' },
-      { label: 'Last.fm', href: 'https://www.last.fm/user/ZaneJulien', detail: 'music — see /tunes' },
-      { label: 'Steam', href: 'https://steamcommunity.com/id/KoriKosmos/', detail: 'games' },
-    ],
-  },
-  {
-    title: 'Work & code',
-    items: [
-      { label: 'GitHub', href: 'https://github.com/KoriKosmos' },
-      { label: 'LinkedIn', href: 'https://linkedin.com/in/maan-meher-449094a0' },
-      { label: 'Email', href: 'mailto:kori@korikosmos.dev', detail: 'kori@korikosmos.dev' },
-    ],
-  },
-  {
-    title: 'This site',
-    items: [{ label: 'RSS feed', href: '/rss.xml', detail: 'subscribe to the blog' }],
-  },
-];
-
-const isExternal = (href: string) => href.startsWith('http');
+import { LINKS, isExternalLink as isExternal } from '../data/links';
 
 export function LinksPage() {
   return (

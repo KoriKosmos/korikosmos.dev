@@ -1,235 +1,200 @@
-import { useState, type FormEvent } from 'react';
-import {
-  MAX_MESSAGE_LENGTH,
-  MAX_NAME_LENGTH,
-  type GuestbookEntry,
-} from '../lib/constants';
+// Modern-skin guestbook. Same data, same API, same behaviour as
+// retro-components/RetroGuestbookPage.tsx — just dressed in Tailwind + DaisyUI.
+//
+// The limits and the entry type come from ../lib/constants, not ../lib/guestbook:
+// that module imports node:fs and async-mutex at the top level, so a value
+// import would drag them into this client:load bundle. constants.ts is the one
+// source of truth for the limits, so the character counter here and the
+// truncation on the server can't disagree.
+import { useState } from 'react';
+import { MESSAGE_MAX, NAME_MAX, URL_MAX, type GuestbookEntry } from '../lib/constants';
 
 interface Props {
-  /** SSR-fetched in guestbook.astro so the list is in the HTML, not fetched on mount. */
-  initialEntries: GuestbookEntry[];
+  entries: GuestbookEntry[];
 }
 
-// Explicit locale + UTC keep server-rendered and hydrated output identical;
-// the visitor's own locale/timezone would produce a hydration mismatch.
-const dateFormatter = new Intl.DateTimeFormat('en-GB', {
-  day: 'numeric',
-  month: 'long',
-  year: 'numeric',
-  timeZone: 'UTC',
-});
-
-function formatDate(iso: string) {
-  const parsed = new Date(iso);
-  return Number.isNaN(parsed.valueOf()) ? '' : dateFormatter.format(parsed);
+interface GuestbookResponse {
+  entries?: GuestbookEntry[];
+  error?: string;
 }
 
-/** Deterministic per-name hue so each signature gets its own avatar colour. */
-function hueFor(name: string) {
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) % 360;
-  return hash;
+type Status = { kind: 'ok' | 'error'; text: string } | null;
+
+function formatStamp(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return iso;
+  const day = date.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+  const time = date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  return `${day} at ${time}`;
 }
 
-export function GuestbookPage({ initialEntries }: Props) {
-  const [entries, setEntries] = useState(initialEntries);
+export function GuestbookPage({ entries: initial }: Props) {
+  const [entries, setEntries] = useState<GuestbookEntry[]>(initial);
   const [name, setName] = useState('');
   const [message, setMessage] = useState('');
   const [url, setUrl] = useState('');
-  // Honeypot. Named "subject" rather than anything URL-ish so browser autofill
-  // won't populate it and cost a real visitor their signature.
-  const [subject, setSubject] = useState('');
-  const [status, setStatus] = useState<'idle' | 'sending' | 'sent'>('idle');
-  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [status, setStatus] = useState<Status>(null);
 
-  async function handleSubmit(event: FormEvent) {
+  const count = entries.length;
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (status === 'sending') return;
-
-    setStatus('sending');
-    setError(null);
+    if (busy) return;
+    setBusy(true);
+    setStatus(null);
 
     try {
       const response = await fetch('/api/guestbook', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, message, url, subject }),
+        body: JSON.stringify({ name, message, url }),
       });
-      const data = await response.json();
+      const data = (await response.json()) as GuestbookResponse;
 
-      if (!response.ok) {
-        setError(data?.error ?? 'Something went wrong. Try again shortly.');
-        setStatus('idle');
+      if (!response.ok || !data.entries) {
+        setStatus({
+          kind: 'error',
+          text: `Error: ${data.error ?? 'The guestbook is not accepting signatures right now.'}`,
+        });
         return;
       }
 
-      // The honeypot path also answers 200, with no entry. Confirming success
-      // only when an entry comes back stops a tripped trap from showing a
-      // human "thanks for signing!" for a message that was never stored.
-      if (!data.entry) {
-        setError('That didn’t go through — try again, or email me instead.');
-        setStatus('idle');
-        return;
-      }
-
-      setEntries(current => [data.entry as GuestbookEntry, ...current]);
+      setEntries(data.entries);
       setName('');
       setMessage('');
       setUrl('');
-      setStatus('sent');
+      setStatus({ kind: 'ok', text: 'Signed! Thanks for stopping by.' });
     } catch {
-      setError('Could not reach the server. Check your connection and try again.');
-      setStatus('idle');
+      setStatus({
+        kind: 'error',
+        text: 'Error: could not reach the guestbook server. Please try again in a moment.',
+      });
+    } finally {
+      setBusy(false);
     }
-  }
-
-  const remaining = MAX_MESSAGE_LENGTH - message.length;
+  };
 
   return (
-    // Lives on the homepage, where TypingHeading is the h1 — hence h2 here.
-    <section id="guestbook" className="my-8 space-y-8 text-left scroll-mt-8">
+    <section className="my-8 space-y-8">
       <header>
-        <h2 className="text-4xl font-extrabold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent inline-block">
+        <h1 className="text-5xl font-extrabold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent inline-block">
           Guestbook
-        </h2>
+        </h1>
         <p className="mt-2 text-base-content/60">
-          Say hello, leave a link, tell me what you’re working on. No account, no tracking — just
-          the old web.
+          The good part of the old web: leave a note, no account required.{' '}
+          {count === 1 ? '1 person has signed' : `${count} people have signed`} so far.
         </p>
       </header>
 
-      <form onSubmit={handleSubmit} className="bg-base-200 rounded-xl p-6 shadow space-y-4">
-        <h3 className="text-2xl font-bold">Sign the guestbook</h3>
+      <div className="bg-base-200 rounded-xl p-6 shadow space-y-4">
+        <h2 className="text-2xl font-bold">Sign it</h2>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <label className="block">
-            <span className="text-sm font-semibold">Name</span>
-            <input
-              type="text"
-              value={name}
-              onChange={event => setName(event.target.value)}
-              maxLength={MAX_NAME_LENGTH}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="form-control">
+              <label className="label" htmlFor="gb-name">
+                <span className="label-text font-semibold">Name</span>
+              </label>
+              <input
+                id="gb-name"
+                name="name"
+                type="text"
+                required
+                maxLength={NAME_MAX}
+                value={name}
+                onChange={event => setName(event.target.value)}
+                placeholder="who's visiting?"
+                autoComplete="nickname"
+                className="input input-bordered w-full"
+              />
+            </div>
+
+            <div className="form-control">
+              <label className="label" htmlFor="gb-url">
+                <span className="label-text font-semibold">
+                  Website <span className="text-base-content/60 font-normal">(optional)</span>
+                </span>
+              </label>
+              <input
+                id="gb-url"
+                name="url"
+                type="text"
+                maxLength={URL_MAX}
+                value={url}
+                onChange={event => setUrl(event.target.value)}
+                placeholder="your homepage"
+                autoComplete="url"
+                className="input input-bordered w-full"
+              />
+            </div>
+          </div>
+
+          <div className="form-control">
+            <label className="label" htmlFor="gb-message">
+              <span className="label-text font-semibold">Message</span>
+            </label>
+            <textarea
+              id="gb-message"
+              name="message"
               required
-              autoComplete="nickname"
-              placeholder="Ada"
-              className="mt-1 w-full rounded bg-base-100 border border-base-content/20 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+              rows={5}
+              maxLength={MESSAGE_MAX}
+              value={message}
+              onChange={event => setMessage(event.target.value)}
+              placeholder="say hello…"
+              className="textarea textarea-bordered w-full"
             />
-          </label>
-
-          <label className="block">
-            <span className="text-sm font-semibold">
-              Your site <span className="font-normal text-base-content/50">(optional)</span>
+            <span className="mt-1 text-sm text-base-content/60">
+              {MESSAGE_MAX - message.length} characters left.
             </span>
-            <input
-              type="text"
-              value={url}
-              onChange={event => setUrl(event.target.value)}
-              inputMode="url"
-              autoComplete="url"
-              placeholder="example.com"
-              className="mt-1 w-full rounded bg-base-100 border border-base-content/20 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-          </label>
-        </div>
+          </div>
 
-        <label className="block">
-          <span className="text-sm font-semibold">Message</span>
-          <textarea
-            value={message}
-            onChange={event => setMessage(event.target.value)}
-            maxLength={MAX_MESSAGE_LENGTH}
-            required
-            rows={3}
-            placeholder="Found this via…"
-            className="mt-1 w-full rounded bg-base-100 border border-base-content/20 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-          />
-          <span
-            className={`block text-right text-xs mt-1 ${remaining < 20 ? 'text-warning' : 'text-base-content/50'}`}
-            aria-live="polite"
-          >
-            {remaining} characters left
-          </span>
-        </label>
+          <div className="flex flex-wrap items-center gap-4">
+            <button type="submit" className="btn btn-primary" disabled={busy}>
+              {busy ? 'Signing…' : 'Sign the guestbook'}
+            </button>
+            <span className="text-sm text-base-content/60">Links are nofollow. Be kind.</span>
+          </div>
 
-        {/* Honeypot: off-screen and skipped by keyboard/screen readers, so only
-            bots that fill every field will populate it. */}
-        <div aria-hidden="true" className="absolute w-px h-px -left-[9999px] overflow-hidden">
-          <label>
-            Subject
-            <input
-              type="text"
-              name="subject"
-              tabIndex={-1}
-              autoComplete="off"
-              value={subject}
-              onChange={event => setSubject(event.target.value)}
-            />
-          </label>
-        </div>
+          {/* Always mounted so screen readers announce the change. */}
+          <div aria-live="polite" className="min-h-[1.5rem]">
+            {status && (
+              <p className={status.kind === 'ok' ? 'text-success font-medium' : 'text-error font-medium'}>
+                {status.kind === 'ok' ? '✓ ' : '✕ '}
+                {status.text}
+              </p>
+            )}
+          </div>
+        </form>
+      </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <button
-            type="submit"
-            disabled={status === 'sending'}
-            className="bg-primary text-primary-content rounded px-5 py-2 font-semibold shadow hover:shadow-lg disabled:opacity-60 transition-all"
-          >
-            {status === 'sending' ? 'Signing…' : 'Sign'}
-          </button>
-          {status === 'sent' && (
-            <span className="text-success text-sm" role="status">
-              Thanks for signing! 💛
-            </span>
-          )}
-          {error && (
-            <span className="text-error text-sm" role="alert">
-              {error}
-            </span>
-          )}
-        </div>
-      </form>
+      <div className="space-y-4">
+        <h2 className="text-2xl font-bold">Entries</h2>
 
-      <div>
-        <h3 className="text-2xl font-bold mb-4">
-          {entries.length === 0
-            ? 'No signatures yet'
-            : `${entries.length} ${entries.length === 1 ? 'signature' : 'signatures'}`}
-        </h3>
-
-        {entries.length === 0 ? (
-          <p className="text-base-content/60">Be the first to sign — the page is yours.</p>
+        {count === 0 ? (
+          <div className="bg-base-200 rounded-xl p-6 shadow">
+            <p className="text-base-content/60">No one has signed yet — you could be the first.</p>
+          </div>
         ) : (
           <ul className="space-y-4">
             {entries.map(entry => (
               <li key={entry.id} className="bg-base-200 rounded-xl p-5 shadow">
-                <div className="flex items-center gap-3">
-                  <span
-                    aria-hidden="true"
-                    className="grid place-items-center w-9 h-9 shrink-0 rounded-full font-bold text-base-100"
-                    style={{ backgroundColor: `hsl(${hueFor(entry.name)} 65% 55%)` }}
-                  >
-                    {entry.name.charAt(0).toUpperCase()}
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <span className="font-semibold text-lg">
+                    {entry.url ? (
+                      <a href={entry.url} rel="nofollow ugc noopener" target="_blank" className="link link-primary">
+                        {entry.name}
+                      </a>
+                    ) : (
+                      entry.name
+                    )}
                   </span>
-                  <div className="min-w-0">
-                    <p className="font-semibold truncate">
-                      {entry.url ? (
-                        <a
-                          href={entry.url}
-                          target="_blank"
-                          rel="nofollow ugc noopener noreferrer"
-                          className="text-primary hover:underline"
-                        >
-                          {entry.name}
-                        </a>
-                      ) : (
-                        entry.name
-                      )}
-                    </p>
-                    <p className="text-xs text-base-content/50">
-                      <time dateTime={entry.date}>{formatDate(entry.date)}</time>
-                    </p>
-                  </div>
+                  <time dateTime={entry.date} suppressHydrationWarning className="text-sm text-base-content/60">
+                    {formatStamp(entry.date)}
+                  </time>
                 </div>
-                <p className="mt-3 whitespace-pre-line break-words">{entry.message}</p>
+                <p className="mt-2 whitespace-pre-wrap break-words">{entry.message}</p>
               </li>
             ))}
           </ul>

@@ -1,8 +1,12 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { isRetro } from '../lib/skin';
 import { AboutPage } from '../page-components/AboutPage.tsx';
+import { RetroAboutPage } from '../retro-components/RetroAboutPage.tsx';
+
+const retro = isRetro(Astro);
 ---
 
 <Layout title="About" description="About Maan -- storytelling enthusiast, systems thinker, and lifelong learner.">
-  <AboutPage />
+  {retro ? <RetroAboutPage /> : <AboutPage />}
 </Layout>

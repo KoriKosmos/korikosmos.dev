@@ -1,8 +1,9 @@
 // The "now page" indie-web convention: a snapshot of what I'm up to right now.
-// Edit NOW_UPDATED and the section content below whenever life changes — that's the whole point.
+// Edit the section content below whenever life changes — that's the whole point —
+// and bump NOW_UPDATED in src/data/now.ts, which the retro skin shares.
 // See https://nownownow.com/about for the idea.
 
-const NOW_UPDATED = new Date('2026-07-08');
+import { NOW_UPDATED } from '../data/now';
 
 interface NowTrack {
   name: string;

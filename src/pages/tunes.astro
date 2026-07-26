@@ -1,7 +1,9 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { getRecentTracks, getTopArtists, getTopAlbums } from '../lib/lastfm';
+import { isRetro } from '../lib/skin';
 import { Tunes } from '../page-components/Tunes.tsx';
+import RetroIslandShell from '../retro-components/RetroIslandShell.astro';
 
 const recentTracks = await getRecentTracks(10);
 const topArtists = await getTopArtists('overall', 5, false);
@@ -9,15 +11,37 @@ const topAlbums = await getTopAlbums('overall', 5);
 
 const currentTrack = recentTracks[0];
 const isPlaying = currentTrack?.['@attr']?.nowplaying === 'true';
+const retro = isRetro(Astro);
 ---
 
 <Layout title="Tunes" description="What I'm listening to right now, powered by Last.fm scrobbles." isWide={true}>
-  <Tunes
-    client:load
-    recentTracks={recentTracks}
-    initialArtists={topArtists}
-    initialAlbums={topAlbums}
-    currentTrack={currentTrack}
-    isPlaying={isPlaying}
-  />
+  {retro ? (
+    <RetroIslandShell
+      title="MY MUSIC"
+      blinkie="nowplaying"
+      blinkieAlt="Now playing"
+      notes={[
+        '★ Straight from my Last.fm scrobbles, updated every 30 seconds.',
+        '★ Sorry, you cannot download these. Please buy the CD.',
+      ]}
+    >
+      <Tunes
+        client:load
+        recentTracks={recentTracks}
+        initialArtists={topArtists}
+        initialAlbums={topAlbums}
+        currentTrack={currentTrack}
+        isPlaying={isPlaying}
+      />
+    </RetroIslandShell>
+  ) : (
+    <Tunes
+      client:load
+      recentTracks={recentTracks}
+      initialArtists={topArtists}
+      initialAlbums={topAlbums}
+      currentTrack={currentTrack}
+      isPlaying={isPlaying}
+    />
+  )}
 </Layout>

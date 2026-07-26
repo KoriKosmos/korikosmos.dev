@@ -1,59 +1,66 @@
 import type { APIRoute } from 'astro';
-import { addEntry, getEntries, validateEntry } from '../../lib/guestbook';
+import { getGuestbook, signGuestbook } from '../../lib/guestbook';
 import { checkRateLimit, getClientKey } from '../../lib/rateLimit';
+import { isSameOrigin } from '../../lib/sameOrigin';
+import { readBodyCapped } from '../../lib/readBody';
 
-export const prerender = false;
+/**
+ * Signing is unauthenticated by design — that is the whole point of a
+ * guestbook — so the write path carries its own controls: same-origin only
+ * (see lib/sameOrigin.ts), a body cap so nobody streams a gigabyte into
+ * `JSON.parse`, and throttling per best-effort client key.
+ *
+ * None of it is load-bearing against data loss, though. `signGuestbook()`
+ * refuses to evict when the book is full, so the worst a flood can achieve is
+ * filling it — which I can undo by pruning the file. That is the fix that
+ * matters; these three just make flooding tedious.
+ */
 
-/** One signature per client per 30s — enough to stop flooding, cheap to hit twice by accident. */
-const COOLDOWN_MS = 30_000;
+const MAX_BODY_BYTES = 4096;
 
-const json = (body: unknown, status = 200) =>
+/** One signature per 30s. Nobody writes a guestbook message faster than that. */
+const WINDOW_MS = 30_000;
+
+const json = (body: unknown, status = 200, headers: Record<string, string> = {}) =>
   new Response(JSON.stringify(body), {
     status,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...headers },
   });
 
 export const GET: APIRoute = async () => {
-  try {
-    return json({ entries: await getEntries() });
-  } catch (error) {
-    console.error('[guestbook] read failed:', error);
-    return json({ error: 'Could not load the guestbook.' }, 500);
-  }
+  const entries = await getGuestbook();
+  return json({ entries });
 };
 
-export const POST: APIRoute = async ({ request, clientAddress }) => {
-  let body: any;
+export const POST: APIRoute = async ({ request, site, url, clientAddress }) => {
+  if (!isSameOrigin(request, site, url)) {
+    return json({ error: 'Please sign the guestbook from the guestbook page.' }, 403);
+  }
+
+  // Capped while streaming, not after buffering — see lib/readBody.ts.
+  const read = await readBodyCapped(request, MAX_BODY_BYTES);
+  if (!read.ok) {
+    return json({ error: 'That message is far too long.' }, 413);
+  }
+
+  let body: unknown;
   try {
-    body = await request.json();
+    body = JSON.parse(read.text);
   } catch {
-    return json({ error: 'Invalid JSON body.' }, 400);
+    return json({ error: 'Invalid JSON body' }, 400);
   }
-
-  // Honeypot: a field hidden from humans via CSS. Bots that fill every input
-  // get a 200 with no write, so they have nothing to retry against.
-  //
-  // Deliberately NOT named "website"/"url" — browser autofill heuristics target
-  // URL-ish field names regardless of `autocomplete="off"`, and the form already
-  // has a legitimate site field. A false positive here silently drops a real
-  // signature, so the trap name must be one no autofiller recognises.
-  if (typeof body?.subject === 'string' && body.subject.trim() !== '') {
-    return json({ ok: true, entry: null });
-  }
-
-  const result = validateEntry({ name: body?.name, message: body?.message, url: body?.url });
-  if (!result.ok) return json({ error: result.error }, 400);
 
   const key = getClientKey(request, clientAddress);
-  if (!checkRateLimit('guestbook', key, COOLDOWN_MS)) {
-    return json({ error: 'You just signed — give it a moment before posting again.' }, 429);
+  if (!checkRateLimit('guestbook', key, WINDOW_MS)) {
+    return json({ error: 'Slow down! Try again in a moment.' }, 429, {
+      'Retry-After': String(WINDOW_MS / 1000),
+    });
   }
 
-  try {
-    const entry = await addEntry(result.value);
-    return json({ ok: true, entry }, 201);
-  } catch (error) {
-    console.error('[guestbook] write failed:', error);
-    return json({ error: 'Could not save your message. Try again shortly.' }, 500);
+  const result = await signGuestbook((body ?? {}) as Record<string, unknown>);
+  if (!result.ok) {
+    return json({ error: result.error }, 400);
   }
+
+  return json({ entries: result.entries });
 };
