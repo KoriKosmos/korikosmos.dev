@@ -3,6 +3,7 @@ import { getCollection } from 'astro:content';
 import { adjustReaction, getCounts, isValidEmoji } from '../../../lib/reactions';
 import { checkRateLimit, getClientKey } from '../../../lib/rateLimit';
 import { isSameOrigin } from '../../../lib/sameOrigin';
+import { readBodyCapped } from '../../../lib/readBody';
 
 export const prerender = false;
 
@@ -62,12 +63,13 @@ const handleWrite = async (
   const slug = await knownSlug(params.slug);
   if (!slug) return json({ error: 'Unknown post.' }, 404);
 
-  const raw = await request.text();
-  if (raw.length > MAX_BODY_BYTES) return json({ error: 'Body too large.' }, 413);
+  // Capped while streaming, not after buffering — see lib/readBody.ts.
+  const read = await readBodyCapped(request, MAX_BODY_BYTES);
+  if (!read.ok) return json({ error: 'Body too large.' }, 413);
 
   let body: any;
   try {
-    body = JSON.parse(raw);
+    body = JSON.parse(read.text);
   } catch {
     return json({ error: 'Invalid JSON body.' }, 400);
   }

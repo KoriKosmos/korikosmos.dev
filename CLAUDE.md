@@ -112,7 +112,7 @@ The site ships two skins. `SkinToggle.tsx` (rendered in both shells) writes a `k
 
 ## Common Patterns
 
-- Content collections use `getCollection()` and `getEntryBySlug()` from `astro:content`; fetch in `.astro` frontmatter and pass to the page's `page-components/*.tsx` as props (not inside the React component)
+- Content collections use `getCollection()` and `getEntry()` from `astro:content`; fetch in `.astro` frontmatter and pass to the page's `page-components/*.tsx` as props (not inside the React component). **Not `getEntryBySlug()`** — it is deprecated and *throws* for these collections rather than returning undefined, so a `if (!entry)` miss branch after it never runs and an unknown slug 500s with an empty body. A dynamic route that misses should `return Astro.rewrite('/404')`, which renders the real 404 page in the active skin and does return a 404 status
 - API routes export `APIRoute` type from Astro and return `new Response()`
 - Components in `src/components/` and `src/page-components/` export both a named export and `export default <Name>` — `export *` (used by design-sync's synth-entry bundler) does not forward default exports, so the named export must exist for any component that might be synced
 - `ProjectCard`'s `project` prop is typed `CollectionEntry<"projects">` (from `astro:content`) for real use in the site. That type isn't resolvable outside Astro's build, so `.design-sync/config.json`'s `dtsPropsFor.ProjectCard` hand-writes an equivalent plain shape for the synced artifact — keep both in sync if the `projects` content schema changes

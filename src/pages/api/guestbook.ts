@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 import { getGuestbook, signGuestbook } from '../../lib/guestbook';
 import { checkRateLimit, getClientKey } from '../../lib/rateLimit';
 import { isSameOrigin } from '../../lib/sameOrigin';
+import { readBodyCapped } from '../../lib/readBody';
 
 /**
  * Signing is unauthenticated by design — that is the whole point of a
@@ -36,20 +37,15 @@ export const POST: APIRoute = async ({ request, site, url, clientAddress }) => {
     return json({ error: 'Please sign the guestbook from the guestbook page.' }, 403);
   }
 
-  const declared = Number(request.headers.get('content-length'));
-  if (Number.isFinite(declared) && declared > MAX_BODY_BYTES) {
-    return json({ error: 'That message is far too long.' }, 413);
-  }
-
-  // Re-check after reading: content-length is absent on a chunked body.
-  const raw = await request.text();
-  if (raw.length > MAX_BODY_BYTES) {
+  // Capped while streaming, not after buffering — see lib/readBody.ts.
+  const read = await readBodyCapped(request, MAX_BODY_BYTES);
+  if (!read.ok) {
     return json({ error: 'That message is far too long.' }, 413);
   }
 
   let body: unknown;
   try {
-    body = JSON.parse(raw);
+    body = JSON.parse(read.text);
   } catch {
     return json({ error: 'Invalid JSON body' }, 400);
   }

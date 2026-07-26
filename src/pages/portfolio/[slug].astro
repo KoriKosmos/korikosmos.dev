@@ -1,14 +1,16 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import { getEntryBySlug } from 'astro:content';
+import { getEntry } from 'astro:content';
 import { isRetro } from '../../lib/skin';
 import { ProjectDetailPage } from '../../page-components/ProjectDetailPage.tsx';
 import { RetroProjectDetailPage } from '../../retro-components/RetroProjectDetailPage.tsx';
 
-// Server-rendered rather than prerendered — see blog/[slug].astro for why.
+// Server-rendered rather than prerendered — see blog/[slug].astro, which also
+// explains why this is getEntry and not the deprecated getEntryBySlug (which
+// throws on a miss, so the branch below never ran and unknown slugs 500'd).
 const { slug } = Astro.params;
-const project = slug ? await getEntryBySlug('projects', slug) : undefined;
-if (!project) return new Response(null, { status: 404 });
+const project = slug ? await getEntry('projects', slug) : undefined;
+if (!project) return Astro.rewrite('/404');
 
 const { Content } = await project.render();
 const retro = isRetro(Astro);
