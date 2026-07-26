@@ -1,10 +1,14 @@
 /* ===========================================================================
    retro.css — the Web 1.0 / webcore skin.
 
-   Everything here is scoped under [data-skin="retro"] because both stylesheets
-   ship on every page: Layout.astro statically imports both shells, so Astro
-   bundles global.css (Tailwind + DaisyUI) alongside this file regardless of
-   which one renders. Scoping keeps them from colliding.
+   Both stylesheets ship on every page: Layout.astro statically imports both
+   shells, so Astro bundles global.css (Tailwind + DaisyUI) alongside this file
+   regardless of which one renders.
+
+   So anything that could collide with Tailwind — the element-level un-reset in
+   section 1, and the island overrides in section 17 — is scoped under
+   [data-skin="retro"]. The rt-* component classes are not, and don't need to
+   be: the prefix is already unique, and only the retro shell emits them.
 
    Section 1 is an *un-reset*. Tailwind's Preflight strips exactly the browser
    defaults this aesthetic is built on — list bullets, heading sizes, table and

@@ -176,3 +176,6 @@ ds-bundle/
 .design-sync/learnings/
 .design-sync/node_modules
 .claude/
+
+# Runtime-written site data (hit counter). The volume mount owns this, not git.
+data/hits.json

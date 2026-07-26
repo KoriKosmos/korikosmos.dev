@@ -19,8 +19,19 @@ const OUT = path.resolve('./public/retro');
 const svg = (w, h, body, extra = '') =>
   `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"${extra}>${body}</svg>\n`;
 
-/** Embedded CSS — animations declared this way play when the SVG is an <img>. */
-const style = (css) => `<style>${css.replace(/\s+/g, ' ').trim()}</style>`;
+/**
+ * Embedded CSS — animations declared this way play when the SVG is an <img>.
+ *
+ * Each block carries its own prefers-reduced-motion opt-out. An <img> is a
+ * separate document: retro.css's reduced-motion rules stop everything on the
+ * page but cannot reach inside these files, so without this the blinkies and
+ * the construction barricade would keep animating for a user who asked all
+ * motion to stop. The media query is evaluated against the user's real
+ * environment even for an SVG referenced as an image.
+ */
+const style = (css) =>
+  `<style>${css.replace(/\s+/g, ' ').trim()}` +
+  `@media (prefers-reduced-motion: reduce){*{animation:none!important;}}</style>`;
 
 const files = new Map();
 const emit = (relPath, contents) => files.set(relPath, contents);

@@ -28,15 +28,14 @@ const hits = Astro.locals.hits ?? 0;
 const counterDigits = String(hits).padStart(6, "0").split("");
 
 // Sidebar nav: the same NAV_ITEMS as the modern header, flattened into the
-// grouped link list a 2004 sidebar would have had, plus the retro-only pages.
-const navGroups = [
-	...NAV_ITEMS.map(item =>
-		"items" in item
-			? { label: item.label, items: item.items }
-			: { label: null, items: [item] },
-	),
-	{ label: "Extras", items: [{ href: "/guestbook", label: "Guestbook" }] },
-];
+// grouped link list a 2004 sidebar would have had. Nothing is appended here —
+// /guestbook already lives in NAV_ITEMS' "Me" group, and adding it again listed
+// it twice in the sidebar.
+const navGroups = NAV_ITEMS.map(item =>
+	"items" in item
+		? { label: item.label, items: item.items }
+		: { label: null, items: [item] },
+);
 
 const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
