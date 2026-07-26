@@ -1,10 +1,17 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import { TypingHeading } from "../page-components/TypingHeading.tsx";
+import { GuestbookPage } from "../page-components/GuestbookPage.tsx";
+import { getEntries } from "../lib/guestbook";
+
+// Read the store directly rather than fetching /api/guestbook: an SSR
+// self-fetch would target the container's internal origin, not the canonical
+// one (see src/middleware.ts for the same class of problem).
+const guestbookEntries = await getEntries();
 ---
 
 <Layout description="Personal portfolio, blog, and games hub by Maan.">
-	<section class="text-center py-20">
+	<section class="text-center pt-20 pb-12">
 		<TypingHeading client:load />
 		<p class="text-xl mb-10 text-base-content/70">
 			Welcome to my personal space on the internet.
@@ -46,4 +53,5 @@ import { TypingHeading } from "../page-components/TypingHeading.tsx";
 			</a>
 		</div>
 	</section>
+	<GuestbookPage client:load initialEntries={guestbookEntries} />
 </Layout>

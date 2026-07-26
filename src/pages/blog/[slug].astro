@@ -2,6 +2,7 @@
 import Layout from '../../layouts/Layout.astro';
 import { getCollection, getEntryBySlug } from 'astro:content';
 import { BlogPostPage } from '../../page-components/BlogPostPage.tsx';
+import PostReactions from '../../page-components/PostReactions.tsx';
 
 export const prerender = true;
 
@@ -19,4 +20,8 @@ const { Content } = await post.render();
   <BlogPostPage title={post.data.title}>
     <Content />
   </BlogPostPage>
+  {/* Sibling of the post, not a child: `client:*` is an Astro-template
+      directive (BlogPostPage is React and couldn't apply it), and keeping the
+      bar outside `.prose` stops typography styles restyling the buttons. */}
+  <PostReactions client:load slug={slug} />
 </Layout>

@@ -30,6 +30,8 @@ export const NAV_ITEMS: NavItem[] = [
       { href: '/now', label: 'Now' },
       { href: '/uses', label: 'Uses' },
       { href: '/links', label: 'Links' },
+      // The guestbook lives on the homepage, not its own route.
+      { href: '/#guestbook', label: 'Guestbook' },
     ],
   },
   {
@@ -44,7 +46,7 @@ export const NAV_ITEMS: NavItem[] = [
   {
     label: 'Play',
     items: [
-      { href: '/games', label: 'Games' },
+      { href: '/games', label: 'All Games' },
       { href: '/games/tetris', label: 'Tetris' },
       { href: '/games/rock-paper-scissors', label: 'Rock Paper Scissors' },
     ],
