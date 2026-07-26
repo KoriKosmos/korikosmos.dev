@@ -9,24 +9,17 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { Mutex } from 'async-mutex';
+import { MESSAGE_MAX, NAME_MAX, URL_MAX, type GuestbookEntry } from './constants';
 
 const DATA_DIR = path.resolve('./data');
 const GUESTBOOK_PATH = path.join(DATA_DIR, 'guestbook.json');
 const lock = new Mutex();
 
-export interface GuestbookEntry {
-  id: string;
-  /** ISO 8601 timestamp. */
-  date: string;
-  name: string;
-  message: string;
-  /** Already validated to be http(s) — safe to use as an href. */
-  url?: string;
-}
+// The entry shape and the field limits live in lib/constants.ts, which is
+// safe to import from a client bundle; this module is server-only (node:fs).
+// Re-exported so the existing `from '../lib/guestbook'` imports keep working.
+export { NAME_MAX, MESSAGE_MAX, URL_MAX, type GuestbookEntry };
 
-export const NAME_MAX = 32;
-export const MESSAGE_MAX = 500;
-export const URL_MAX = 200;
 /**
  * Keep the file (and the page) bounded.
  *

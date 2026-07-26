@@ -1,16 +1,12 @@
 // The retro skin's headline feature: a 2003-grade guestbook CGI, except it's a
 // React island talking to /api/guestbook.
 //
-// NOTE: only the *type* is imported from ../lib/guestbook — that module has
-// top-level `node:fs` / `async-mutex` imports and would poison this client:load
-// bundle. The field limits below are duplicated deliberately; keep them in sync
-// with NAME_MAX / MESSAGE_MAX / URL_MAX over there.
+// NOTE: the limits and the entry type come from ../lib/constants, not
+// ../lib/guestbook — that module has top-level `node:fs` / `async-mutex`
+// imports and would poison this client:load bundle. constants.ts is the one
+// source of truth, so this form and the server agree on every limit.
 import { useState } from 'react';
-import type { GuestbookEntry } from '../lib/guestbook';
-
-const NAME_MAX = 32;
-const MESSAGE_MAX = 500;
-const URL_MAX = 200;
+import { MESSAGE_MAX, NAME_MAX, URL_MAX, type GuestbookEntry } from '../lib/constants';
 
 interface Props {
   entries: GuestbookEntry[];

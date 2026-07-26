@@ -1,15 +1,13 @@
 // Modern-skin guestbook. Same data, same API, same behaviour as
 // retro-components/RetroGuestbookPage.tsx — just dressed in Tailwind + DaisyUI.
 //
-// Only the *type* comes from ../lib/guestbook: that module imports node:fs and
-// async-mutex at the top level, so a value import would end up in this
-// client:load bundle. The limits below mirror NAME_MAX / MESSAGE_MAX / URL_MAX.
+// The limits and the entry type come from ../lib/constants, not ../lib/guestbook:
+// that module imports node:fs and async-mutex at the top level, so a value
+// import would drag them into this client:load bundle. constants.ts is the one
+// source of truth for the limits, so the character counter here and the
+// truncation on the server can't disagree.
 import { useState } from 'react';
-import type { GuestbookEntry } from '../lib/guestbook';
-
-const NAME_MAX = 32;
-const MESSAGE_MAX = 500;
-const URL_MAX = 200;
+import { MESSAGE_MAX, NAME_MAX, URL_MAX, type GuestbookEntry } from '../lib/constants';
 
 interface Props {
   entries: GuestbookEntry[];

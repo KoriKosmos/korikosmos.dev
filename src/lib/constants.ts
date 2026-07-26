@@ -8,18 +8,28 @@ export const BLOCKED_ITEMS = ['The Magnus Archives'];
 
 /* ── Guestbook ───────────────────────────────────────────────────────────── */
 
-export const MAX_NAME_LENGTH = 40;
-export const MAX_MESSAGE_LENGTH = 280;
-export const MAX_URL_LENGTH = 200;
+/**
+ * The single source of truth for the field limits.
+ *
+ * `src/lib/guestbook.ts` truncates to these on the server and both guestbook
+ * islands set `maxLength` from them, so the counter under the textarea and the
+ * value that actually lands on disk can't disagree.
+ */
+export const NAME_MAX = 32;
+export const MESSAGE_MAX = 500;
+export const URL_MAX = 200;
 
 export interface GuestbookEntry {
   id: string;
-  name: string;
-  message: string;
-  /** Optional homepage — the classic guestbook "URL" field. */
-  url?: string;
   /** ISO-8601 timestamp. */
   date: string;
+  name: string;
+  message: string;
+  /**
+   * Optional homepage — the classic guestbook "URL" field. Rendered as an
+   * href, so `sanitizeUrl()` has already restricted it to http(s).
+   */
+  url?: string;
 }
 
 /* ── Post reactions ──────────────────────────────────────────────────────── */
