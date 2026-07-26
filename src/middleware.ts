@@ -61,6 +61,11 @@ function isCountablePageView(pathname: string): boolean {
 }
 
 const skinAndHits = defineMiddleware(async (context, next) => {
+  // Prerendered routes (/og/*) are rendered at build time with no real request.
+  // Reading cookies there touches Astro.request.headers, which warns on every
+  // generated card — and the skin is meaningless for an image endpoint anyway.
+  if (context.isPrerendered) return next();
+
   const skin = parseSkin(context.cookies.get(SKIN_COOKIE)?.value);
   context.locals.skin = skin;
   context.locals.hits = 0;

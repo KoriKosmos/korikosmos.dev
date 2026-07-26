@@ -37,98 +37,94 @@
   cursor: var(--rt-cursor);
 }
 
-[data-skin='retro'] h1,
-[data-skin='retro'] h2,
-[data-skin='retro'] h3,
-[data-skin='retro'] h4,
-[data-skin='retro'] h5,
-[data-skin='retro'] h6 {
+/* The element selectors below are wrapped in :where() so the whole un-reset
+   sits at exactly one-class specificity (0,1,0). That is high enough to beat
+   Tailwind Preflight's bare-element rules (0,0,1), and low enough that every
+   rt-* class in sections 3+ wins on source order. Without :where(), a plain
+   `[data-skin='retro'] h2` (0,1,1) outranks `.rt-subhead` (0,1,0) — headings,
+   .rt-btn links, and the list-style:none on .rt-badges / .rt-cardgrid / .rt-nav
+   all silently lose to the reset that is supposed to be their floor. */
+[data-skin='retro'] :where(h1, h2, h3, h4, h5, h6) {
   font-weight: bold;
   margin: 0.5em 0 0.4em;
   line-height: 1.2;
 }
-[data-skin='retro'] h1 { font-size: 2em; }
-[data-skin='retro'] h2 { font-size: 1.5em; }
-[data-skin='retro'] h3 { font-size: 1.25em; }
-[data-skin='retro'] h4 { font-size: 1.05em; }
-[data-skin='retro'] h5 { font-size: 0.95em; }
-[data-skin='retro'] h6 { font-size: 0.9em; }
+[data-skin='retro'] :where(h1) { font-size: 2em; }
+[data-skin='retro'] :where(h2) { font-size: 1.5em; }
+[data-skin='retro'] :where(h3) { font-size: 1.25em; }
+[data-skin='retro'] :where(h4) { font-size: 1.05em; }
+[data-skin='retro'] :where(h5) { font-size: 0.95em; }
+[data-skin='retro'] :where(h6) { font-size: 0.9em; }
 
-[data-skin='retro'] p { margin: 0 0 0.9em; }
+[data-skin='retro'] :where(p) { margin: 0 0 0.9em; }
 
-[data-skin='retro'] ul,
-[data-skin='retro'] ol {
+[data-skin='retro'] :where(ul, ol) {
   margin: 0 0 0.9em;
   padding-left: 2.2em;
 }
-[data-skin='retro'] ul { list-style: disc outside; }
-[data-skin='retro'] ol { list-style: decimal outside; }
-[data-skin='retro'] ul ul { list-style: circle outside; }
-[data-skin='retro'] li { margin: 0.15em 0; }
+[data-skin='retro'] :where(ul) { list-style: disc outside; }
+[data-skin='retro'] :where(ol) { list-style: decimal outside; }
+[data-skin='retro'] :where(ul ul) { list-style: circle outside; }
+[data-skin='retro'] :where(li) { margin: 0.15em 0; }
 
-[data-skin='retro'] blockquote {
+[data-skin='retro'] :where(blockquote) {
   margin: 0 0 0.9em 1.2em;
   padding-left: 0.8em;
   border-left: 4px ridge var(--rt-accent);
   font-style: italic;
 }
 
-[data-skin='retro'] hr {
+[data-skin='retro'] :where(hr) {
   border: 0;
   border-top: 2px groove var(--rt-bevel-dark);
   margin: 1em 0;
 }
 
-[data-skin='retro'] img {
+[data-skin='retro'] :where(img) {
   display: inline-block;
   vertical-align: middle;
   max-width: 100%;
   height: auto;
 }
 
-[data-skin='retro'] table {
+[data-skin='retro'] :where(table) {
   border-collapse: separate;
   border-spacing: 0;
 }
 
-[data-skin='retro'] b,
-[data-skin='retro'] strong { font-weight: bold; }
-[data-skin='retro'] i,
-[data-skin='retro'] em { font-style: italic; }
-[data-skin='retro'] u { text-decoration: underline; }
-[data-skin='retro'] small { font-size: 0.8em; }
+[data-skin='retro'] :where(b, strong) { font-weight: bold; }
+[data-skin='retro'] :where(i, em) { font-style: italic; }
+[data-skin='retro'] :where(u) { text-decoration: underline; }
+[data-skin='retro'] :where(small) { font-size: 0.8em; }
 
-[data-skin='retro'] code,
-[data-skin='retro'] pre,
-[data-skin='retro'] kbd,
-[data-skin='retro'] samp {
+[data-skin='retro'] :where(code, pre, kbd, samp) {
   font-family: var(--rt-font-mono);
   font-size: 0.95em;
 }
 
-[data-skin='retro'] a {
+[data-skin='retro'] :where(a) {
   color: var(--rt-link);
   text-decoration: underline;
   cursor: var(--rt-cursor-pointer);
 }
-[data-skin='retro'] a:visited { color: var(--rt-visited); }
-[data-skin='retro'] a:hover { color: var(--rt-accent); background-color: var(--rt-link-hover-bg); }
+[data-skin='retro'] :where(a:visited) { color: var(--rt-visited); }
+[data-skin='retro'] :where(a:hover) {
+  color: var(--rt-accent);
+  background-color: var(--rt-link-hover-bg);
+}
 
-[data-skin='retro'] button,
-[data-skin='retro'] input,
-[data-skin='retro'] select,
-[data-skin='retro'] textarea {
+[data-skin='retro'] :where(button, input, select, textarea) {
   font-family: var(--rt-font-alt);
   font-size: 1em;
   cursor: var(--rt-cursor-pointer);
 }
 
-[data-skin='retro'] fieldset {
+[data-skin='retro'] :where(fieldset) {
   border: 2px groove var(--rt-bevel-light);
   padding: 0.6em 0.9em;
   margin: 0 0 1em;
 }
-[data-skin='retro'] legend {
+[data-skin='retro'] :where(legend) {
   padding: 0 0.4em;
   font-weight: bold;
 }
@@ -804,6 +800,152 @@ a:hover > .rt-btn88 { border-color: var(--rt-accent); }
   border-radius: 0 !important;
 }
 [data-skin='retro'] #oneko-toggle:active { border-style: inset; }
+
+/* Island headings: the components hard-code `text-3xl font-bold` etc. Re-cut
+   them as .rt-heading / .rt-subhead without touching the markup. */
+.rt-island h1 {
+  font-family: var(--rt-font-alt);
+  font-size: 1.9em !important;
+  text-align: center;
+  color: var(--rt-accent);
+  text-shadow: 2px 2px 0 var(--rt-bevel-dark), -1px -1px 0 var(--rt-bevel-light);
+}
+.rt-island h2 {
+  font-family: var(--rt-font-alt);
+  font-size: 1.15em !important;
+  color: var(--rt-accent-2);
+  border-bottom: 2px dashed var(--rt-accent);
+  padding-bottom: 2px;
+}
+.rt-island h3 { font-family: var(--rt-font-alt); font-size: 1em !important; }
+
+/* 2003 had no border-radius. One sweep beats rounded/rounded-xl/-2xl/-3xl/-full
+   across all three islands without enumerating every utility. */
+.rt-island *,
+.rt-island *::before,
+.rt-island *::after { border-radius: 0 !important; }
+
+/* Surfaces. DaisyUI's colour vars resolve to the *dark* theme inside the retro
+   skin (no data-theme is set), so every bg-base and bg-neutral surface has to
+   be repainted or it fights the panel it sits in. Substring matching covers the
+   opacity variants (bg-base-200/50, bg-base-100/80, ...). */
+.rt-island [class*='bg-base-'],
+.rt-island [class*='bg-neutral'] {
+  background-color: var(--rt-panel-alt) !important;
+  border: 2px groove var(--rt-bevel-light);
+  backdrop-filter: none !important;
+}
+.rt-island [class*='bg-accent'] {
+  background-color: var(--rt-accent) !important;
+  color: #ffffff !important;
+  border: 2px outset var(--rt-bevel-light);
+}
+
+/* Ink. Same problem: dark-theme base-content on a light retro panel is
+   invisible. Accent-coloured section labels get the retro accents instead. */
+.rt-island [class*='text-base-content'],
+.rt-island [class*='text-neutral-content'] { color: var(--rt-ink) !important; }
+.rt-island [class*='text-base-content/4'],
+.rt-island [class*='text-base-content/6'],
+.rt-island [class*='text-base-content/8'] { color: var(--rt-ink-soft) !important; }
+.rt-island .text-primary { color: var(--rt-accent) !important; }
+.rt-island .text-secondary { color: var(--rt-accent-2) !important; }
+.rt-island .text-accent { color: var(--rt-link) !important; }
+.rt-island [class*='border-base-content'] { border-color: var(--rt-bevel-dark) !important; }
+
+/* Every island control becomes a beveled 3D button. */
+.rt-island button {
+  font-family: var(--rt-font-alt);
+  font-weight: bold;
+  color: var(--rt-ink) !important;
+  background: var(--rt-panel-alt) !important;
+  border: 3px outset var(--rt-bevel-light) !important;
+  border-right-color: var(--rt-bevel-dark) !important;
+  border-bottom-color: var(--rt-bevel-dark) !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+.rt-island button:hover { background: var(--rt-link-hover-bg) !important; }
+.rt-island button:active { border-style: inset !important; }
+
+/* Tunes' period switcher: its inline <style> tints the active button with
+   DaisyUI colours, which the rule above overrides — so re-mark the active
+   state here, with a caret as well as colour (never colour alone). */
+.rt-island .period-btn.active {
+  background: var(--rt-accent) !important;
+  color: #ffffff !important;
+  border-style: inset !important;
+}
+.rt-island .period-btn.active::before { content: '\25B6\00a0'; }
+
+/* Tetris canvases get a CRT bezel. content-box is deliberate: tetris.js sets
+   an explicit px style width/height, and border-box would scale the bitmap. */
+.rt-island canvas {
+  box-sizing: content-box;
+  background: var(--rt-counter-bg);
+  border: 6px inset var(--rt-bevel-dark);
+  image-rendering: pixelated;
+}
+.rt-island #board { border-width: 10px !important; }
+
+/* The username / game-over <dialog>s ship DaisyUI chrome — make them windows.
+   The [class] qualifier outranks the bg-base-* surface rule above, which would
+   otherwise repaint the border it sets. */
+.rt-island dialog[class] {
+  background: var(--rt-panel) !important;
+  color: var(--rt-ink) !important;
+  border: 4px outset var(--rt-bevel-light) !important;
+  border-right-color: var(--rt-bevel-dark) !important;
+  border-bottom-color: var(--rt-bevel-dark) !important;
+  box-shadow: 5px 5px 0 var(--rt-shadow) !important;
+}
+.rt-island dialog::backdrop { background: rgba(0, 0, 0, 0.55); }
+.rt-island input[type='text'] {
+  background: #ffffff !important;
+  color: #111111 !important;
+  border: 2px inset var(--rt-bevel-dark) !important;
+  font-family: var(--rt-font-alt);
+}
+
+/* Both games render their leaderboard into #leaderboard as plain <li>s; dress
+   the list as a sunken scoreboard (a real .rt-table isn't reachable from CSS). */
+.rt-island #leaderboard {
+  background: var(--rt-panel-alt);
+  border: 2px inset var(--rt-bevel-dark);
+  font-family: var(--rt-font-mono);
+  padding: 8px 8px 8px 34px;
+  margin-top: 6px;
+}
+.rt-island #leaderboard li { border-bottom: 1px dotted var(--rt-bevel-dark); padding: 2px 0; }
+.rt-island #leaderboard li:last-child { border-bottom: 0; }
+
+/* Rock-paper-scissors readout — the two lines the game writes into. */
+.rt-island #computerChoice,
+.rt-island #result {
+  font-family: var(--rt-font-mono);
+  font-weight: bold;
+  color: var(--rt-accent);
+  min-height: 1.4em;
+  margin: 0;
+}
+
+/* Tunes artwork: ridge frames like every 2003 photo album. The hero backdrop
+   copy is excluded — it's a blurred absolute-positioned layer, not a picture. */
+.rt-island img[class*='object-cover']:not([class*='blur']) {
+  border: 3px ridge var(--rt-accent);
+}
+
+/* Tunes hero title keeps its bg-clip-text mask; swap the DaisyUI gradient for
+   the house rainbow so it reads as WordArt. Section 18 stops the animation. */
+.rt-island .bg-clip-text {
+  background-image: linear-gradient(
+    90deg,
+    #ff0000, #ff8c00, #ffd700, #00c853, #00b0ff, #7c4dff, #ff00c8, #ff0000
+  ) !important;
+  background-size: 200% 100%;
+  animation: rt-rainbow-slide 6s linear infinite;
+  font-family: var(--rt-font-alt);
+}
 
 /* ---------------------------------------------------------------------------
    18. Reduced motion — the aesthetic is period-accurate, the accessibility
