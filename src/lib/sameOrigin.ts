@@ -7,7 +7,7 @@
  * `fetch()` from one of my own islands, and browsers always attach `Origin`
  * (and `Sec-Fetch-Site`) to a POST, so requiring them costs nothing real.
  *
- * The comparison is against `site` — the canonical domain from
+ * The Origin *comparison* is against `site` — the canonical domain from
  * astro.config.mjs — and never against `Astro.url.origin`. This is the same
  * trap src/middleware.ts documents for Keystatic's OAuth callback: behind the
  * container's reverse proxy the Node server sees the internal host, so
@@ -15,10 +15,17 @@
  * forged Host header nominate its own allowed origin.
  */
 export function isSameOrigin(request: Request, site: URL | undefined, url: URL): boolean {
-  // Sec-Fetch-* is set by the browser and cannot be forged from script, so
-  // when it's present it's the strongest signal available.
+  // `Sec-Fetch-*` are forbidden header names: script cannot set them, so a
+  // cross-site page has no way to make a browser emit `same-origin` here. That
+  // makes this stronger evidence than the Origin string, and — unlike the
+  // canonical-host comparison below — it is host-agnostic. Without it, a
+  // production build reached at anything other than `site` (the container on
+  // localhost:8484, a staging host, www) would 403 its own guestbook form.
   const fetchSite = request.headers.get('sec-fetch-site');
-  if (fetchSite && fetchSite !== 'same-origin') return false;
+  if (fetchSite === 'same-origin') return true;
+  if (fetchSite) return false;
+
+  // Fallback for clients that send no Sec-Fetch-Site.
 
   const allowed = new Set<string>();
   if (site) allowed.add(site.origin);

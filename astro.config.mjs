@@ -47,8 +47,10 @@ export default defineConfig({
     tailwind(),
     sitemap({
       customPages: [...contentUrls('blog', '/blog'), ...contentUrls('projects', '/portfolio')],
-      // The CMS is not content anyone should find in search.
-      filter: page => !page.includes('/admin') && !page.includes('/keystatic'),
+      // The CMS is not content anyone should find in search. Matched at the
+      // start of the path, not anywhere in the URL — a post slugged
+      // "admin-guide" would otherwise drop itself out of the sitemap.
+      filter: page => !/^\/(admin|keystatic)(\/|$)/.test(new URL(page).pathname),
     }),
     react(),
     ...(enableKeystatic ? [keystatic()] : []),
