@@ -1,12 +1,12 @@
 # Development Guidelines
 
-This project contains the source for **korikosmos.dev**, a personal portfolio, blog, and games hub built with [Astro](https://astro.build/) 5 (SSR mode), styled with Tailwind CSS 3 + DaisyUI 5.
+This project contains the source for **korikosmos.dev**, a personal portfolio, blog, and games hub built with [Astro](https://astro.build/) 5 (SSR mode), styled with Tailwind CSS 3 + DaisyUI 4.
 
 ## Tech Stack
 
 - **Framework:** Astro 5 (`output: 'server'`, `@astrojs/node` standalone adapter)
 - **UI:** React 19 via `@astrojs/react` — `.astro` pages fetch data server-side and render a `.tsx` body component
-- **Styling:** Tailwind CSS 3.3 + DaisyUI 5.5 (5 custom themes: dark, light, forest, spider-man, batman) for the modern skin; `src/styles/retro.css` for the retro one
+- **Styling:** Tailwind CSS 3.3 + DaisyUI 4.12 (5 custom themes: dark, light, forest, spider-man, batman) for the modern skin; `src/styles/retro.css` for the retro one
 - **TypeScript:** Strict mode (`astro/tsconfigs/strict`)
 - **Deployment:** Docker (multi-stage build, Node 20 Alpine, port 4321)
 - **CMS:** Keystatic (admin at `/keystatic`, GitHub mode; `/admin` redirects there)

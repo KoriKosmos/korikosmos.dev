@@ -52,7 +52,13 @@ export default defineConfig({
       // "admin-guide" would otherwise drop itself out of the sitemap.
       filter: page => !/^\/(admin|keystatic)(\/|$)/.test(new URL(page).pathname),
     }),
-    react(),
+    // `exclude` keeps the React plugin's Babel pass off Vite's prebundled
+    // dependency chunks. They are already-compiled library code (the biggest is
+    // react-dom + scheduler at ~1 MB), so react-refresh has nothing to
+    // instrument there — and Babel's generator prints a "deoptimised the
+    // styling ... exceeds the max of 500KB" note every time it walks one.
+    // Dev-only: the production build never touches node_modules/.vite.
+    react({ exclude: ['**/node_modules/.vite/**'] }),
     ...(enableKeystatic ? [keystatic()] : []),
   ],
 });
