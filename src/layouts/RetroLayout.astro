@@ -126,14 +126,18 @@ const LAST_UPDATED = "26 July 2026";
 			</p>
 			<img class="rt-blinkie" src="/retro/blinkies/welcome.svg" alt="Welcome to my site" width="150" height="20" />
 			<div class="rt-hr"></div>
+			<!-- CSS marquee rather than a real <marquee> element: the element
+			     scrolls from the browser's own layout engine, which no CSS rule
+			     can stop, so it would keep moving under prefers-reduced-motion.
+			     .rt-marquee__track is covered by retro.css's reduced-motion block. -->
 			<div class="rt-marquee">
-				<marquee behavior="scroll" direction="left" scrollamount="4">
+				<div class="rt-marquee__track">
 					★彡 Welcome to my corner of the World Wide Web! 彡★ &nbsp;&nbsp;&nbsp;
 					This page is best viewed with your monitor turned ON &nbsp;&nbsp;&nbsp;
 					Don't forget to sign the guestbook! &nbsp;&nbsp;&nbsp;
 					Tell your friends! Bookmark me! &nbsp;&nbsp;&nbsp;
 					Now with 100% more CSS &nbsp;&nbsp;&nbsp;
-				</marquee>
+				</div>
 			</div>
 		</div>
 	</div>

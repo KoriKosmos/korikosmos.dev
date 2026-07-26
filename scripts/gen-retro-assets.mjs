@@ -166,6 +166,13 @@ emit(
 
 /* ===========================================================================
    Animated "GIF" set
+
+   Note: anything with a text label gets an opaque plate behind it. These are
+   drawn on --rt-panel, which is near-white in the kawaii/y2k themes and
+   near-black in geocities/cyber, so bare dark text vanishes in half of them.
+   (Keep explanations here, not in the emitted SVG — an XML comment may not
+   contain a double hyphen, so a CSS custom property name inside one is a
+   parse error.)
    =========================================================================== */
 
 emit(
@@ -190,7 +197,8 @@ emit(
      <rect x="6" y="20" width="168" height="20" fill="#111111" opacity="0.08"/>
      <circle class="flash" cx="14" cy="12" r="5" fill="#ff3b30" stroke="#8c0000" stroke-width="1.5"/>
      <circle class="flash" cx="166" cy="12" r="5" fill="#ff3b30" stroke="#8c0000" stroke-width="1.5" style="animation-delay:.45s"/>
-     <text x="90" y="55" text-anchor="middle" font-family="Verdana,sans-serif" font-size="10" font-weight="bold" fill="#111111">UNDER CONSTRUCTION</text>`,
+     <rect x="12" y="44" width="156" height="15" fill="#111111"/>
+     <text x="90" y="55.5" text-anchor="middle" font-family="Verdana,sans-serif" font-size="10" font-weight="bold" fill="#ffb400">UNDER CONSTRUCTION</text>`,
   ),
 );
 
@@ -282,9 +290,10 @@ emit(
       .spin { animation: sp 6s linear infinite; transform-origin: 14px 14px; }
       @keyframes sp { to { transform: rotate(360deg); } }
     `)}
+     <rect width="72" height="28" rx="2" fill="#0b1020"/>
      <circle class="spin" cx="14" cy="14" r="8" fill="none" stroke="#00b0ff" stroke-width="3" stroke-dasharray="6 4"/>
-     <text x="46" y="12" text-anchor="middle" font-family="Verdana,sans-serif" font-size="8" font-weight="bold" fill="#00b0ff">WEB</text>
-     <text x="46" y="22" text-anchor="middle" font-family="Verdana,sans-serif" font-size="8" font-weight="bold" fill="#7c4dff">RING</text>`,
+     <text x="46" y="12" text-anchor="middle" font-family="Verdana,sans-serif" font-size="8" font-weight="bold" fill="#66ccff">WEB</text>
+     <text x="46" y="22" text-anchor="middle" font-family="Verdana,sans-serif" font-size="8" font-weight="bold" fill="#c0a8ff">RING</text>`,
   ),
 );
 
@@ -373,10 +382,35 @@ function blinkie({ file, bg, ink, ink2, text }) {
    Write everything
    =========================================================================== */
 
-await fs.rm(OUT, { recursive: true, force: true });
+// Write in place and prune what's no longer generated, rather than removing
+// public/retro/ wholesale: deleting the directory out from under a running
+// `astro dev` makes it 404 every asset until the server is restarted.
 for (const [relPath, contents] of files) {
   const target = path.join(OUT, relPath);
   await fs.mkdir(path.dirname(target), { recursive: true });
   await fs.writeFile(target, contents, 'utf-8');
 }
-console.log(`Wrote ${files.size} retro assets to public/retro/`);
+
+let pruned = 0;
+async function prune(dir) {
+  let entries;
+  try {
+    entries = await fs.readdir(dir, { withFileTypes: true });
+  } catch {
+    return;
+  }
+  for (const entry of entries) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      await prune(full);
+      continue;
+    }
+    if (!files.has(path.relative(OUT, full))) {
+      await fs.rm(full);
+      pruned++;
+    }
+  }
+}
+await prune(OUT);
+
+console.log(`Wrote ${files.size} retro assets to public/retro/${pruned ? ` (pruned ${pruned} stale)` : ''}`);
