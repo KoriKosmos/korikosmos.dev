@@ -1,22 +1,34 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import { getCollection, getEntryBySlug } from 'astro:content';
+import { getEntryBySlug } from 'astro:content';
+import { isRetro } from '../../lib/skin';
 import { BlogPostPage } from '../../page-components/BlogPostPage.tsx';
+import { RetroBlogPostPage } from '../../retro-components/RetroBlogPostPage.tsx';
 
-export const prerender = true;
-
-export async function getStaticPaths() {
-  const posts = await getCollection('blog');
-  return posts.map(p => ({ params: { slug: p.slug } }));
-}
-
+// Server-rendered, not prerendered: the skin lives in a request cookie, and a
+// build-time render has no request to read it from. Content collections are
+// in-memory at runtime, so rendering per request costs effectively nothing.
 const { slug } = Astro.params;
-const post = await getEntryBySlug('blog', slug);
+const post = slug ? await getEntryBySlug('blog', slug) : undefined;
+if (!post) return new Response(null, { status: 404 });
+
 const { Content } = await post.render();
+const retro = isRetro(Astro);
 ---
 
 <Layout title={post.data.title} description={post.data.description} image={`/og/blog/${slug}.png`}>
-  <BlogPostPage title={post.data.title}>
-    <Content />
-  </BlogPostPage>
+  {retro ? (
+    <RetroBlogPostPage
+      title={post.data.title}
+      description={post.data.description}
+      pubDate={post.data.pubDate.toISOString()}
+      updatedDate={post.data.updatedDate?.toISOString()}
+    >
+      <Content />
+    </RetroBlogPostPage>
+  ) : (
+    <BlogPostPage title={post.data.title}>
+      <Content />
+    </BlogPostPage>
+  )}
 </Layout>

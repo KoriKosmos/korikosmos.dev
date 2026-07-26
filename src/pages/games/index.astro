@@ -1,8 +1,12 @@
 ---
 import Layout from '../../layouts/Layout.astro';
+import { isRetro } from '../../lib/skin';
 import { GamesIndexPage } from '../../page-components/GamesIndexPage.tsx';
+import { RetroGamesIndexPage } from '../../retro-components/RetroGamesIndexPage.tsx';
+
+const retro = isRetro(Astro);
 ---
 
 <Layout title="Games" description="Play Tetris, Rock Paper Scissors, and more browser games.">
-  <GamesIndexPage />
+  {retro ? <RetroGamesIndexPage /> : <GamesIndexPage />}
 </Layout>

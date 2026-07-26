@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="88" height="31" viewBox="0 0 88 31" shape-rendering="crispEdges"><defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+         <stop offset="0%" stop-color="#0055aa"/><stop offset="100%" stop-color="#002d5c"/>
+       </linearGradient></defs>
+       <rect width="88" height="31" fill="url(#bg)"/>
+       <rect x="0.5" y="0.5" width="87" height="30" fill="none" stroke="#000000"/>
+       <rect x="1.5" y="1.5" width="85" height="28" fill="none" stroke="#ffffff" stroke-opacity="0.35"/>
+       <rect x="2" y="2" width="24" height="27" fill="#ffffff"/>
+       <text x="14" y="20" text-anchor="middle" font-family="Verdana,Geneva,sans-serif" font-size="12" font-weight="bold" fill="#0055aa">✓</text>
+       <text x="57" y="14" text-anchor="middle" font-family="Verdana,Geneva,sans-serif" font-size="7.5" font-weight="bold" fill="#ffffff">VALID CSS!</text>
+       <text x="57" y="24" text-anchor="middle" font-family="Verdana,Geneva,sans-serif" font-size="7" fill="#ffffff">probably</text></svg>

@@ -1,0 +1,20 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { getGuestbook } from '../lib/guestbook';
+import { isRetro } from '../lib/skin';
+import { GuestbookPage } from '../page-components/GuestbookPage.tsx';
+import { RetroGuestbookPage } from '../retro-components/RetroGuestbookPage.tsx';
+
+// The guestbook is the retro skin's headline feature, but it exists in both —
+// a link people can share shouldn't 404 depending on a cookie.
+const entries = await getGuestbook();
+const retro = isRetro(Astro);
+---
+
+<Layout title="Guestbook" description="Sign Maan's guestbook — the good part of the old web.">
+  {retro ? (
+    <RetroGuestbookPage client:load entries={entries} />
+  ) : (
+    <GuestbookPage client:load entries={entries} />
+  )}
+</Layout>

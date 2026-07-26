@@ -1,26 +1,27 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import { getCollection, getEntryBySlug } from 'astro:content';
+import { getEntryBySlug } from 'astro:content';
+import { isRetro } from '../../lib/skin';
 import { ProjectDetailPage } from '../../page-components/ProjectDetailPage.tsx';
+import { RetroProjectDetailPage } from '../../retro-components/RetroProjectDetailPage.tsx';
 
-export const prerender = true;
-
-export async function getStaticPaths() {
-  const projects = await getCollection('projects');
-  return projects.map(p => ({ params: { slug: p.slug } }));
-}
-
+// Server-rendered rather than prerendered — see blog/[slug].astro for why.
 const { slug } = Astro.params;
-const project = await getEntryBySlug('projects', slug);
-const Content = project ? (await project.render()).Content : null;
+const project = slug ? await getEntryBySlug('projects', slug) : undefined;
+if (!project) return new Response(null, { status: 404 });
+
+const { Content } = await project.render();
+const retro = isRetro(Astro);
 ---
 
-<Layout
-  title={project ? project.data.title : 'Project'}
-  description={project?.data.summary}
-  image={`/og/portfolio/${slug}.png`}
->
-  <ProjectDetailPage project={project}>
-    {Content && <Content />}
-  </ProjectDetailPage>
+<Layout title={project.data.title} description={project.data.summary} image={`/og/portfolio/${slug}.png`}>
+  {retro ? (
+    <RetroProjectDetailPage project={project}>
+      <Content />
+    </RetroProjectDetailPage>
+  ) : (
+    <ProjectDetailPage project={project}>
+      <Content />
+    </ProjectDetailPage>
+  )}
 </Layout>

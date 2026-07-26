@@ -1,0 +1,282 @@
+---
+// The Web 1.0 shell: table layout, sidebars stuffed with badges, a marquee,
+// a real hit counter, and a webring. Layout.astro dispatches here when the
+// kk-skin cookie says "retro".
+//
+// Deliberately no <ClientRouter />. Full page loads are what this era felt
+// like, and they keep the two skins from ever swapping one shell's markup into
+// the other's document. Every class used here is defined in retro.css.
+import "../styles/retro.css";
+import OnekoToggle from "../components/OnekoToggle.tsx";
+import RetroChrome from "../retro-components/RetroChrome.tsx";
+import SkinToggle from "../retro-components/SkinToggle.tsx";
+import { NAV_ITEMS, SITE_TITLE, SITE_DESCRIPTION } from "../config";
+
+const {
+	title = SITE_TITLE,
+	description = SITE_DESCRIPTION,
+	image,
+} = Astro.props;
+
+const formattedTitle = title === SITE_TITLE ? SITE_TITLE : `${title} | ${SITE_TITLE}`;
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+const socialImage = new URL(image ?? '/og/site.png', Astro.site);
+const pathname = Astro.url.pathname;
+
+const hits = Astro.locals.hits ?? 0;
+// Odometer, zero-padded to six digits like every counter CGI ever written.
+const counterDigits = String(hits).padStart(6, "0").split("");
+
+// Sidebar nav: the same NAV_ITEMS as the modern header, flattened into the
+// grouped link list a 2004 sidebar would have had, plus the retro-only pages.
+const navGroups = [
+	...NAV_ITEMS.map(item =>
+		"items" in item
+			? { label: item.label, items: item.items }
+			: { label: null, items: [item] },
+	),
+	{ label: "Extras", items: [{ href: "/guestbook", label: "Guestbook" }] },
+];
+
+const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+
+// Webring: cycles the site's own pages, because a ring of one is still a ring.
+const RING = ["/", "/about", "/blog", "/portfolio", "/tunes", "/games", "/now", "/uses", "/links", "/guestbook"];
+const ringIndex = Math.max(0, RING.findIndex(href => href === pathname));
+const ringPrev = RING[(ringIndex - 1 + RING.length) % RING.length];
+const ringNext = RING[(ringIndex + 1) % RING.length];
+
+const BUTTONS = [
+	{ file: "korikosmos", alt: "KoriKosmos.dev", href: "/" },
+	{ file: "netscape", alt: "Best viewed in Netscape 4.0" },
+	{ file: "notepad", alt: "Made with Notepad" },
+	{ file: "astro", alt: "Powered by Astro", href: "https://astro.build" },
+	{ file: "validcss", alt: "Valid CSS, probably" },
+	{ file: "resolution", alt: "Best viewed at 1024 x 768" },
+	{ file: "linux", alt: "Runs on Linux" },
+	{ file: "selfhosted", alt: "Self hosted" },
+	{ file: "lastfm", alt: "Scrobbling since forever", href: "/tunes" },
+	{ file: "oneko", alt: "Oneko approved" },
+	{ file: "tetris", alt: "Block stacker", href: "/games/tetris" },
+	{ file: "nojs", alt: "Degrades gracefully" },
+	{ file: "guestbook", alt: "Sign my guestbook", href: "/guestbook" },
+	{ file: "openweb", alt: "Keep the web weird" },
+];
+
+const LAST_UPDATED = "26 July 2026";
+---
+
+<html lang="en" data-skin="retro" data-retro-theme="kawaii">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>{formattedTitle}</title>
+	<meta name="description" content={description} />
+	<link rel="canonical" href={canonicalURL} />
+	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+	<meta name="generator" content={Astro.generator} />
+
+	<meta property="og:type" content="website" />
+	<meta property="og:url" content={canonicalURL} />
+	<meta property="og:title" content={formattedTitle} />
+	<meta property="og:description" content={description} />
+	<meta property="og:image" content={socialImage} />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content={formattedTitle} />
+	<meta name="twitter:description" content={description} />
+	<meta name="twitter:image" content={socialImage} />
+
+	<link rel="preconnect" href="https://lastfm.freetls.fastly.net" crossorigin />
+
+	<!-- Critical background per retro theme, so the first paint isn't the
+	     modern skin's dark grey before retro.css arrives -->
+	<style is:inline>
+		html[data-skin="retro"] { background-color: #ffe9f4; }
+		html[data-skin="retro"][data-retro-theme="geocities"] { background-color: #000018; }
+		html[data-skin="retro"][data-retro-theme="cyber"] { background-color: #030b05; }
+		html[data-skin="retro"][data-retro-theme="y2k"] { background-color: #b8c2d4; }
+	</style>
+
+	<!-- Apply the saved retro colour scheme before first paint -->
+	<script is:inline>
+		(() => {
+			const allowed = ["kawaii", "geocities", "cyber", "y2k"];
+			const stored = localStorage.getItem("retro-theme");
+			document.documentElement.setAttribute(
+				"data-retro-theme",
+				allowed.includes(stored) ? stored : "kawaii",
+			);
+		})();
+	</script>
+</head>
+<body>
+<a href="#main-content" class="rt-sr-only rt-skip-link">Skip to content</a>
+
+<div class="rt-page">
+
+	<!-- ============ Banner ============ -->
+	<div class="rt-panel">
+		<div class="rt-panel__title">C:\WEB\KORIKOSMOS\{pathname === "/" ? "INDEX" : pathname.replace(/^\//, "").replace(/\//g, "\\").toUpperCase()}.HTM</div>
+		<div class="rt-panel__body rt-center">
+			<h1 class="rt-heading" style="margin-bottom:2px">
+				<span class="rt-rainbow">✦ KoriKosmos ✦</span>
+			</h1>
+			<p class="rt-small rt-alt" style="margin-bottom:6px">
+				Maan's Personal Homepage &nbsp;•&nbsp; est. 1998 (spiritually)
+			</p>
+			<img class="rt-blinkie" src="/retro/blinkies/welcome.svg" alt="Welcome to my site" width="150" height="20" />
+			<div class="rt-hr"></div>
+			<div class="rt-marquee">
+				<marquee behavior="scroll" direction="left" scrollamount="4">
+					★彡 Welcome to my corner of the World Wide Web! 彡★ &nbsp;&nbsp;&nbsp;
+					This page is best viewed with your monitor turned ON &nbsp;&nbsp;&nbsp;
+					Don't forget to sign the guestbook! &nbsp;&nbsp;&nbsp;
+					Tell your friends! Bookmark me! &nbsp;&nbsp;&nbsp;
+					Now with 100% more CSS &nbsp;&nbsp;&nbsp;
+				</marquee>
+			</div>
+		</div>
+	</div>
+
+	<!-- ============ Body ============ -->
+	<table class="rt-shell">
+		<tbody>
+			<tr>
+				<!-- ---- Left sidebar ---- -->
+				<td class="rt-col-left">
+					<nav class="rt-panel" aria-label="Primary">
+						<div class="rt-panel__title">Navigation</div>
+						<div class="rt-panel__body" style="padding:4px">
+							<ul class="rt-nav">
+								<li><a href="/" aria-current={pathname === "/" ? "page" : undefined}>Home</a></li>
+								{navGroups.map(group => (
+									<>
+										{group.label && <li class="rt-nav__group">{group.label}</li>}
+										{group.items.map(link => (
+											<li>
+												<a href={link.href} aria-current={isActive(link.href) ? "page" : undefined}>
+													{link.label}
+												</a>
+											</li>
+										))}
+									</>
+								))}
+							</ul>
+						</div>
+					</nav>
+
+					<div class="rt-panel">
+						<div class="rt-panel__title">Visitors</div>
+						<div class="rt-panel__body rt-center">
+							<p class="rt-counter" aria-hidden="true">
+								{counterDigits.map(digit => <span class="rt-counter__digit">{digit}</span>)}
+							</p>
+							<p class="rt-sr-only">{hits} visitors so far.</p>
+							<p class="rt-note" style="margin:6px 0 0">You are visitor #{hits}!</p>
+						</div>
+					</div>
+
+					<div class="rt-panel">
+						<div class="rt-panel__title">Webring</div>
+						<div class="rt-panel__body rt-center">
+							<img src="/retro/gfx/webring.svg" alt="" width="72" height="28" />
+							<p class="rt-webring" style="margin:4px 0 0">
+								<a href={ringPrev}>&laquo; Prev</a>
+								<span aria-hidden="true">|</span>
+								<a href={RING[Math.floor(RING.length / 2)]}>Random</a>
+								<span aria-hidden="true">|</span>
+								<a href={ringNext}>Next &raquo;</a>
+							</p>
+						</div>
+					</div>
+				</td>
+
+				<!-- ---- Main content ---- -->
+				<td class="rt-col-main">
+					<main id="main-content">
+						<slot />
+					</main>
+				</td>
+
+				<!-- ---- Right sidebar ---- -->
+				<td class="rt-col-right">
+					<div class="rt-panel">
+						<div class="rt-panel__title">Hello!</div>
+						<div class="rt-panel__body rt-center">
+							<img src="/retro/gfx/mascot.svg" alt="A small pink cat waving" width="72" height="72" />
+							<p class="rt-small" style="margin:4px 0 0">Thanks for stopping by!</p>
+						</div>
+					</div>
+
+					<div class="rt-panel">
+						<div class="rt-panel__title">Notices</div>
+						<div class="rt-panel__body rt-center">
+							<img class="rt-blinkie" src="/retro/blinkies/guestbook.svg" alt="Please sign my guestbook" width="150" height="20" />
+							<img class="rt-blinkie" src="/retro/blinkies/nowplaying.svg" alt="Now playing" width="150" height="20" />
+							<img class="rt-blinkie" src="/retro/blinkies/kawaii.svg" alt="Kawaii" width="150" height="20" />
+							<img class="rt-construction" src="/retro/gfx/construction.svg" alt="Under construction" width="180" height="60" />
+						</div>
+					</div>
+
+					<div class="rt-panel">
+						<div class="rt-panel__title">Awards</div>
+						<div class="rt-panel__body rt-center">
+							<img class="rt-award" src="/retro/gfx/award.svg" alt="Cool Site of the Day award" width="120" height="48" />
+							<p class="rt-note">Self-awarded, 2004.</p>
+						</div>
+					</div>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+
+	<!-- ============ Footer ============ -->
+	<div class="rt-hr rt-hr--stars"></div>
+
+	<div class="rt-panel">
+		<div class="rt-panel__title">Link Me / Sites I Like</div>
+		<div class="rt-panel__body">
+			<ul class="rt-badges">
+				{BUTTONS.map(button => (
+					<li>
+						{button.href ? (
+							<a
+								href={button.href}
+								title={button.alt}
+								{...(button.href.startsWith("http") ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+							>
+								<img class="rt-btn88" src={`/retro/buttons/${button.file}.svg`} alt={button.alt} width="88" height="31" />
+							</a>
+						) : (
+							<img class="rt-btn88" src={`/retro/buttons/${button.file}.svg`} alt={button.alt} width="88" height="31" />
+						)}
+					</li>
+				))}
+			</ul>
+		</div>
+	</div>
+
+	<footer class="rt-panel">
+		<div class="rt-panel__body rt-center rt-small">
+			<p style="margin-bottom:6px">
+				<img src="/retro/gfx/mail.svg" alt="" width="24" height="18" />
+				<a href="mailto:kori@korikosmos.dev">kori@korikosmos.dev</a>
+				&nbsp;•&nbsp;
+				<a href="/rss.xml">RSS</a>
+				&nbsp;•&nbsp;
+				<a href="/guestbook" >Sign the guestbook</a>
+			</p>
+			<p class="rt-note" style="margin:0">
+				Last updated {LAST_UPDATED} &nbsp;•&nbsp; &copy; {new Date().getFullYear()} Maan &ndash; KoriKosmos
+				&nbsp;•&nbsp; <span class="rt-blink">No frames were harmed.</span>
+			</p>
+			<p class="rt-note" style="margin:4px 0 0">{SITE_DESCRIPTION}</p>
+		</div>
+	</footer>
+</div>
+
+<OnekoToggle client:load />
+<SkinToggle client:load skin="retro" />
+<RetroChrome client:load />
+</body>
+</html>

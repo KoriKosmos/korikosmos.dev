@@ -1,9 +1,31 @@
 ---
 import Layout from "../layouts/Layout.astro";
+import { getCollection } from "astro:content";
+import { isRetro } from "../lib/skin";
 import { TypingHeading } from "../page-components/TypingHeading.tsx";
+import { RetroHomePage } from "../retro-components/RetroHomePage.tsx";
+
+const retro = isRetro(Astro);
+
+// Only the retro homepage needs these — it's a 2004 front page, so it lists
+// everything on the site rather than linking to four cards.
+const [posts, projects] = retro
+	? await Promise.all([getCollection("blog"), getCollection("projects")])
+	: [[], []];
 ---
 
 <Layout description="Personal portfolio, blog, and games hub by Maan.">
+	{retro ? (
+		<RetroHomePage
+			posts={posts.map(p => ({
+				slug: p.slug,
+				title: p.data.title,
+				description: p.data.description,
+				pubDate: p.data.pubDate.toISOString(),
+			}))}
+			projects={projects.map(p => ({ slug: p.slug, title: p.data.title, summary: p.data.summary }))}
+		/>
+	) : (
 	<section class="text-center py-20">
 		<TypingHeading client:load />
 		<p class="text-xl mb-10 text-base-content/70">
@@ -46,4 +68,5 @@ import { TypingHeading } from "../page-components/TypingHeading.tsx";
 			</a>
 		</div>
 	</section>
+	)}
 </Layout>

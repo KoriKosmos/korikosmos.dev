@@ -1,11 +1,14 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { getCollection } from 'astro:content';
+import { isRetro } from '../lib/skin';
 import { PortfolioPage } from '../page-components/PortfolioPage.tsx';
+import { RetroPortfolioPage } from '../retro-components/RetroPortfolioPage.tsx';
 
 const projects = await getCollection('projects');
+const retro = isRetro(Astro);
 ---
 
 <Layout title="Portfolio" description="Projects and work by Maan.">
-  <PortfolioPage projects={projects} />
+  {retro ? <RetroPortfolioPage projects={projects} /> : <PortfolioPage projects={projects} />}
 </Layout>

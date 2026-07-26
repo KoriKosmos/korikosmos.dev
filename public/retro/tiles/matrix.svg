@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="36" height="48" viewBox="0 0 36 48"><rect width="36" height="48" fill="#030b05"/>
+     <g font-family="monospace" font-size="9">
+       <text x="3" y="10" fill="#0f5c2c">1</text>
+       <text x="15" y="20" fill="#0a3d1d">0</text>
+       <text x="27" y="14" fill="#12683a">1</text>
+       <text x="26" y="32" fill="#0f5c2c">1</text>
+       <text x="6" y="40" fill="#0a3d1d">0</text>
+       <text x="16" y="46" fill="#0d4a24">1</text>
+     </g></svg>
