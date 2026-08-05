@@ -1,0 +1,88 @@
+---
+// The head metadata shared by both skins: description, canonical, icon, and the
+// Open Graph / Twitter card tags that drive link previews in Discord, Slack,
+// iMessage and friends.
+//
+// Deliberately output-only — it takes everything as props and emits <meta> and
+// <link>, nothing else. Each shell keeps its own <title>, critical CSS, and
+// scripts, because those are where the two skins genuinely differ. If this
+// component ever needs to know which skin it is rendering in, it has grown past
+// what it is for.
+import { SITE_TITLE } from '../config';
+
+interface Props {
+  /** Already formatted as `{page} | {site}` by the caller. */
+  title: string;
+  description: string;
+  canonicalURL: URL;
+  socialImage: URL;
+  /** `article` for blog posts, so they carry authorship and dates. */
+  type?: 'website' | 'article';
+  /** ISO 8601. Only emitted for `type="article"`. */
+  publishedTime?: string;
+  modifiedTime?: string;
+}
+
+const {
+  title,
+  description,
+  canonicalURL,
+  socialImage,
+  type = 'website',
+  publishedTime,
+  modifiedTime,
+} = Astro.props;
+
+// The generated cards are a fixed 1200x630 (see src/pages/og/[...route].ts).
+// Declaring the dimensions lets a crawler reserve the large-image layout before
+// it has fetched the file — without them some clients fall back to the small
+// thumbnail treatment, which is most of what made the embed look plain.
+const OG_IMAGE_WIDTH = '1200';
+const OG_IMAGE_HEIGHT = '630';
+
+const imageAlt = `${title} — a card on a constellation background`;
+---
+
+<meta name="description" content={description} />
+<link rel="canonical" href={canonicalURL} />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<meta name="generator" content={Astro.generator} />
+
+{/* Discord tints the embed's left stripe with this, and mobile browsers use it
+    for the address-bar chrome. It is read by a crawler that has no cookie, so
+    it can't follow the visitor's chosen theme — this is the accent shared by
+    all five, and matches the border on the generated cards. */}
+<meta name="theme-color" content="#818cf8" />
+
+<!-- Open Graph -->
+<meta property="og:type" content={type} />
+<meta property="og:url" content={canonicalURL} />
+{/* Kept as the full `{page} | {site}` string rather than the bare page title:
+    og:site_name is rendered as separate small text by Discord, but ignored
+    outright by several other clients, where a bare title loses all context. */}
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:site_name" content={SITE_TITLE} />
+<meta property="og:locale" content="en_GB" />
+<meta property="og:image" content={socialImage} />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content={OG_IMAGE_WIDTH} />
+<meta property="og:image:height" content={OG_IMAGE_HEIGHT} />
+<meta property="og:image:alt" content={imageAlt} />
+
+{
+  type === 'article' && (
+    <>
+      {publishedTime && <meta property="article:published_time" content={publishedTime} />}
+      {modifiedTime && <meta property="article:modified_time" content={modifiedTime} />}
+      <meta property="article:author" content="Kori Kosmos" />
+    </>
+  )
+}
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={socialImage} />
+<meta name="twitter:image:alt" content={imageAlt} />

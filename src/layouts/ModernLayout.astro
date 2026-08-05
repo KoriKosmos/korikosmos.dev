@@ -11,6 +11,7 @@ import ConstellationField from "../page-components/ConstellationField.tsx";
 import CommandPalette from "../page-components/CommandPalette.tsx";
 import NavigationProgress from "../page-components/NavigationProgress.tsx";
 import SkinToggle from "../retro-components/SkinToggle.tsx";
+import SeoHead from "./SeoHead.astro";
 import type { PaletteLink } from "../page-components/CommandPalette.tsx";
 import { NAV_ITEMS, SITE_TITLE, SITE_DESCRIPTION } from "../config";
 
@@ -19,6 +20,9 @@ const {
 	description = SITE_DESCRIPTION,
 	image,
 	isWide = false,
+	ogType,
+	publishedTime,
+	modifiedTime,
 } = Astro.props;
 
 const formattedTitle = title === SITE_TITLE ? SITE_TITLE : `${title} | ${SITE_TITLE}`;
@@ -61,23 +65,15 @@ const paletteLinks: PaletteLink[] = [
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 	<title>{formattedTitle}</title>
-	<meta name="description" content={description} />
-	<link rel="canonical" href={canonicalURL} />
-	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-	<meta name="generator" content={Astro.generator} />
-
-	<!-- Open Graph -->
-	<meta property="og:type" content="website" />
-	<meta property="og:url" content={canonicalURL} />
-	<meta property="og:title" content={formattedTitle} />
-	<meta property="og:description" content={description} />
-	<meta property="og:image" content={socialImage} />
-
-	<!-- Twitter Card -->
-	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content={formattedTitle} />
-	<meta name="twitter:description" content={description} />
-	<meta name="twitter:image" content={socialImage} />
+	<SeoHead
+		title={formattedTitle}
+		description={description}
+		canonicalURL={canonicalURL}
+		socialImage={socialImage}
+		type={ogType}
+		publishedTime={publishedTime}
+		modifiedTime={modifiedTime}
+	/>
 
 	<!-- Preconnect -->
 	<link rel="preconnect" href="https://lastfm.freetls.fastly.net" crossorigin />

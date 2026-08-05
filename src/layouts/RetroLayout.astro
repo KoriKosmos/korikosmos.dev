@@ -10,6 +10,7 @@ import "../styles/retro.css";
 import OnekoToggle from "../components/OnekoToggle.tsx";
 import RetroChrome from "../retro-components/RetroChrome.tsx";
 import SkinToggle from "../retro-components/SkinToggle.tsx";
+import SeoHead from "./SeoHead.astro";
 import { NAV_ITEMS, SITE_TITLE, SITE_DESCRIPTION } from "../config";
 import { DEFAULT_RETRO_THEME, RETRO_THEMES } from "../lib/skin";
 
@@ -17,6 +18,9 @@ const {
 	title = SITE_TITLE,
 	description = SITE_DESCRIPTION,
 	image,
+	ogType,
+	publishedTime,
+	modifiedTime,
 } = Astro.props;
 
 const formattedTitle = title === SITE_TITLE ? SITE_TITLE : `${title} | ${SITE_TITLE}`;
@@ -71,20 +75,15 @@ const LAST_UPDATED = "26 July 2026";
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 	<title>{formattedTitle}</title>
-	<meta name="description" content={description} />
-	<link rel="canonical" href={canonicalURL} />
-	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-	<meta name="generator" content={Astro.generator} />
-
-	<meta property="og:type" content="website" />
-	<meta property="og:url" content={canonicalURL} />
-	<meta property="og:title" content={formattedTitle} />
-	<meta property="og:description" content={description} />
-	<meta property="og:image" content={socialImage} />
-	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content={formattedTitle} />
-	<meta name="twitter:description" content={description} />
-	<meta name="twitter:image" content={socialImage} />
+	<SeoHead
+		title={formattedTitle}
+		description={description}
+		canonicalURL={canonicalURL}
+		socialImage={socialImage}
+		type={ogType}
+		publishedTime={publishedTime}
+		modifiedTime={modifiedTime}
+	/>
 
 	<link rel="preconnect" href="https://lastfm.freetls.fastly.net" crossorigin />
 

@@ -21,35 +21,86 @@ const pages: Record<string, { title: string; description: string }> = {
   ),
 };
 
+type RGB = [number, number, number];
+
+/**
+ * Card families. Each section gets its own accent so blog posts, projects, and
+ * the site card are distinguishable at a glance in a chat scrollback, while the
+ * shared starfield geometry (one seed for all three — see gen-og-assets.mjs)
+ * keeps them recognisably the same site.
+ *
+ * `gradient` is the vertical wash the starfield is drawn over; its lower stop is
+ * nudged toward the accent hue rather than left a neutral grey.
+ */
+const VARIANTS: Record<string, { starfield: string; accent: RGB; gradient: RGB[] }> = {
+  site: {
+    starfield: './src/assets/og/starfield-site.png',
+    accent: [129, 140, 248],
+    gradient: [
+      [15, 20, 36],
+      [28, 30, 60],
+    ],
+  },
+  blog: {
+    starfield: './src/assets/og/starfield-blog.png',
+    accent: [56, 189, 248],
+    gradient: [
+      [12, 21, 34],
+      [18, 40, 62],
+    ],
+  },
+  portfolio: {
+    starfield: './src/assets/og/starfield-portfolio.png',
+    accent: [192, 132, 252],
+    gradient: [
+      [20, 16, 36],
+      [40, 26, 62],
+    ],
+  },
+};
+
+/** `path` is the `pages` key above, so the section is its first segment. */
+const variantFor = (path: string) =>
+  path.startsWith('blog/') ? VARIANTS.blog : path.startsWith('portfolio/') ? VARIANTS.portfolio : VARIANTS.site;
+
 export const { getStaticPaths, GET } = await OGImageRoute({
   pages,
-  getImageOptions: (_path, page) => ({
-    title: page.title,
-    description: page.description,
-    // Vendored so builds don't depend on a font CDN
-    fonts: ['./src/fonts/noto-sans-latin-400-normal.ttf', './src/fonts/noto-sans-latin-800-normal.ttf'],
-    // Matches the dark theme's base-100/primary-secondary gradient look
-    bgGradient: [
-      [17, 24, 39],
-      [31, 41, 55],
-    ],
-    border: { color: [129, 140, 248], width: 16, side: 'inline-start' },
-    padding: 72,
-    font: {
-      title: {
-        size: 72,
-        // The 800-weight file registers as its own family, not as a weight of 'Noto Sans'
-        families: ['Noto Sans ExtraBold', 'Noto Sans'],
-        weight: 'ExtraBold',
-        color: [243, 244, 246],
-        lineHeight: 1.2,
+  getImageOptions: (path, page) => {
+    const variant = variantFor(path);
+
+    return {
+      title: page.title,
+      description: page.description,
+      // Vendored so builds don't depend on a font CDN
+      fonts: ['./src/fonts/noto-sans-latin-400-normal.ttf', './src/fonts/noto-sans-latin-800-normal.ttf'],
+      bgGradient: variant.gradient,
+      // Drawn over the gradient (astro-og-canvas paints background, then border,
+      // then this), so the starfield PNG carries alpha and the wash shows through.
+      bgImage: { path: variant.starfield, fit: 'cover' as const },
+      // The mark also pushes the text down out of the corner: astro-og-canvas
+      // clamps the paragraph to a band just below the logo, so with no logo the
+      // title is pinned at `padding` and the bottom half of the card is dead
+      // space. With one, the text sits near the middle and the constellation
+      // fills the rest.
+      logo: { path: './src/assets/og/mark.png', size: [58] as [number] },
+      border: { color: variant.accent, width: 14, side: 'inline-start' as const },
+      padding: 68,
+      font: {
+        title: {
+          size: 74,
+          // The 800-weight file registers as its own family, not as a weight of 'Noto Sans'
+          families: ['Noto Sans ExtraBold', 'Noto Sans'],
+          weight: 'ExtraBold' as const,
+          color: [246, 247, 251] as RGB,
+          lineHeight: 1.15,
+        },
+        description: {
+          size: 34,
+          weight: 'Normal' as const,
+          color: [186, 196, 214] as RGB,
+          lineHeight: 1.45,
+        },
       },
-      description: {
-        size: 36,
-        weight: 'Normal',
-        color: [209, 213, 219],
-        lineHeight: 1.4,
-      },
-    },
-  }),
+    };
+  },
 });

@@ -26,7 +26,14 @@ const { Content } = await post.render();
 const retro = isRetro(Astro);
 ---
 
-<Layout title={post.data.title} description={post.data.description} image={`/og/blog/${slug}.png`}>
+<Layout
+  title={post.data.title}
+  description={post.data.description}
+  image={`/og/blog/${slug}.png`}
+  ogType="article"
+  publishedTime={post.data.pubDate.toISOString()}
+  modifiedTime={post.data.updatedDate?.toISOString()}
+>
   {retro ? (
     <>
       <RetroBlogPostPage
