@@ -11,6 +11,9 @@
 import ModernLayout from "./ModernLayout.astro";
 import RetroLayout from "./RetroLayout.astro";
 import { isRetro } from "../lib/skin";
+import type { LayoutProps } from "./props";
+
+type Props = LayoutProps;
 
 const Shell = isRetro(Astro) ? RetroLayout : ModernLayout;
 ---

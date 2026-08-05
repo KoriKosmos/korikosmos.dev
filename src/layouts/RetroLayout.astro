@@ -13,6 +13,10 @@ import SkinToggle from "../retro-components/SkinToggle.tsx";
 import SeoHead from "./SeoHead.astro";
 import { NAV_ITEMS, SITE_TITLE, SITE_DESCRIPTION } from "../config";
 import { DEFAULT_RETRO_THEME, RETRO_THEMES } from "../lib/skin";
+import type { LayoutProps } from "./props";
+
+// isWide is accepted and ignored: the retro shell is one fixed-width table.
+type Props = LayoutProps;
 
 const {
 	title = SITE_TITLE,
@@ -77,6 +81,7 @@ const LAST_UPDATED = "26 July 2026";
 	<title>{formattedTitle}</title>
 	<SeoHead
 		title={formattedTitle}
+		pageTitle={title}
 		description={description}
 		canonicalURL={canonicalURL}
 		socialImage={socialImage}

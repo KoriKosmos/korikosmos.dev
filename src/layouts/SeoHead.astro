@@ -9,15 +9,18 @@
 // component ever needs to know which skin it is rendering in, it has grown past
 // what it is for.
 import { SITE_TITLE } from '../config';
+import type { OgType } from './props';
 
 interface Props {
   /** Already formatted as `{page} | {site}` by the caller. */
   title: string;
+  /** The bare page title, for alt text that shouldn't repeat the site name. */
+  pageTitle: string;
   description: string;
   canonicalURL: URL;
   socialImage: URL;
   /** `article` for blog posts, so they carry authorship and dates. */
-  type?: 'website' | 'article';
+  type?: OgType;
   /** ISO 8601. Only emitted for `type="article"`. */
   publishedTime?: string;
   modifiedTime?: string;
@@ -25,6 +28,7 @@ interface Props {
 
 const {
   title,
+  pageTitle,
   description,
   canonicalURL,
   socialImage,
@@ -40,7 +44,11 @@ const {
 const OG_IMAGE_WIDTH = '1200';
 const OG_IMAGE_HEIGHT = '630';
 
-const imageAlt = `${title} — a card on a constellation background`;
+// Built from the bare page title, not the `{page} | {site}` one — a separator
+// mid-sentence reads as noise when this is spoken aloud. The homepage's page
+// title *is* the site name, so it would otherwise say it twice.
+const cardSubject = pageTitle === SITE_TITLE ? SITE_TITLE : `${pageTitle} — ${SITE_TITLE}`;
+const imageAlt = `${cardSubject} social card on a constellation background`;
 ---
 
 <meta name="description" content={description} />

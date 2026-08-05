@@ -14,6 +14,9 @@ import SkinToggle from "../retro-components/SkinToggle.tsx";
 import SeoHead from "./SeoHead.astro";
 import type { PaletteLink } from "../page-components/CommandPalette.tsx";
 import { NAV_ITEMS, SITE_TITLE, SITE_DESCRIPTION } from "../config";
+import type { LayoutProps } from "./props";
+
+type Props = LayoutProps;
 
 const {
 	title = SITE_TITLE,
@@ -67,6 +70,7 @@ const paletteLinks: PaletteLink[] = [
 	<title>{formattedTitle}</title>
 	<SeoHead
 		title={formattedTitle}
+		pageTitle={title}
 		description={description}
 		canonicalURL={canonicalURL}
 		socialImage={socialImage}
