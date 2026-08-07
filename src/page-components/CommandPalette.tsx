@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { navigate } from "astro:transitions/client";
+import { persistTheme } from "../lib/theme";
+import type { Theme } from "../lib/theme";
 
 // Site-wide ⌘K / Ctrl-K launcher. Mounted once in Layout.astro with
 // transition:persist; link items (pages, blog posts, projects) are built
@@ -27,7 +29,7 @@ interface PaletteAction {
   perform?: () => void;
 }
 
-const THEMES: { name: string; label: string }[] = [
+const THEMES: { name: Theme; label: string }[] = [
   { name: "dark", label: "Dark" },
   { name: "light", label: "Light" },
   { name: "forest", label: "Forest" },
@@ -35,14 +37,15 @@ const THEMES: { name: string; label: string }[] = [
   { name: "batman", label: "Batman" },
 ];
 
-function applyTheme(name: string) {
+function applyTheme(name: Theme) {
   const root = document.documentElement;
   if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
     root.setAttribute("data-theme-fade", "");
     window.setTimeout(() => root.removeAttribute("data-theme-fade"), 400);
   }
   root.setAttribute("data-theme", name);
-  localStorage.setItem("theme", name);
+  // Cookie as well as localStorage, so the next server render is already themed.
+  persistTheme(name);
 }
 
 /**

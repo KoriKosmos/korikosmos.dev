@@ -14,6 +14,14 @@ import SkinToggle from "../retro-components/SkinToggle.tsx";
 import SeoHead from "./SeoHead.astro";
 import type { PaletteLink } from "../page-components/CommandPalette.tsx";
 import { NAV_ITEMS, SITE_TITLE, SITE_DESCRIPTION } from "../config";
+import {
+	DEFAULT_THEME,
+	getTheme,
+	THEME_COOKIE,
+	THEME_COOKIE_MAX_AGE,
+	THEME_STORAGE_KEY,
+	THEMES,
+} from "../lib/theme";
 import type { LayoutProps } from "./props";
 
 type Props = LayoutProps;
@@ -27,6 +35,12 @@ const {
 	publishedTime,
 	modifiedTime,
 } = Astro.props;
+
+// Rendered onto <html> below. Resolved from the kk-theme cookie by middleware,
+// so the document leaves the server already themed — the inline script that
+// used to be solely responsible for this can be deferred by things outside our
+// control (see src/lib/theme.ts), and when it is, the page flashes the default.
+const theme = getTheme(Astro);
 
 const formattedTitle = title === SITE_TITLE ? SITE_TITLE : `${title} | ${SITE_TITLE}`;
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
@@ -63,7 +77,7 @@ const paletteLinks: PaletteLink[] = [
 ---
 
 <!-- bg-base-100 lives on <html>, not <body>, so fixed -z-10 layers (homepage starfield) can paint above it -->
-<html lang="en" class="bg-base-100" data-skin="modern">
+<html lang="en" class="bg-base-100" data-skin="modern" data-theme={theme}>
 <head>
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -82,7 +96,9 @@ const paletteLinks: PaletteLink[] = [
 	<!-- Preconnect -->
 	<link rel="preconnect" href="https://lastfm.freetls.fastly.net" crossorigin />
 
-	<!-- Critical theme backgrounds: correct paint even before the stylesheet loads -->
+	<!-- Critical theme backgrounds: correct paint even before the stylesheet
+	     loads. <html> already carries data-theme from the cookie, so the bare
+	     rule is only the first-visit default — keep it matching DEFAULT_THEME. -->
 	<style is:inline>
 		html { background-color: #111827; }
 		html[data-theme="light"] { background-color: #F3F4F6; }
@@ -91,20 +107,63 @@ const paletteLinks: PaletteLink[] = [
 		html[data-theme="spider-man"] { background-color: #10163A; }
 	</style>
 
-	<!-- Apply saved theme before first paint, and re-apply after every client-side navigation -->
-	<script is:inline>
-		(() => {
-			const applyTheme = () => {
-				let theme = localStorage.getItem("theme") || "dark";
-				if (theme === "spiderman") theme = "spider-man"; // pre-rename stored value
-				document.documentElement.setAttribute("data-theme", theme);
-			};
-			applyTheme();
-			if (!window.__themeSwapHooked) {
-				window.__themeSwapHooked = true;
-				document.addEventListener("astro:after-swap", applyTheme);
+	<!-- Reconcile the server-rendered theme with localStorage, and re-apply after
+	     every client-side navigation.
+
+	     data-cfasync="false" opts this out of Cloudflare Rocket Loader, which
+	     otherwise rewrites inline scripts to a token MIME type and replays them
+	     asynchronously after load — that is what reintroduced the flash. The
+	     server-rendered data-theme above is the real defence; this is the
+	     fallback for the cases the cookie can't cover:
+	       - a visitor whose choice predates the cookie (localStorage only),
+	       - a page prefetched before the theme was changed, then swapped in by
+	         ClientRouter, which resets <html>'s attributes to the stale ones. -->
+	<script
+		is:inline
+		data-cfasync="false"
+		define:vars={{
+			themes: THEMES,
+			fallback: DEFAULT_THEME,
+			storageKey: THEME_STORAGE_KEY,
+			cookie: THEME_COOKIE,
+			maxAge: THEME_COOKIE_MAX_AGE,
+		}}
+	>
+		// define:vars already wraps this in its own function scope.
+		const normalise = (value) => {
+			const named = value === "spiderman" ? "spider-man" : value; // pre-rename stored value
+			return themes.includes(named) ? named : null;
+		};
+		const read = () => {
+			try {
+				return localStorage.getItem(storageKey);
+			} catch {
+				return null; // private mode: the cookie already decided the render
 			}
-		})();
+		};
+
+		const applyTheme = () => {
+			const root = document.documentElement;
+			const stored = read();
+			// localStorage wins over the rendered attribute: on a swap the attribute
+			// can be from a page prefetched before the theme changed.
+			const theme = normalise(stored) ?? normalise(root.getAttribute("data-theme")) ?? fallback;
+
+			if (root.getAttribute("data-theme") !== theme) root.setAttribute("data-theme", theme);
+			if (stored !== theme) {
+				try {
+					localStorage.setItem(storageKey, theme);
+				} catch {}
+			}
+			// Keep the cookie in step (and rolling) so the next request renders it.
+			document.cookie = cookie + "=" + theme + "; path=/; max-age=" + maxAge + "; samesite=lax";
+		};
+
+		applyTheme();
+		if (!window.__themeSwapHooked) {
+			window.__themeSwapHooked = true;
+			document.addEventListener("astro:after-swap", applyTheme);
+		}
 	</script>
 
 	<ClientRouter />
