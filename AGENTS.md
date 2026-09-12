@@ -111,6 +111,7 @@ The whole point is that this is a *different site*, not a restyle — the layout
 
 - `npm run dev` – start development server at `localhost:4321`.
 - `npm run build` – build to `dist/`.
+- `npm run check` – I check TypeScript and checked JavaScript without emitting files. This does not type-check `.astro` templates, so I also run the build and production-render checks.
 - `npm test` – run my focused regression checks with Node's test runner via `tsx` (Node 20 compatible).
 - `npm run test:render` – after a build, I check real production responses in both skins without starting a server. React interaction checks use JSDOM and do not replace a visual browser pass.
 - `npm run preview` – preview the production build locally.
@@ -140,7 +141,7 @@ For Decap CMS OAuth:
 - Whenever you make a change, add or modify this AGENTS.md file to enhance future updates, refactors and usability. Whether this is instructions, best habits, etc.
 - Whenever a change is made, keep a list of notes at the bottom of this AGENTS.md file that tracks the more "qualitative" wants of the user/client, such as themes, experiences, etc.
 - Keep commits focused and write a short imperative subject line (e.g. `Fix navbar links`).
-- I run `npm test` and verify that `npm run build` succeeds before committing.
+- I run `npm run check`, `npm test`, `npm run build` and `npm run test:render` before committing.
 - New pages go in `src/pages`, and reusable pieces belong in `src/components`.
 - Never apply a "codex" label to PRs; omit ChatGPT chat links.
 - Write documentation in first-person voice, from my perspective.
@@ -148,6 +149,7 @@ For Decap CMS OAuth:
 - GitHub Copilot instructions are configured in `.github/copilot-instructions.md`.
 
 ## Notes
+- I keep strict TypeScript checks clean alongside the build. Canvas and typing callbacks are initialised after the DOM guards so they retain non-null types; persisted hit-counter JSON starts as `unknown` and is narrowed before use. This keeps my homepage effects and visitor counter working without weakening strict mode.
 - I load Tunes periods on demand instead of prefetching every chart. The active period owns its abortable request so slower responses cannot overwrite a newer selection. Live polling refreshes the whole recent list, updates playback even when the track name is unchanged, pauses in hidden tabs, and removes its timers/listeners on navigation. Missing cover art uses my local record illustration.
 - I share successful Last.fm requests across visitors, with a bounded cache and in-flight coalescing. Recent tracks expire after 15 seconds; charts after 15 minutes. I keep a five-second upstream timeout, validate public query parameters, return uncached 503s for outages, and let `/now` and `/tunes` render with empty music data when Last.fm is unavailable. I never log URLs containing my API key.
 - I added Star Pairs as a gentle cosmic memory game with three board sizes. Both skins wrap the same island, and the pure rules live in `src/lib/starPairs.ts`. I keep its scores on the visitor's device, pause when the tab is hidden, and support arrow keys plus Enter/Space. I never randomise the SSR board; it is dealt after Start to avoid hydration mismatches.

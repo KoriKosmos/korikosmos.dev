@@ -126,12 +126,17 @@ Run these from the project root:
 | :------------------ | :------------------------------------- |
 | `npm install`       | Install dependencies                   |
 | `npm run dev`       | Start the dev server                   |
+| `npm run check`     | Check TypeScript without emitting files |
 | `npm run build`     | Build the production site to `./dist/` |
 | `npm test`          | Run focused regression tests           |
 | `npm run test:render` | Check production HTML in both skins (build first) |
 | `npm run preview`   | Preview the built site locally         |
 | `npm run gen:retro` | Redraw the retro graphics in `public/retro/` |
 | `npm run astro ...` | Run additional Astro CLI commands      |
+
+I run `npm run check`, `npm test`, `npm run build` and `npm run test:render`
+before committing. The TypeScript check covers my TS/TSX files and checked
+JavaScript configuration; the build and render checks also exercise Astro pages.
 
 ## Docker
 

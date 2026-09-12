@@ -19,6 +19,10 @@ const SITE = 'https://korikosmos.dev';
 // Slugs come from the filenames because that is what `getCollection()` derives
 // them from; nothing in src/content overrides `slug` in frontmatter. If an
 // entry ever does, this needs to read the frontmatter instead.
+/**
+ * @param {string} collection
+ * @param {string} base
+ */
 function contentUrls(collection, base) {
   const dir = new URL(`./src/content/${collection}/`, import.meta.url);
   if (!fs.existsSync(dir)) return [];

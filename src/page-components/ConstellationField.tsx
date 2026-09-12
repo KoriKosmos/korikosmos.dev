@@ -62,7 +62,7 @@ export function ConstellationField() {
       });
     }
 
-    function drawFrame(time: number) {
+    const drawFrame = (time: number) => {
       ctx.clearRect(0, 0, width, height);
 
       // Star-to-star constellation lines
@@ -107,7 +107,7 @@ export function ConstellationField() {
         ctx.fill();
       }
       ctx.globalAlpha = 1;
-    }
+    };
 
     function step() {
       for (const star of stars) {
@@ -152,7 +152,7 @@ export function ConstellationField() {
       rafId = 0;
     }
 
-    function resize() {
+    const resize = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       width = window.innerWidth;
       height = window.innerHeight;
@@ -161,7 +161,7 @@ export function ConstellationField() {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       seedStars();
       if (reducedMotion.matches) drawFrame(0);
-    }
+    };
 
     const onPointerMove = (e: PointerEvent) => {
       mouse.x = e.clientX;

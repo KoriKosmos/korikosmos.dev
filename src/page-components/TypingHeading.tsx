@@ -13,13 +13,13 @@ export function TypingHeading() {
 
     let i = 0;
     let timeoutId: ReturnType<typeof setTimeout>;
-    function type() {
+    const type = () => {
       if (i < TEXT.length) {
         element.textContent += TEXT.charAt(i);
         i++;
         timeoutId = setTimeout(type, TYPING_DELAY);
       }
-    }
+    };
     timeoutId = setTimeout(type, 500);
 
     return () => clearTimeout(timeoutId);
