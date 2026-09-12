@@ -54,6 +54,7 @@ A production build **without** those env vars ships no admin routes at all.
 
 ## Features
 
+- **Star Pairs** at `/games/star-pairs`: My constellation memory game has three board sizes, keyboard and touch controls, automatic pausing when leaving the tab, and personal bests stored on the device. It works in both skins and needs no account or external assets.
 - **Blog reading tools**: My posts show publication dates, reading-time estimates and a linked contents list. A progress strip tracks the article, and readers can copy a section link or a code block. The article and contents remain readable without JavaScript in either skin.
 - **Searchable blog and portfolio**: I can search titles, descriptions and post bodies, sort the results, and filter projects with public GitHub source. Filters are shareable URLs and work in both skins without JavaScript.
 - **Webcore mode** — a full Web 1.0 skin behind a toggle:

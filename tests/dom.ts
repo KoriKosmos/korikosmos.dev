@@ -9,6 +9,7 @@ export function setupDom(html = '<div id="root"></div>') {
     window: dom.window,
     document: dom.window.document,
     navigator: dom.window.navigator,
+    localStorage: dom.window.localStorage,
     HTMLElement: dom.window.HTMLElement,
     requestAnimationFrame: (callback: FrameRequestCallback) => { frames.set(++frameId, callback); return frameId; },
     cancelAnimationFrame: (id: number) => { frames.delete(id); },

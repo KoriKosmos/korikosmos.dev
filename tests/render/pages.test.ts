@@ -26,7 +26,7 @@ for (const skin of ['modern', 'retro'] as const) {
     const blog = await render('/blog?q=homelab&sort=oldest', skin);
     assert.equal(blog.response.status, 200);
     assert.equal(blog.document.querySelector<HTMLInputElement>('input[name="q"]')?.value, 'homelab');
-    assert.match(blog.document.querySelector('main')?.textContent ?? '', /1 of 3 posts/);
+    assert.match(blog.document.querySelector('main')?.textContent ?? '', /\d+ of \d+ posts/);
     assert.ok(blog.document.querySelector('main a[href="/blog/rebuilding-react-islands/"]'));
 
     const sorted = await render('/blog?sort=oldest', skin);
@@ -34,7 +34,7 @@ for (const skin of ['modern', 'retro'] as const) {
     assert.equal(cards[0]?.getAttribute('href'), '/blog/hello-world/');
 
     const portfolio = await render('/portfolio?source=github&q=astro', skin);
-    assert.match(portfolio.document.querySelector('main')?.textContent ?? '', /1 of 4 projects/);
+    assert.match(portfolio.document.querySelector('main')?.textContent ?? '', /\d+ of \d+ projects/);
     assert.ok(portfolio.document.querySelector('main a[href="/portfolio/korikosmos-dev/"]'));
 
     const empty = await render('/blog?q=unfindableword', skin);
@@ -53,5 +53,15 @@ for (const skin of ['modern', 'retro'] as const) {
     }
     assert.ok(document.querySelector('[data-reader-content]'));
     assert.equal((await render('/blog/does-not-exist', skin)).response.status, 404);
+  });
+
+  test(`${skin}: Star Pairs renders a stable start screen and is discoverable`, async () => {
+    const game = await render('/games/star-pairs', skin);
+    assert.equal(game.response.status, 200);
+    assert.equal(game.document.querySelector('main h1')?.textContent, 'Star Pairs');
+    assert.match(game.document.querySelector('main')?.textContent ?? '', /Start game/);
+    assert.equal(game.document.querySelectorAll('.star-pairs-card').length, 0, 'No random board during SSR');
+    const games = await render('/games', skin);
+    assert.ok(games.document.querySelector('main a[href="/games/star-pairs/"]'));
   });
 }

@@ -148,6 +148,7 @@ For Decap CMS OAuth:
 - GitHub Copilot instructions are configured in `.github/copilot-instructions.md`.
 
 ## Notes
+- I added Star Pairs as a gentle cosmic memory game with three board sizes. Both skins wrap the same island, and the pure rules live in `src/lib/starPairs.ts`. I keep its scores on the visitor's device, pause when the tab is hidden, and support arrow keys plus Enter/Space. I never randomise the SSR board; it is dealt after Start to avoid hydration mismatches.
 - I give readers a table of contents from Astro's rendered heading slugs, an estimated reading time, and optional progress/copy tools in both skins. I keep article bodies static; `ReadingTools` only adds controls and cleans up its observers, scroll listener and injected code buttons on navigation.
 - I want my blog and portfolio to be easy to explore in either skin. Search and sorting live in URL query parameters and work without JavaScript; `src/lib/contentDiscovery.ts` owns filtering and ordering, so page components must preserve the supplied order. I keep full Markdown bodies on the server instead of shipping a search index to every visitor.
 - Tunes page normalizes track names to filter out duplicates across different language credits.

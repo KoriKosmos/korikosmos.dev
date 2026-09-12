@@ -1020,6 +1020,9 @@ a:hover > .rt-btn88 { border-color: var(--rt-accent); }
   .rt-sparkle { display: none; }
 }
 /* Search uses the same URL state in both skins, with native form controls. */
+[data-skin='retro'] .star-pairs select { color: var(--rt-ink); background: var(--rt-panel); border: 2px inset var(--rt-bevel-dark); }
+[data-skin='retro'] .star-pairs-card[data-revealed='true'] { background: var(--rt-panel) !important; border-color: var(--rt-accent) !important; }
+[data-skin='retro'] .star-pairs-card[data-matched='true'] { border-style: inset !important; }
 [data-skin='retro'] .rt-post-contents { margin: 12px 0; }
 [data-skin='retro'] .rt-post-contents__list { margin: 0; padding-left: 24px; }
 [data-skin='retro'] .rt-post-contents__nested { margin-left: 16px; }

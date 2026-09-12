@@ -23,6 +23,17 @@ interface GameEntry {
 
 const GAMES: GameEntry[] = [
   {
+    href: '/games/star-pairs/',
+    title: 'Star Pairs',
+    description: 'Match the constellations in a cosmic memory game.',
+    file: 'STARPAIR.HTM',
+    size: '8 KB',
+    version: '1.0',
+    released: 'just arrived from orbit',
+    requires: 'a mouse, keyboard or touchscreen',
+    extras: ['Three board sizes', 'Personal bests on this device', 'Pauses when you leave the tab'],
+  },
+  {
     href: '/games/tetris/',
     title: 'Tetris',
     description: 'The classic block-stacking puzzle game.',
@@ -90,7 +101,7 @@ export function RetroGamesIndexPage() {
             </tbody>
           </table>
           <p className="rt-note" style={{ margin: '8px 0 0' }}>
-            2 file(s) &mdash; 60 KB &nbsp;&middot;&nbsp; 0 director(ies) &nbsp;&middot;&nbsp;
+            {GAMES.length} file(s) &middot; 0 director(ies) &nbsp;&middot;&nbsp;
             2,147,483,647 bytes free
           </p>
         </div>
@@ -178,7 +189,7 @@ export function RetroGamesIndexPage() {
           <p className="rt-note" style={{ margin: '8px 0 0' }}>
             Beat a high score?{' '}
             <a href="/guestbook">Brag about it in the guestbook</a>. Scores are saved to the
-            leaderboard automatically &mdash; no floppy disk required.
+            relevant scoreboard, with Star Pairs bests kept on this device. No floppy disk required.
           </p>
         </div>
       </div>
