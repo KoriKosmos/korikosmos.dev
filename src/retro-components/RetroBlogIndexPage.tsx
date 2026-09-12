@@ -1,5 +1,6 @@
 import type { CollectionEntry } from "astro:content";
 import { ContentFilters, type ContentFiltersProps } from '../page-components/ContentFilters';
+import { readingMinutes } from '../lib/reading';
 
 /**
  * The blog index, re-dressed as a 2003 "web log".
@@ -143,6 +144,7 @@ export function RetroBlogIndexPage({ posts: sorted, filters }: Props) {
                     <time dateTime={post.data.pubDate.toISOString()}>
                       {post.data.pubDate.toLocaleDateString("en-GB", LONG_DATE)}
                     </time>
+                    <span> · {readingMinutes(post.body)} min read</span>
                   </p>
 
                   <div className="rt-inset">

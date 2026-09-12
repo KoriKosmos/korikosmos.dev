@@ -1,5 +1,6 @@
 import type { CollectionEntry } from "astro:content";
 import { ContentFilters, type ContentFiltersProps } from './ContentFilters';
+import { readingMinutes } from '../lib/reading';
 
 interface Props {
   posts: CollectionEntry<"blog">[];
@@ -46,7 +47,7 @@ export function BlogIndexPage({ posts, filters }: Props) {
               >
                 <h2 className="text-2xl font-bold mb-2">{post.data.title}</h2>
                 <p className="opacity-90 line-clamp-2">{post.data.description}</p>
-                <div className="mt-4 text-sm opacity-90 flex items-center gap-2">
+                <div className="mt-4 text-sm opacity-90 flex flex-wrap items-center gap-2">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="16"
@@ -69,6 +70,8 @@ export function BlogIndexPage({ posts, filters }: Props) {
                     day: "numeric",
                     timeZone: "UTC",
                   })}</time>
+                  <span aria-hidden="true">·</span>
+                  <span>{readingMinutes(post.body)} min read</span>
                 </div>
               </a>
             ))}

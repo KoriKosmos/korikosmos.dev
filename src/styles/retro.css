@@ -1020,6 +1020,15 @@ a:hover > .rt-btn88 { border-color: var(--rt-accent); }
   .rt-sparkle { display: none; }
 }
 /* Search uses the same URL state in both skins, with native form controls. */
+[data-skin='retro'] .rt-post-contents { margin: 12px 0; }
+[data-skin='retro'] .rt-post-contents__list { margin: 0; padding-left: 24px; }
+[data-skin='retro'] .rt-post-contents__nested { margin-left: 16px; }
+[data-skin='retro'] .rt-reading-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 10px 0; min-height: 40px; }
+[data-skin='retro'] .rt-reading-progress { position: fixed; inset: 0 0 auto; height: 4px; z-index: 40; pointer-events: none; }
+[data-skin='retro'] .rt-reading-progress__fill { height: 100%; background: var(--rt-accent); transform-origin: left; }
+[data-skin='retro'] .rt-reader-code { margin: 12px 0; }
+[data-skin='retro'] .rt-reader-code > button { display: block; margin-left: auto; }
+[data-skin='retro'] [data-reader-content] :target { text-decoration-color: var(--rt-accent); }
 [data-skin='retro'] .rt-discovery { margin: 12px 0; }
 [data-skin='retro'] .rt-discovery__controls { display: flex; flex-wrap: wrap; align-items: end; gap: 8px; }
 [data-skin='retro'] .rt-discovery__controls label { flex: 1 1 140px; min-width: 0; }

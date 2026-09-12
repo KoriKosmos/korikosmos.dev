@@ -54,6 +54,7 @@ A production build **without** those env vars ships no admin routes at all.
 
 ## Features
 
+- **Blog reading tools**: My posts show publication dates, reading-time estimates and a linked contents list. A progress strip tracks the article, and readers can copy a section link or a code block. The article and contents remain readable without JavaScript in either skin.
 - **Searchable blog and portfolio**: I can search titles, descriptions and post bodies, sort the results, and filter projects with public GitHub source. Filters are shareable URLs and work in both skins without JavaScript.
 - **Webcore mode** — a full Web 1.0 skin behind a toggle:
   - A `kk-skin` cookie, resolved in `src/middleware.ts` before anything renders. `src/layouts/Layout.astro` is a dispatcher that picks `ModernLayout.astro` or `RetroLayout.astro`, and each route renders either a `src/page-components/*` or a `src/retro-components/Retro*` body.
@@ -124,6 +125,7 @@ Run these from the project root:
 | `npm run dev`       | Start the dev server                   |
 | `npm run build`     | Build the production site to `./dist/` |
 | `npm test`          | Run focused regression tests           |
+| `npm run test:render` | Check production HTML in both skins (build first) |
 | `npm run preview`   | Preview the built site locally         |
 | `npm run gen:retro` | Redraw the retro graphics in `public/retro/` |
 | `npm run astro ...` | Run additional Astro CLI commands      |

@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import type { ArticleHeading } from '../lib/reading';
+import { PostContents } from '../page-components/PostContents';
 
 /**
  * A single blog post in the Web 1.0 skin.
@@ -16,6 +18,8 @@ interface Props {
   pubDate: string;
   /** ISO date string */
   updatedDate?: string;
+  minutes: number;
+  headings: ArticleHeading[];
   children?: ReactNode;
 }
 
@@ -34,6 +38,8 @@ export function RetroBlogPostPage({
   description,
   pubDate,
   updatedDate,
+  minutes,
+  headings,
   children,
 }: Props) {
   return (
@@ -52,6 +58,7 @@ export function RetroBlogPostPage({
               <strong>{longDate(pubDate)}</strong>
             </time>{" "}
             by <strong>Maan</strong>
+            <span> · {minutes} min read</span>
             {updatedDate && (
               <>
                 <span aria-hidden="true"> &nbsp;•&nbsp; </span>
@@ -72,7 +79,8 @@ export function RetroBlogPostPage({
 
           <div className="rt-hr"></div>
 
-          <div className="rt-prose">{children}</div>
+          <PostContents headings={headings} retro />
+          <div data-reader-content className="rt-prose">{children}</div>
 
           <div className="rt-hr rt-hr--stars"></div>
 
