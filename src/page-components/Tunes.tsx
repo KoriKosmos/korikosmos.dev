@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { getBestImage } from "../lib/images";
 import { BLOCKED_ITEMS } from "../lib/constants";
+import { trackArtistName } from '../lib/lastfmTrack';
 import type { LastfmTrack as Track, LastfmArtist as Artist, LastfmAlbum as Album } from '../lib/lastfmTypes';
 
 interface Props {
@@ -140,7 +141,7 @@ export function Tunes({ recentTracks, initialArtists, initialAlbums }: Props) {
 
   const currentTrack = tracks[0];
   const heroTrackName = currentTrack?.name || 'Nothing playing';
-  const heroArtistName = currentTrack?.artist['#text'] || '';
+  const heroArtistName = trackArtistName(currentTrack);
   const heroAlbumName = currentTrack?.album['#text'] || '';
   const heroImg = getBestImage(currentTrack?.image ?? []) || MUSIC_PLACEHOLDER;
   const heroIsPlaying = currentTrack?.['@attr']?.nowplaying === 'true';
@@ -216,7 +217,7 @@ export function Tunes({ recentTracks, initialArtists, initialAlbums }: Props) {
                 />
                 <div className="min-w-0 flex-1">
                   <h3 className="font-bold truncate group-hover:text-primary transition-colors">{track.name}</h3>
-                  <p className="text-sm text-base-content/60 truncate">{track.artist["#text"]}</p>
+                  <p className="text-sm text-base-content/60 truncate">{trackArtistName(track)}</p>
                 </div>
               </div>
             ))}

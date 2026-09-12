@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createAsyncCache } from '../src/lib/asyncCache';
 import { createLastfmClient, readLastfmQuery } from '../src/lib/lastfmClient';
+import type { LastfmTrack } from '../src/lib/lastfmTypes';
 
 test('concurrent cache readers share work, expire from completion, and retry failures', async () => {
   let now = 0;
@@ -70,6 +71,24 @@ test('HTTP-200 API errors and malformed collections are not cached as empty succ
   assert.deepEqual(await client.getTopAlbums(), []);
   assert.deepEqual(await client.getTopAlbums(), []);
   assert.equal(calls, 3);
+});
+
+test('recent tracks preserve different artists and deduplicate equivalent artist shapes', async () => {
+  const song = { name: 'Same title', album: { '#text': 'Album' }, image: [] };
+  const tracks: LastfmTrack[] = [
+    { ...song, artist: { name: 'First artist' } },
+    { ...song, artist: { name: 'Second artist' } },
+    { ...song, artist: { '#text': 'Second artist' } },
+    { ...song, artist: { '#text': 'Third artist', name: 'Second artist' } },
+    { ...song, artist: { '#text': '', name: 'Fourth artist' } },
+    { ...song, artist: { name: 'Fourth artist' } },
+    { ...song, name: 'Another title', artist: { name: 'Fourth artist' } },
+  ];
+  const client = createLastfmClient({
+    user: 'test', apiKey: 'test',
+    fetcher: async () => Response.json({ recenttracks: { track: tracks } }),
+  });
+  assert.deepEqual(await client.getRecentTracks(), [tracks[0], tracks[1], tracks[3], tracks[4], tracks[6]]);
 });
 
 test('both plain and enriched artist lists cache successful results', async () => {

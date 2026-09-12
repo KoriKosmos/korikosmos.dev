@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { act, createElement } from 'react';
 import { createRoot } from 'react-dom/client';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { Tunes } from '../src/page-components/Tunes';
 import type { LastfmTrack } from '../src/lib/lastfmTypes';
 import { setupDom } from './dom';
@@ -11,6 +12,24 @@ const track: LastfmTrack = {
 };
 const props = { recentTracks: [track], initialArtists: [], initialAlbums: [] };
 const button = (name: string) => [...document.querySelectorAll('button')].find(button => button.textContent?.trim() === name)!;
+
+test('Tunes renders artist-name fallbacks in the hero and history', () => {
+  const recentTracks: LastfmTrack[] = [
+    { ...track, artist: { name: 'Hero artist' } },
+    { ...track, artist: { '#text': '', name: 'History artist' } },
+    { ...track, artist: { '#text': 'Primary credit', name: 'Fallback credit' } },
+  ];
+  const env = setupDom(renderToStaticMarkup(createElement(Tunes, { ...props, recentTracks })));
+  try {
+    assert.match(document.querySelector('section')?.textContent ?? '', /Hero artist/);
+    const history = document.querySelectorAll('section')[1].textContent ?? '';
+    assert.match(history, /History artist/);
+    assert.match(history, /Primary credit/);
+    assert.doesNotMatch(history, /Fallback credit/);
+  } finally {
+    env.cleanup();
+  }
+});
 
 test('a late response from an old period cannot overwrite the current chart', async t => {
   const env = setupDom();

@@ -78,6 +78,7 @@ A production build **without** those env vars ships no admin routes at all.
   - **High Scores**: Global leaderboard implemented via server-side API (`src/pages/api/scores/[game].ts`, accessed as `/api/scores/:game`) and persistent JSON storage.
   - **Config**: Centralized navigation and site settings in `src/config.ts`.
 - Displays my most recently played tracks with album artwork
+- I recognise both Last.fm artist credit formats in `/now` and Tunes, including recent history and duplicate filtering.
 - Normalizes track names to avoid duplicates credited in different languages
 - Toggle a little cursor-following cat from the corner button
 - Switch between five DaisyUI themes (dark, light, forest, spider-man, batman) using the theme bar, or four retro sub-themes in webcore mode

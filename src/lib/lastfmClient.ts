@@ -1,5 +1,6 @@
 import { createAsyncCache } from './asyncCache';
 import { BLOCKED_ITEMS } from './constants';
+import { trackArtistName } from './lastfmTrack';
 import type { LastfmAlbum, LastfmArtist, LastfmTrack } from './lastfmTypes';
 
 export const LASTFM_API_BASE = 'https://ws.audioscrobbler.com/2.0/';
@@ -51,7 +52,7 @@ export function createLastfmClient({ user, apiKey, fetcher = fetch, now = Date.n
     const data = await request('user.getrecenttracks', { limit: Math.max(15, limit + 5) });
     const tracks: LastfmTrack[] = data.recenttracks.track;
     return tracks.filter((track, index) => index === 0 ||
-      track.name !== tracks[index - 1].name || track.artist['#text'] !== tracks[index - 1].artist['#text'])
+      track.name !== tracks[index - 1].name || trackArtistName(track) !== trackArtistName(tracks[index - 1]))
       .slice(0, limit);
   }
 
