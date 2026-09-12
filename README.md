@@ -54,6 +54,7 @@ A production build **without** those env vars ships no admin routes at all.
 
 ## Features
 
+- **Saved themes on first paint**: I keep my modern theme in a cookie as well as local storage, so the server sends the selected theme in the HTML. Legacy choices migrate automatically. The picker follows the displayed theme, and cookie restoration still works during client navigation when local storage is blocked. Retro keeps its own independent scheme.
 - **Live Tunes updates**: The playing badge and recent history update together, including when the same song stops. Period changes cancel obsolete requests, charts load when selected, and live polling pauses in background tabs. Missing artwork has a local fallback.
 - **Resilient music loading**: I fetch independent Last.fm sections together and share cached requests between visitors. Recent tracks refresh quickly, charts are cached for 15 minutes, and a slow or unavailable Last.fm service cannot hold the page open indefinitely. API failures return an uncached retry response.
 - **Star Pairs** at `/games/star-pairs`: My constellation memory game has three board sizes, keyboard and touch controls, automatic pausing when leaving the tab, and personal bests stored on the device. It works in both skins and needs no account or external assets.

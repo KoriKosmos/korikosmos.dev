@@ -106,10 +106,15 @@ const LAST_UPDATED = "26 July 2026";
 
 	<!-- Apply the saved retro colour scheme before first paint. The allowlist
 	     and fallback come from src/lib/skin.ts via define:vars rather than being
-	     retyped here, which is how they drifted from it last time. -->
-	<script is:inline define:vars={{ allowed: RETRO_THEMES, fallback: DEFAULT_RETRO_THEME }}>
+	     retyped here, which is how they drifted from it last time.
+
+	     data-cfasync="false" keeps Cloudflare Rocket Loader from deferring this
+	     to after load, which turns a pre-paint script into a visible flash of
+	     the default scheme. See src/lib/theme.ts for the whole story. -->
+	<script is:inline data-cfasync="false" define:vars={{ allowed: RETRO_THEMES, fallback: DEFAULT_RETRO_THEME }}>
 		// define:vars already wraps this in its own function scope.
-		const stored = localStorage.getItem("retro-theme");
+		let stored = null;
+		try { stored = localStorage.getItem("retro-theme"); } catch {}
 		document.documentElement.setAttribute(
 			"data-retro-theme",
 			allowed.includes(stored) ? stored : fallback,

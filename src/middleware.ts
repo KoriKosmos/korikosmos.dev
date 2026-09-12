@@ -1,5 +1,6 @@
 import { defineMiddleware, sequence } from 'astro:middleware';
 import { parseSkin, SKIN_COOKIE } from './lib/skin';
+import { parseTheme, THEME_COOKIE } from './lib/theme';
 import { bumpHits, getHits } from './lib/hits';
 
 // Keystatic GitHub OAuth redirect_uri fix.
@@ -40,12 +41,14 @@ const keystaticOrigin = defineMiddleware((context, next) => {
   return next();
 });
 
-// Skin resolution + retro hit counter.
+// Skin + theme resolution, and the retro hit counter.
 //
 // The skin has to be known before any component renders (Layout.astro picks a
 // whole different shell, and each page picks a different body component), so it
-// is resolved here into `locals` rather than read ad hoc. Doing it in
-// middleware also means the hit counter can bump *before* rendering starts —
+// is resolved here into `locals` rather than read ad hoc. The theme rides along
+// for the same reason: ModernLayout renders it as `data-theme` on <html>, which
+// is what makes the first paint correct without waiting for a script. Doing it
+// in middleware also means the hit counter can bump *before* rendering starts —
 // setting cookies from layout frontmatter races with Astro's streamed response.
 const SESSION_COOKIE = 'kk-seen';
 const SESSION_MAX_AGE = 60 * 30; // 30 minutes — one "visit"
@@ -68,6 +71,7 @@ const skinAndHits = defineMiddleware(async (context, next) => {
 
   const skin = parseSkin(context.cookies.get(SKIN_COOKIE)?.value);
   context.locals.skin = skin;
+  context.locals.theme = parseTheme(context.cookies.get(THEME_COOKIE)?.value);
   context.locals.hits = 0;
 
   if (skin !== 'retro' || !isCountablePageView(context.url.pathname)) {

@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
 import type { MouseEvent, ReactNode } from "react";
-
-const DEFAULT_THEME = "dark";
+import { parseTheme, persistTheme } from "../lib/theme";
+import type { Theme } from "../lib/theme";
 
 type ViewTransitionLike = { ready: Promise<void>; finished: Promise<void> };
 type DocumentWithViewTransition = Document & {
   startViewTransition?: (update: () => void) => ViewTransitionLike;
 };
 
-const THEMES: { name: string; label: string; swatch: string; icon?: ReactNode }[] = [
+const THEMES: { name: Theme; label: string; swatch: string; icon?: ReactNode }[] = [
   { name: "dark", label: "Dark theme", swatch: "bg-blue-600 border" },
   { name: "forest", label: "Forest theme", swatch: "bg-green-600 border" },
   {
@@ -63,19 +63,27 @@ const THEMES: { name: string; label: string; swatch: string; icon?: ReactNode }[
   },
 ];
 
-function commitTheme(theme: string) {
+function commitTheme(theme: Theme) {
   document.documentElement.setAttribute("data-theme", theme);
-  localStorage.setItem("theme", theme);
+  // Writes the cookie as well as localStorage — the cookie is what lets the
+  // *next* page load render this theme server-side instead of flashing.
+  persistTheme(theme);
 }
 
 export function ThemeBar() {
-  const [current, setCurrent] = useState<string | null>(null);
+  const [current, setCurrent] = useState<Theme | null>(null);
 
   useEffect(() => {
-    setCurrent(localStorage.getItem("theme") || DEFAULT_THEME);
+    // Follow the displayed theme, including cookie restores and palette changes.
+    const root = document.documentElement;
+    const sync = () => setCurrent(parseTheme(root.getAttribute("data-theme")));
+    sync();
+    const observer = new window.MutationObserver(sync);
+    observer.observe(root, { attributes: true, attributeFilter: ["data-theme"] });
+    return () => observer.disconnect();
   }, []);
 
-  function applyTheme(theme: string, event: MouseEvent<HTMLButtonElement>) {
+  function applyTheme(theme: Theme, event: MouseEvent<HTMLButtonElement>) {
     setCurrent(theme);
     const root = document.documentElement;
     if (root.getAttribute("data-theme") === theme) return;

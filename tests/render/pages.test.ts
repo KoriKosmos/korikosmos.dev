@@ -16,9 +16,9 @@ assert.ok(manifestFile, 'Run npm run build before the production render checks.'
 const { manifest } = await import(new URL(manifestFile, build).href);
 const app = new App(manifest);
 
-async function render(path: string, skin: 'modern' | 'retro') {
+async function render(path: string, skin: 'modern' | 'retro', theme?: string) {
   const response = await app.render(new Request(`https://korikosmos.dev${path}`, {
-    headers: { cookie: `kk-skin=${skin}; kk-seen=1` },
+    headers: { cookie: `kk-skin=${skin}; kk-seen=1${theme === undefined ? '' : `; kk-theme=${encodeURIComponent(theme)}`}` },
   }));
   return { response, document: new JSDOM(await response.text()).window.document };
 }
@@ -106,4 +106,84 @@ test('music API rejects malformed requests and does not cache upstream failures'
   assert.equal(response.status, 503);
   assert.equal(response.headers.get('cache-control'), 'no-store');
   assert.equal(response.headers.get('retry-after'), '30');
+});
+
+test('modern: saved themes render in the initial HTML without running scripts', async () => {
+  const cases = [
+    ['dark', 'dark'], ['light', 'light'], ['forest', 'forest'],
+    ['spider-man', 'spider-man'], ['batman', 'batman'],
+    ['spiderman', 'spider-man'], ['unknown', 'dark'], [undefined, 'dark'],
+  ];
+  for (const [cookie, expected] of cases) {
+    const { response, document } = await render('/blog', 'modern', cookie);
+    assert.equal(response.status, 200);
+    assert.equal(document.documentElement.getAttribute('data-theme'), expected);
+    assert.ok(document.querySelector('head script[data-cfasync="false"]'));
+  }
+});
+
+test('modern: the generated theme script migrates storage and restores themes after stale page swaps', async () => {
+  const { document } = await render('/blog', 'modern', 'forest');
+  const script = document.querySelector('head script[data-cfasync="false"]')?.textContent;
+  assert.ok(script);
+  const dom = new JSDOM(document.documentElement.outerHTML, { url: 'https://korikosmos.dev/blog', runScripts: 'outside-only' });
+  const win = dom.window;
+  try {
+    win.localStorage.setItem('theme', 'spiderman');
+    win.eval(script);
+    assert.equal(win.document.documentElement.getAttribute('data-theme'), 'spider-man');
+    assert.equal(win.localStorage.getItem('theme'), 'spider-man');
+    assert.match(win.document.cookie, /kk-theme=spider-man/);
+    win.localStorage.setItem('theme', 'batman');
+    win.document.documentElement.setAttribute('data-theme', 'dark');
+    win.document.dispatchEvent(new win.Event('astro:after-swap'));
+    assert.equal(win.document.documentElement.getAttribute('data-theme'), 'batman');
+    assert.match(win.document.cookie, /kk-theme=batman/);
+  } finally {
+    win.close();
+  }
+});
+
+test('modern: blocked local storage preserves the cookie choice through stale page swaps', async () => {
+  const { document } = await render('/blog', 'modern', 'forest');
+  const script = document.querySelector('head script[data-cfasync="false"]')?.textContent;
+  assert.ok(script);
+  const dom = new JSDOM(document.documentElement.outerHTML, { url: 'https://korikosmos.dev/blog', runScripts: 'outside-only' });
+  const win = dom.window;
+  try {
+    Object.defineProperty(win, 'localStorage', { get() { throw new Error('Storage blocked'); } });
+    win.document.cookie = 'kk-theme=forest; path=/';
+    assert.doesNotThrow(() => win.eval(script));
+    assert.equal(win.document.documentElement.getAttribute('data-theme'), 'forest');
+    win.document.cookie = 'kk-theme=batman; path=/';
+    win.document.documentElement.setAttribute('data-theme', 'dark');
+    win.document.dispatchEvent(new win.Event('astro:after-swap'));
+    assert.equal(win.document.documentElement.getAttribute('data-theme'), 'batman');
+    assert.match(win.document.cookie, /kk-theme=batman/);
+  } finally {
+    win.close();
+  }
+});
+
+test('retro: the generated theme script restores its own scheme and tolerates blocked storage', async () => {
+  const { document } = await render('/blog', 'retro', 'batman');
+  assert.equal(document.documentElement.getAttribute('data-retro-theme'), 'y2k');
+  assert.equal(document.documentElement.hasAttribute('data-theme'), false);
+  const script = document.querySelector('head script[data-cfasync="false"]')?.textContent;
+  assert.ok(script);
+  const dom = new JSDOM(document.documentElement.outerHTML, { url: 'https://korikosmos.dev/blog', runScripts: 'outside-only' });
+  const win = dom.window;
+  try {
+    win.localStorage.setItem('retro-theme', 'cyber');
+    win.eval(script);
+    assert.equal(win.document.documentElement.getAttribute('data-retro-theme'), 'cyber');
+    win.localStorage.setItem('retro-theme', 'unknown');
+    win.eval(script);
+    assert.equal(win.document.documentElement.getAttribute('data-retro-theme'), 'y2k');
+    Object.defineProperty(win, 'localStorage', { get() { throw new Error('Storage blocked'); } });
+    assert.doesNotThrow(() => win.eval(script));
+    assert.equal(win.document.documentElement.getAttribute('data-retro-theme'), 'y2k');
+  } finally {
+    win.close();
+  }
 });
