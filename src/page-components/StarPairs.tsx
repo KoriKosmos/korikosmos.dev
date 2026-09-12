@@ -9,6 +9,7 @@ const clock = (seconds: number) => `${Math.floor(seconds / 60)}:${String(seconds
 export function StarPairs() {
   const [difficulty, setDifficulty] = useState<Difficulty>('orbit');
   const [game, setGame] = useState<PairGame | null>(null);
+  const [roundId, setRoundId] = useState(0);
   const [seconds, setSeconds] = useState(0);
   const [paused, setPaused] = useState(false);
   const [focused, setFocused] = useState(0);
@@ -29,7 +30,7 @@ export function StarPairs() {
       window.clearInterval(interval);
       document.removeEventListener('visibilitychange', onVisibility);
     };
-  }, [Boolean(game), game?.won, paused]);
+  }, [roundId, Boolean(game), game?.won, paused]);
 
   useEffect(() => {
     if (!game || game.flipped.length !== 2 || paused) return;
@@ -49,6 +50,7 @@ export function StarPairs() {
   }, [game?.won]);
 
   function start() {
+    setRoundId(value => value + 1);
     setSeconds(0);
     setPaused(false);
     setFocused(0);

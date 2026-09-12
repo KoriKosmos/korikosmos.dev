@@ -3,7 +3,7 @@ import test from 'node:test';
 import { act, createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 import { StarPairs } from '../src/page-components/StarPairs';
-import { DIFFICULTIES, concealPairCards, createPairGame, flipPairCard, isBetterScore, parsePersonalBests, type Difficulty } from '../src/lib/starPairs';
+import { BEST_KEY, DIFFICULTIES, concealPairCards, createPairGame, flipPairCard, isBetterScore, parsePersonalBests, type Difficulty } from '../src/lib/starPairs';
 import { setupDom } from './dom';
 
 test('each difficulty deals exactly two of each chosen constellation', () => {
@@ -101,6 +101,46 @@ test('the game supports keyboard focus, mismatch delay, pause, and a clean resta
     }
     assert.match(document.querySelector('[role="status"]')?.textContent ?? '', /Sky complete/);
     assert.match(document.querySelector('footer')?.textContent ?? '', /Your best Orbit: 6 moves/);
+  } finally {
+    await act(async () => { root.unmount(); });
+    t.mock.timers.reset();
+    env.cleanup();
+  }
+});
+
+test('restarting an active round resets its timer without resetting it on card flips', async t => {
+  const env = setupDom();
+  Object.defineProperty(document, 'hidden', { configurable: true, value: false });
+  t.mock.method(Math, 'random', () => 0.4);
+  t.mock.timers.enable({ apis: ['setTimeout', 'setInterval'] });
+  const expected = createPairGame('orbit');
+  const root = createRoot(document.getElementById('root')!);
+  const click = async (button: HTMLButtonElement) => { await act(async () => { button.click(); }); };
+  const findButton = (text: string) => [...document.querySelectorAll('button')].find(button => button.textContent === text)!;
+  const time = () => document.querySelectorAll('dd')[2].textContent;
+  try {
+    await act(async () => { root.render(createElement(StarPairs)); });
+    await click(findButton('Start game'));
+    await act(async () => { t.mock.timers.tick(900); });
+    await click(findButton('New game'));
+    await act(async () => { t.mock.timers.tick(100); });
+    assert.equal(time(), '0:00', 'The previous round must not advance the new clock');
+    await act(async () => { t.mock.timers.tick(400); });
+    await click(document.querySelectorAll<HTMLButtonElement>('.star-pairs-card')[0]);
+    await act(async () => { t.mock.timers.tick(499); });
+    assert.equal(time(), '0:00');
+    await act(async () => { t.mock.timers.tick(1); });
+    assert.equal(time(), '0:01', 'A card flip must not delay the round timer');
+
+    for (const sign of new Set(expected.cards.map(card => card.sign))) {
+      for (const card of expected.cards.filter(card => card.sign === sign)) {
+        await click(document.querySelectorAll<HTMLButtonElement>('.star-pairs-card')[card.id]);
+      }
+    }
+    assert.match(document.querySelector('[role="status"]')?.textContent ?? '', /Sky complete/);
+    assert.deepEqual(JSON.parse(localStorage.getItem(BEST_KEY)!).orbit, { moves: 6, seconds: 1 });
+    await act(async () => { t.mock.timers.tick(5000); });
+    assert.equal(time(), '0:01', 'Completion stops the clock');
   } finally {
     await act(async () => { root.unmount(); });
     t.mock.timers.reset();
