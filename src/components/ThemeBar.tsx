@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { MouseEvent, ReactNode } from "react";
+import { flushSync } from "react-dom";
 import { parseTheme, persistTheme } from "../lib/theme";
 import type { Theme } from "../lib/theme";
 
@@ -63,15 +64,10 @@ const THEMES: { name: Theme; label: string; swatch: string; icon?: ReactNode }[]
   },
 ];
 
-function commitTheme(theme: Theme) {
-  document.documentElement.setAttribute("data-theme", theme);
-  // Writes the cookie as well as localStorage — the cookie is what lets the
-  // *next* page load render this theme server-side instead of flashing.
-  persistTheme(theme);
-}
-
 export function ThemeBar() {
   const [current, setCurrent] = useState<Theme | null>(null);
+  const activeTransition = useRef<ViewTransitionLike | null>(null);
+  const fadeTimeout = useRef<number | undefined>(undefined);
 
   useEffect(() => {
     // Follow the displayed theme, including cookie restores and palette changes.
@@ -80,26 +76,39 @@ export function ThemeBar() {
     sync();
     const observer = new window.MutationObserver(sync);
     observer.observe(root, { attributes: true, attributeFilter: ["data-theme"] });
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      window.clearTimeout(fadeTimeout.current);
+      if (fadeTimeout.current !== undefined) root.removeAttribute("data-theme-fade");
+    };
   }, []);
 
   function applyTheme(theme: Theme, event: MouseEvent<HTMLButtonElement>) {
-    setCurrent(theme);
     const root = document.documentElement;
     if (root.getAttribute("data-theme") === theme) return;
 
+    // Storage can block the main thread. Save before the browser freezes the
+    // old snapshot, keeping the transition update limited to visible changes.
+    persistTheme(theme);
+    const commitTheme = () => {
+      root.setAttribute("data-theme", theme);
+      // Capture the page colours and selected swatch in the same new snapshot.
+      flushSync(() => setCurrent(theme));
+    };
     const doc = document as DocumentWithViewTransition;
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    window.clearTimeout(fadeTimeout.current);
+    root.removeAttribute("data-theme-fade");
 
     if (reduceMotion) {
-      commitTheme(theme);
+      commitTheme();
       return;
     }
 
     if (!doc.startViewTransition) {
       root.setAttribute("data-theme-fade", "");
-      commitTheme(theme);
-      window.setTimeout(() => root.removeAttribute("data-theme-fade"), 400);
+      commitTheme();
+      fadeTimeout.current = window.setTimeout(() => root.removeAttribute("data-theme-fade"), 400);
       return;
     }
 
@@ -114,8 +123,10 @@ export function ThemeBar() {
     );
 
     root.setAttribute("data-theme-switching", "");
-    const transition = doc.startViewTransition(() => commitTheme(theme));
+    const transition = doc.startViewTransition(commitTheme);
+    activeTransition.current = transition;
     transition.ready.then(() => {
+      if (activeTransition.current !== transition) return;
       root.animate(
         {
           clipPath: [
@@ -126,11 +137,20 @@ export function ThemeBar() {
         {
           duration: 500,
           easing: "cubic-bezier(0.4, 0, 0.2, 1)",
+          fill: "both",
           pseudoElement: "::view-transition-new(root)",
         },
       );
+    }).catch(() => {
+      // A navigation or newer switch can skip the reveal. The update still runs.
     });
-    transition.finished.finally(() => root.removeAttribute("data-theme-switching"));
+    const finish = () => {
+      // An older transition must not re-enable page animations mid-reveal.
+      if (activeTransition.current !== transition) return;
+      activeTransition.current = null;
+      root.removeAttribute("data-theme-switching");
+    };
+    void transition.finished.then(finish, finish);
   }
 
   return (

@@ -150,6 +150,7 @@ For Decap CMS OAuth:
 - GitHub Copilot instructions are configured in `.github/copilot-instructions.md`.
 
 ## Notes
+- I want theme changes to retain their smooth circular reveal. I save the choice before starting a view transition, then synchronously commit the selected swatch with the page colours. I disable nested CSS transitions during the reveal, and only the active transition can clear its styles. My regression checks cover snapshot timing, interrupted and skipped reveals, reduced motion and repeated fallback fades.
 - I consolidated the site improvements from #70 with the theme persistence work from #69, retaining both histories. Theme checks cover initial server HTML, legacy migration, stale prefetched pages and blocked local storage in both skins. The modern picker observes `data-theme` rather than reading storage itself; the reconciliation script uses the live cookie before a stale HTML attribute when storage is unavailable.
 - I give each Star Pairs start a new round identifier and include it in the clock effect's dependencies. The interval resets on New game, including during active play, but does not restart on card flips. I check the first full second after a restart and the time saved with a completed personal best.
 - I derive the retro blog's newest post from the full collection in its Astro route and pass it separately from filtered results. The NEW! badge, modem caption, update date and entry total describe the whole blog, so filtering and sorting cannot make an old post look newly published.
