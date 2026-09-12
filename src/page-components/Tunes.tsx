@@ -10,6 +10,13 @@ interface Props {
   initialAlbums: Album[];
 }
 
+interface ChartData {
+  artists: Artist[];
+  albums: Album[];
+  artistsLoaded: boolean;
+  albumsLoaded: boolean;
+}
+
 const PERIOD_MAP: Record<string, string> = {
   overall: "All Time",
   "12month": "Last Year",
@@ -36,50 +43,63 @@ export function Tunes({ recentTracks, initialArtists, initialAlbums }: Props) {
   const [albums, setAlbums] = useState(() => filterAlbums(initialAlbums));
   const [activePeriod, setActivePeriod] = useState('overall');
   const [loading, setLoading] = useState(false);
-  const [listError, setListError] = useState(false);
+  const [artistError, setArtistError] = useState(false);
+  const [albumError, setAlbumError] = useState(false);
   const [periodRetry, setPeriodRetry] = useState(0);
   const [tracks, setTracks] = useState(recentTracks);
   const [refreshError, setRefreshError] = useState(false);
-  const dataCache = useRef(new Map<string, { artists: Artist[]; albums: Album[] }>());
+  const dataCache = useRef(new Map<string, ChartData>([
+    ['overall', { artists, albums, artistsLoaded: false, albumsLoaded: false }],
+  ]));
+  const listError = artistError || albumError;
 
   // Each selection owns its request and cleanup. A slower previous selection
   // cannot replace the active period or clear its loading state.
   useEffect(() => {
     const controller = new AbortController();
     let cancelled = false;
-    setListError(false);
+    setArtistError(false);
+    setAlbumError(false);
 
     const apply = (data: { artists: Artist[]; albums: Album[] }) => {
-      setArtists(filterArtists(data.artists));
-      setAlbums(filterAlbums(data.albums));
+      setArtists(data.artists);
+      setAlbums(data.albums);
     };
-    const cached = dataCache.current.get(activePeriod);
-    if (cached) {
-      apply(cached);
+    const cached = dataCache.current.get(activePeriod) ?? {
+      artists: [], albums: [], artistsLoaded: false, albumsLoaded: false,
+    };
+    // Keep retained results tied to their period, including the initial SSR data.
+    apply(cached);
+    if (cached.artistsLoaded && cached.albumsLoaded) {
       setLoading(false);
       return;
     }
 
     setLoading(true);
+    async function fetchList<T>(method: 'artists' | 'albums'): Promise<T[]> {
+      const response = await fetch(`/api/lastfm?method=${method}&period=${activePeriod}&limit=5`, { signal: controller.signal });
+      if (!response.ok) throw new Error('Music data unavailable');
+      const data = await response.json();
+      if (!Array.isArray(data)) throw new Error('Invalid music data');
+      return data;
+    }
     async function load() {
-      try {
-        const [artistsRes, albumsRes] = await Promise.all([
-          fetch(`/api/lastfm?method=artists&period=${activePeriod}&limit=5`, { signal: controller.signal }),
-          fetch(`/api/lastfm?method=albums&period=${activePeriod}&limit=5`, { signal: controller.signal }),
-        ]);
-        if (!artistsRes.ok || !albumsRes.ok) throw new Error('Music data unavailable');
-        const [artists, albums] = await Promise.all([artistsRes.json(), albumsRes.json()]);
-        if (!Array.isArray(artists) || !Array.isArray(albums)) throw new Error('Invalid music data');
-        if (!cancelled) {
-          const data = { artists, albums };
-          dataCache.current.set(activePeriod, data);
-          apply(data);
-        }
-      } catch {
-        if (!cancelled) setListError(true);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
+      const [artistResult, albumResult] = await Promise.allSettled([
+        cached.artistsLoaded ? Promise.resolve(cached.artists) : fetchList<Artist>('artists').then(filterArtists),
+        cached.albumsLoaded ? Promise.resolve(cached.albums) : fetchList<Album>('albums').then(filterAlbums),
+      ]);
+      if (cancelled) return;
+      const data: ChartData = {
+        artists: artistResult.status === 'fulfilled' ? artistResult.value : cached.artists,
+        albums: albumResult.status === 'fulfilled' ? albumResult.value : cached.albums,
+        artistsLoaded: artistResult.status === 'fulfilled',
+        albumsLoaded: albumResult.status === 'fulfilled',
+      };
+      dataCache.current.set(activePeriod, data);
+      apply(data);
+      setArtistError(!data.artistsLoaded);
+      setAlbumError(!data.albumsLoaded);
+      setLoading(false);
     }
     void load();
     return () => { cancelled = true; controller.abort(); };
@@ -145,8 +165,8 @@ export function Tunes({ recentTracks, initialArtists, initialAlbums }: Props) {
   const heroAlbumName = currentTrack?.album['#text'] || '';
   const heroImg = getBestImage(currentTrack?.image ?? []) || MUSIC_PLACEHOLDER;
   const heroIsPlaying = currentTrack?.['@attr']?.nowplaying === 'true';
-  const loadingArtists = loading;
-  const loadingAlbums = loading;
+  const loadingArtists = loading && artists.length === 0;
+  const loadingAlbums = loading && albums.length === 0;
 
   const periodLabel = PERIOD_MAP[activePeriod];
 
@@ -190,7 +210,7 @@ export function Tunes({ recentTracks, initialArtists, initialAlbums }: Props) {
         </div>
       </section>
       {refreshError && <p role="status" className="text-sm text-base-content/70">Live updates are temporarily unavailable. Keeping the last result and retrying shortly.</p>}
-      {listError && <div role="alert" className="flex flex-wrap items-center gap-3 text-sm"><span>Could not load this period.</span><button type="button" className="btn btn-sm btn-outline" onClick={() => setPeriodRetry(value => value + 1)}>Retry charts</button></div>}
+      {listError && <div role="alert" className="flex flex-wrap items-center gap-3 text-sm"><span>Some charts could not refresh.</span><button type="button" className="btn btn-sm btn-outline" onClick={() => setPeriodRetry(value => value + 1)}>Retry charts</button></div>}
 
       {/* Main Stats Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr_min-content] gap-6 items-stretch">
@@ -236,7 +256,7 @@ export function Tunes({ recentTracks, initialArtists, initialAlbums }: Props) {
             </div>
           )}
           <div className="flex flex-col gap-3 flex-1 justify-center">
-            {listError ? (
+            {artistError && artists.length === 0 ? (
               <p className="text-center p-4 text-base-content/60">Artist data is unavailable.</p>
             ) : (
               artists.map((artist, i) => {
@@ -304,7 +324,7 @@ export function Tunes({ recentTracks, initialArtists, initialAlbums }: Props) {
           </div>
         )}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
-          {listError ? (
+          {albumError && albums.length === 0 ? (
             <p className="text-center p-4 text-base-content/60 col-span-full">Album data is unavailable.</p>
           ) : (
             albums.map((album, i) => (

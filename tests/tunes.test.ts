@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { act, createElement } from 'react';
-import { createRoot } from 'react-dom/client';
-import { renderToStaticMarkup } from 'react-dom/server';
+import { createRoot, hydrateRoot } from 'react-dom/client';
+import { renderToStaticMarkup, renderToString } from 'react-dom/server';
 import { Tunes } from '../src/page-components/Tunes';
 import type { LastfmTrack } from '../src/lib/lastfmTypes';
 import { setupDom } from './dom';
@@ -140,6 +140,78 @@ test('failed charts can retry the same selected period', async t => {
     await act(async () => { button('Retry charts').click(); });
     assert.equal(document.querySelector('[role="alert"]'), null);
     assert.equal(button('All Time').getAttribute('aria-pressed'), 'true');
+  } finally {
+    await act(async () => { root.unmount(); });
+    env.cleanup();
+  }
+});
+
+for (const failedChart of ['artists', 'albums']) {
+  test(`hydration retains ${failedChart} when their refresh fails and updates the other chart`, async t => {
+    const initial = {
+      ...props,
+      initialArtists: [{ name: 'Server artist', url: 'https://example.com/artist', image: [] }],
+      initialAlbums: [{ name: 'Server album', artist: { name: 'Artist' }, url: 'https://example.com/album', image: [] }],
+    };
+    const element = createElement(Tunes, initial);
+    const env = setupDom(`<div id="root">${renderToString(element)}</div>`);
+    const chart = (kind: string) => [...document.querySelectorAll('section')]
+      .find(section => section.querySelector('h2 span')?.textContent === kind)!;
+    const calls: string[] = [];
+    let failure = true;
+    t.mock.method(globalThis, 'fetch', async (input: RequestInfo | URL) => {
+      const method = new URL(String(input), 'https://korikosmos.dev').searchParams.get('method')!;
+      calls.push(method);
+      if (failure && method === failedChart) return Response.json({}, { status: 503 });
+      return Response.json(method === 'artists'
+        ? [{ ...initial.initialArtists[0], name: 'Refreshed artist' }]
+        : [{ ...initial.initialAlbums[0], name: 'Refreshed album' }]);
+    });
+    let root: ReturnType<typeof hydrateRoot> | undefined;
+    try {
+      await act(async () => { root = hydrateRoot(document.getElementById('root')!, element); });
+      const successfulChart = failedChart === 'artists' ? 'albums' : 'artists';
+      assert.match(chart(failedChart).textContent ?? '', /Server/);
+      assert.doesNotMatch(chart(failedChart).textContent ?? '', /data is unavailable/);
+      assert.match(chart(successfulChart).textContent ?? '', /Refreshed/);
+      assert.ok(document.querySelector('[role="alert"]'));
+
+      failure = false;
+      await act(async () => { button('Retry charts').click(); });
+      assert.match(chart(failedChart).textContent ?? '', /Refreshed/);
+      assert.equal(document.querySelector('[role="alert"]'), null);
+      assert.deepEqual(calls, ['artists', 'albums', failedChart], 'Retry only the failed chart');
+    } finally {
+      await act(async () => { root?.unmount(); });
+      env.cleanup();
+    }
+  });
+}
+
+test('chart failures keep successful results and cached data belongs to its own period', async t => {
+  const env = setupDom();
+  const root = createRoot(document.getElementById('root')!);
+  const chart = (kind: string) => [...document.querySelectorAll('section')]
+    .find(section => section.querySelector('h2 span')?.textContent === kind)!;
+  t.mock.method(globalThis, 'fetch', async (input: RequestInfo | URL) => {
+    const query = new URL(String(input), 'https://korikosmos.dev').searchParams;
+    const weekly = query.get('period') === '7day';
+    if (weekly && query.get('method') === 'artists') return Response.json({}, { status: 503 });
+    const name = weekly ? 'Weekly result' : 'Overall result';
+    return Response.json([{ name, artist: { name: 'Artist' }, url: 'https://example.com', image: [] }]);
+  });
+  try {
+    await act(async () => { root.render(createElement(Tunes, props)); });
+    assert.match(chart('artists').textContent ?? '', /Overall result/);
+    await act(async () => { button('Last Week').click(); });
+    assert.match(chart('artists').textContent ?? '', /Artist data is unavailable/);
+    assert.doesNotMatch(chart('artists').textContent ?? '', /Overall result/);
+    assert.match(chart('albums').textContent ?? '', /Weekly result/);
+    assert.doesNotMatch(chart('albums').textContent ?? '', /Album data is unavailable/);
+    await act(async () => { button('All Time').click(); });
+    assert.match(chart('artists').textContent ?? '', /Overall result/);
+    assert.match(chart('albums').textContent ?? '', /Overall result/);
+    assert.equal(document.querySelector('[role="alert"]'), null);
   } finally {
     await act(async () => { root.unmount(); });
     env.cleanup();

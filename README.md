@@ -79,6 +79,7 @@ A production build **without** those env vars ships no admin routes at all.
   - **Config**: Centralized navigation and site settings in `src/config.ts`.
 - Displays my most recently played tracks with album artwork
 - I recognise both Last.fm artist credit formats in `/now` and Tunes, including recent history and duplicate filtering.
+- I keep usable Tunes charts visible when a refresh fails, preserve each period separately, and retry only the charts that failed.
 - Normalizes track names to avoid duplicates credited in different languages
 - Toggle a little cursor-following cat from the corner button
 - Switch between five DaisyUI themes (dark, light, forest, spider-man, batman) using the theme bar, or four retro sub-themes in webcore mode

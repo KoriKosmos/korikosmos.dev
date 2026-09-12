@@ -149,6 +149,7 @@ For Decap CMS OAuth:
 - GitHub Copilot instructions are configured in `.github/copilot-instructions.md`.
 
 ## Notes
+- I retain Tunes chart data by period, including SSR results. Artist and album refreshes settle independently, so one failure cannot discard the other chart; retries request only failed sections. I show an unavailable message only for a failed section with no retained data, and never reuse another period's chart under the active label.
 - I use `trackArtistName` for recent-track artist credits in duplicate filtering, Tunes and `/now`. It prefers `#text`, falling back to `name` when the former is missing or empty, so songs with the same title by different artists remain separate.
 - I keep strict TypeScript checks clean alongside the build. Canvas and typing callbacks are initialised after the DOM guards so they retain non-null types; persisted hit-counter JSON starts as `unknown` and is narrowed before use. This keeps my homepage effects and visitor counter working without weakening strict mode.
 - I load Tunes periods on demand instead of prefetching every chart. The active period owns its abortable request so slower responses cannot overwrite a newer selection. Live polling refreshes the whole recent list, updates playback even when the track name is unchanged, pauses in hidden tabs, and removes its timers/listeners on navigation. Missing cover art uses my local record illustration.
