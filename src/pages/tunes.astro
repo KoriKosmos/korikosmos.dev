@@ -12,8 +12,6 @@ const [recentTracks, topArtists, topAlbums] = await Promise.all([
   getTopAlbums('overall', 5).catch(() => []),
 ]);
 
-const currentTrack = recentTracks[0];
-const isPlaying = currentTrack?.['@attr']?.nowplaying === 'true';
 const retro = isRetro(Astro);
 ---
 
@@ -33,8 +31,6 @@ const retro = isRetro(Astro);
         recentTracks={recentTracks}
         initialArtists={topArtists}
         initialAlbums={topAlbums}
-        currentTrack={currentTrack}
-        isPlaying={isPlaying}
       />
     </RetroIslandShell>
   ) : (
@@ -43,8 +39,6 @@ const retro = isRetro(Astro);
       recentTracks={recentTracks}
       initialArtists={topArtists}
       initialAlbums={topAlbums}
-      currentTrack={currentTrack}
-      isPlaying={isPlaying}
     />
   )}
 </Layout>

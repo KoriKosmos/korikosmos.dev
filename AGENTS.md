@@ -148,6 +148,7 @@ For Decap CMS OAuth:
 - GitHub Copilot instructions are configured in `.github/copilot-instructions.md`.
 
 ## Notes
+- I load Tunes periods on demand instead of prefetching every chart. The active period owns its abortable request so slower responses cannot overwrite a newer selection. Live polling refreshes the whole recent list, updates playback even when the track name is unchanged, pauses in hidden tabs, and removes its timers/listeners on navigation. Missing cover art uses my local record illustration.
 - I share successful Last.fm requests across visitors, with a bounded cache and in-flight coalescing. Recent tracks expire after 15 seconds; charts after 15 minutes. I keep a five-second upstream timeout, validate public query parameters, return uncached 503s for outages, and let `/now` and `/tunes` render with empty music data when Last.fm is unavailable. I never log URLs containing my API key.
 - I added Star Pairs as a gentle cosmic memory game with three board sizes. Both skins wrap the same island, and the pure rules live in `src/lib/starPairs.ts`. I keep its scores on the visitor's device, pause when the tab is hidden, and support arrow keys plus Enter/Space. I never randomise the SSR board; it is dealt after Start to avoid hydration mismatches.
 - I give readers a table of contents from Astro's rendered heading slugs, an estimated reading time, and optional progress/copy tools in both skins. I keep article bodies static; `ReadingTools` only adds controls and cleans up its observers, scroll listener and injected code buttons on navigation.
