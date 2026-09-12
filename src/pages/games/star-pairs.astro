@@ -1,0 +1,17 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { isRetro } from '../../lib/skin';
+import { StarPairs } from '../../page-components/StarPairs';
+import RetroIslandShell from '../../retro-components/RetroIslandShell.astro';
+
+const retro = isRetro(Astro);
+---
+
+<Layout title="Star Pairs" description="A constellation memory game. Match the stars, explore three board sizes, and beat your personal best.">
+  <noscript><p>Star Pairs needs JavaScript to play. You can still browse the <a href="/blog">blog</a> or <a href="/portfolio">portfolio</a>.</p></noscript>
+  {retro ? (
+    <RetroIslandShell title="STARPAIRS.EXE" notes={['Match the constellations. No floppy disk required.', 'Your personal best stays on this computer.']}>
+      <StarPairs client:load />
+    </RetroIslandShell>
+  ) : <StarPairs client:load />}
+</Layout>

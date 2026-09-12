@@ -54,6 +54,12 @@ A production build **without** those env vars ships no admin routes at all.
 
 ## Features
 
+- **Saved themes on first paint**: I keep my modern theme in a cookie as well as local storage, so the server sends the selected theme in the HTML. Legacy choices migrate automatically. The picker follows the displayed theme, and cookie restoration still works during client navigation when local storage is blocked. Retro keeps its own independent scheme.
+- **Live Tunes updates**: The playing badge and recent history update together, including when the same song stops. Period changes cancel obsolete requests, charts load when selected, and live polling pauses in background tabs. Missing artwork has a local fallback.
+- **Resilient music loading**: I fetch independent Last.fm sections together and share cached requests between visitors. Recent tracks refresh quickly, charts are cached for 15 minutes, and a slow or unavailable Last.fm service cannot hold the page open indefinitely. API failures return an uncached retry response.
+- **Star Pairs** at `/games/star-pairs`: My constellation memory game has three board sizes, keyboard and touch controls, automatic pausing when leaving the tab, and personal bests stored on the device. It works in both skins and needs no account or external assets.
+- **Blog reading tools**: My posts show publication dates, reading-time estimates and a linked contents list. A progress strip tracks the article, and readers can copy a section link or a code block. The article and contents remain readable without JavaScript in either skin.
+- **Searchable blog and portfolio**: I can search titles, descriptions and post bodies, sort the results, and filter projects with public GitHub source. Filters are shareable URLs and work in both skins without JavaScript.
 - **Webcore mode** — a full Web 1.0 skin behind a toggle:
   - A `kk-skin` cookie, resolved in `src/middleware.ts` before anything renders. `src/layouts/Layout.astro` is a dispatcher that picks `ModernLayout.astro` or `RetroLayout.astro`, and each route renders either a `src/page-components/*` or a `src/retro-components/Retro*` body.
   - Four sub-themes of its own — y2k (the default), kawaii, geocities, cyber — switched from the retro control panel and remembered in `localStorage`.
@@ -73,6 +79,10 @@ A production build **without** those env vars ships no admin routes at all.
   - **High Scores**: Global leaderboard implemented via server-side API (`src/pages/api/scores/[game].ts`, accessed as `/api/scores/:game`) and persistent JSON storage.
   - **Config**: Centralized navigation and site settings in `src/config.ts`.
 - Displays my most recently played tracks with album artwork
+- I recognise both Last.fm artist credit formats in `/now` and Tunes, including recent history and duplicate filtering.
+- I keep usable Tunes charts visible when a refresh fails, preserve each period separately, and retry only the charts that failed.
+- My retro blog's newest-post badge, update date and entry total always describe the full blog, even when I filter or reorder the results.
+- Each Star Pairs round starts with a fresh timer, so restarting during play cannot carry an old timer tick into a new personal best.
 - Normalizes track names to avoid duplicates credited in different languages
 - Toggle a little cursor-following cat from the corner button
 - Switch between five DaisyUI themes (dark, light, forest, spider-man, batman) using the theme bar, or four retro sub-themes in webcore mode
@@ -121,10 +131,17 @@ Run these from the project root:
 | :------------------ | :------------------------------------- |
 | `npm install`       | Install dependencies                   |
 | `npm run dev`       | Start the dev server                   |
+| `npm run check`     | Check TypeScript without emitting files |
 | `npm run build`     | Build the production site to `./dist/` |
+| `npm test`          | Run focused regression tests           |
+| `npm run test:render` | Check production HTML in both skins (build first) |
 | `npm run preview`   | Preview the built site locally         |
 | `npm run gen:retro` | Redraw the retro graphics in `public/retro/` |
 | `npm run astro ...` | Run additional Astro CLI commands      |
+
+I run `npm run check`, `npm test`, `npm run build` and `npm run test:render`
+before committing. The TypeScript check covers my TS/TSX files and checked
+JavaScript configuration; the build and render checks also exercise Astro pages.
 
 ## Docker
 

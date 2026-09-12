@@ -32,8 +32,15 @@ async function readCount(): Promise<number> {
   if (cachedCount !== null) return cachedCount;
   try {
     const raw = await fs.readFile(HITS_PATH, 'utf-8');
-    const parsed = JSON.parse(raw);
-    cachedCount = typeof parsed?.count === 'number' && parsed.count >= 0 ? parsed.count : 0;
+    const parsed: unknown = JSON.parse(raw);
+    cachedCount =
+      typeof parsed === 'object' &&
+      parsed !== null &&
+      'count' in parsed &&
+      typeof parsed.count === 'number' &&
+      parsed.count >= 0
+        ? parsed.count
+        : 0;
   } catch {
     cachedCount = 0;
   }

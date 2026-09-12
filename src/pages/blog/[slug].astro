@@ -6,6 +6,8 @@ import { BlogPostPage } from '../../page-components/BlogPostPage.tsx';
 import { PostReactions } from '../../page-components/PostReactions.tsx';
 import { RetroBlogPostPage } from '../../retro-components/RetroBlogPostPage.tsx';
 import RetroIslandShell from '../../retro-components/RetroIslandShell.astro';
+import { readingMinutes } from '../../lib/reading';
+import { ReadingTools } from '../../page-components/ReadingTools';
 
 // Server-rendered, not prerendered: the skin lives in a request cookie, and a
 // build-time render has no request to read it from. Content collections are
@@ -22,7 +24,8 @@ const post = slug ? await getEntry('blog', slug) : undefined;
 // site's real 404 page (in whichever skin) instead of a blank body.
 if (!post) return Astro.rewrite('/404');
 
-const { Content } = await post.render();
+const { Content, headings } = await post.render();
+const minutes = readingMinutes(post.body);
 const retro = isRetro(Astro);
 ---
 
@@ -34,6 +37,7 @@ const retro = isRetro(Astro);
   publishedTime={post.data.pubDate.toISOString()}
   modifiedTime={post.data.updatedDate?.toISOString()}
 >
+  <ReadingTools client:load retro={retro} />
   {retro ? (
     <>
       <RetroBlogPostPage
@@ -41,6 +45,8 @@ const retro = isRetro(Astro);
         description={post.data.description}
         pubDate={post.data.pubDate.toISOString()}
         updatedDate={post.data.updatedDate?.toISOString()}
+        minutes={minutes}
+        headings={headings}
       >
         <Content />
       </RetroBlogPostPage>
@@ -55,7 +61,14 @@ const retro = isRetro(Astro);
     </>
   ) : (
     <>
-      <BlogPostPage title={post.data.title}>
+      <BlogPostPage
+        title={post.data.title}
+        description={post.data.description}
+        pubDate={post.data.pubDate.toISOString()}
+        updatedDate={post.data.updatedDate?.toISOString()}
+        minutes={minutes}
+        headings={headings}
+      >
         <Content />
       </BlogPostPage>
       <PostReactions client:load slug={slug!} />

@@ -4,11 +4,15 @@ import { getCollection } from 'astro:content';
 import { isRetro } from '../lib/skin';
 import { PortfolioPage } from '../page-components/PortfolioPage.tsx';
 import { RetroPortfolioPage } from '../retro-components/RetroPortfolioPage.tsx';
+import { discoverProjects, readDiscoveryState } from '../lib/contentDiscovery';
 
-const projects = await getCollection('projects');
+const allProjects = await getCollection('projects');
+const state = readDiscoveryState(Astro.url.searchParams, 'projects');
+const projects = discoverProjects(allProjects, state);
+const filters = { kind: 'projects' as const, state, count: projects.length, total: allProjects.length };
 const retro = isRetro(Astro);
 ---
 
 <Layout title="Portfolio" description="Projects and work by Maan.">
-  {retro ? <RetroPortfolioPage projects={projects} /> : <PortfolioPage projects={projects} />}
+  {retro ? <RetroPortfolioPage projects={projects} filters={filters} /> : <PortfolioPage projects={projects} filters={filters} />}
 </Layout>

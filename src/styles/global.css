@@ -124,3 +124,9 @@ html[data-theme="spider-man"] .from-primary.to-secondary {
   --tw-prose-th-borders: oklch(var(--bc) / 0.3);
   --tw-prose-td-borders: oklch(var(--bc) / 0.2);
 }
+
+[data-reader-content] :is(h2, h3) { scroll-margin-top: 2rem; }
+[data-reader-content] :is(h2, h3):target { text-decoration: underline; text-decoration-color: oklch(var(--p)); text-underline-offset: 0.25em; }
+.reader-code { margin: 1.5em 0; min-width: 0; }
+.reader-code > button { display: block; margin-left: auto; }
+.reader-code > pre { margin-top: 0.5em; }

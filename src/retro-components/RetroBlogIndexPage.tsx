@@ -1,4 +1,6 @@
 import type { CollectionEntry } from "astro:content";
+import { ContentFilters, type ContentFiltersProps } from '../page-components/ContentFilters';
+import { readingMinutes } from '../lib/reading';
 
 /**
  * The blog index, re-dressed as a 2003 "web log".
@@ -11,6 +13,8 @@ import type { CollectionEntry } from "astro:content";
 
 interface Props {
   posts: CollectionEntry<"blog">[];
+  newestPost: CollectionEntry<"blog"> | undefined;
+  filters?: ContentFiltersProps;
 }
 
 const LONG_DATE: Intl.DateTimeFormatOptions = {
@@ -28,13 +32,10 @@ function stampDate(date: Date): string {
   return `${day}-${month}-${date.getFullYear()}`;
 }
 
-export function RetroBlogIndexPage({ posts }: Props) {
-  const sorted = [...posts].sort(
-    (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
-  );
-  const newest = sorted[0];
-  const latestStamp = newest
-    ? newest.data.pubDate.toLocaleDateString("en-GB", LONG_DATE)
+export function RetroBlogIndexPage({ posts: sorted, newestPost, filters }: Props) {
+  const total = filters?.total ?? sorted.length;
+  const latestStamp = newestPost
+    ? newestPost.data.pubDate.toLocaleDateString("en-GB", LONG_DATE)
     : null;
 
   return (
@@ -69,8 +70,8 @@ export function RetroBlogIndexPage({ posts }: Props) {
 
           <div className="rt-inset rt-mono rt-small" style={{ marginTop: "10px" }}>
             <span aria-hidden="true">&gt; </span>
-            {sorted.length} {sorted.length === 1 ? "entry" : "entries"} on file
-            {latestStamp ? ` — most recent update ${latestStamp}` : ""}
+            {total} {total === 1 ? "entry" : "entries"} on file
+            {latestStamp ? ` · most recent update ${latestStamp}` : ""}
             <span className="rt-blink" aria-hidden="true">
               _
             </span>
@@ -80,7 +81,8 @@ export function RetroBlogIndexPage({ posts }: Props) {
 
       <div className="rt-hr"></div>
 
-      {sorted.length === 0 ? (
+      {filters && <ContentFilters {...filters} retro />}
+      {sorted.length === 0 && !filters?.total ? (
         <div className="rt-panel">
           <div className="rt-panel__title">Error: 0 entries found</div>
           <div className="rt-panel__body rt-center">
@@ -106,7 +108,7 @@ export function RetroBlogIndexPage({ posts }: Props) {
           className="rt-stack"
           style={{ listStyle: "none", margin: 0, padding: 0 }}
         >
-          {sorted.map((post, index) => (
+          {sorted.map(post => (
             <li key={post.slug} style={{ margin: 0 }}>
               <article className="rt-panel" style={{ marginBottom: 0 }}>
                 <div className="rt-panel__title">
@@ -117,7 +119,7 @@ export function RetroBlogIndexPage({ posts }: Props) {
                 <div className="rt-panel__body">
                   <h2 className="rt-subhead" style={{ marginTop: 0 }}>
                     <a href={`/blog/${post.slug}/`}>{post.data.title}</a>
-                    {index === 0 && (
+                    {post.slug === newestPost?.slug && (
                       <>
                         {" "}
                         <img
@@ -142,6 +144,7 @@ export function RetroBlogIndexPage({ posts }: Props) {
                     <time dateTime={post.data.pubDate.toISOString()}>
                       {post.data.pubDate.toLocaleDateString("en-GB", LONG_DATE)}
                     </time>
+                    <span> · {readingMinutes(post.body)} min read</span>
                   </p>
 
                   <div className="rt-inset">
@@ -153,7 +156,7 @@ export function RetroBlogIndexPage({ posts }: Props) {
                       [ read more ]
                     </a>
                     <span className="rt-note">
-                      {index === 0
+                      {post.slug === newestPost?.slug
                         ? "Hot off the modem!"
                         : "Still perfectly good."}
                     </span>

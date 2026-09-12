@@ -76,7 +76,8 @@ data/guestbook.json, data/hits.json  # Guestbook + hit counter, same volume moun
 - **Two skins, one site:** I ship a normal modern skin and a Web 1.0 "retro" skin. Which one renders is a `kk-skin` cookie, resolved in `src/middleware.ts` into `Astro.locals.skin` before anything renders. `Layout.astro` dispatches to `ModernLayout.astro` or `RetroLayout.astro`, and each route branches on `isRetro(Astro)` to render either a `page-components/*` or a `retro-components/Retro*` body. See "The retro skin" below.
 - **No `prerender = true` on any route that uses `Layout.astro`:** a build-time render has no request, so the cookie is invisible and the skin toggle silently does nothing. That is why blog and portfolio `[slug]` pages are now SSR — content collections are in memory at runtime, so it costs nothing. `src/pages/og/[...route].ts` stays prerendered because it is request-independent.
 - **Sitemap:** because those slug routes are no longer prerendered, `@astrojs/sitemap` cannot discover them. `astro.config.mjs` feeds them back in via `customPages`, derived from the filenames in `src/content/`. If I ever override `slug` in frontmatter, that helper has to read frontmatter instead.
-- **Theme system:** DaisyUI themes configured in `tailwind.config.mjs` with `data-theme` attribute on `<html>`. Five themes: dark (default), light, forest, spider-man, batman. Custom `--surface` and `--accent-dark` CSS vars extend DaisyUI for specific utilities. The retro skin has its own four sub-themes (`data-retro-theme`), unrelated to these.
+- **Theme system:** DaisyUI themes configured in `tailwind.config.mjs` with `data-theme` attribute on `<html>`. Five themes: dark (default), light, forest, spider-man, batman, listed in `src/lib/theme.ts` which is the source of truth. Custom `--surface` and `--accent-dark` CSS vars extend DaisyUI for specific utilities. The retro skin has its own four sub-themes (`data-retro-theme`), unrelated to these.
+- **The theme is server-rendered, not just restored by script.** The choice lives in a `kk-theme` cookie as well as `localStorage`; middleware resolves it into `locals.theme` and `ModernLayout` writes `data-theme` onto `<html>`, so the first paint is correct with no JavaScript. Always persist through `persistTheme()` so both stores stay in step. The pre-paint scripts in both shells carry `data-cfasync="false"`: Cloudflare Rocket Loader otherwise rewrites inline scripts to a token MIME type and replays them after load, which flashed the default blue theme for about a second on every load. Rocket Loader should stay **off** for this site — it also defers Astro's island and ClientRouter modules.
 - **Tunes page pattern:** SSR fetches initial data, passes to client via `<script define:vars>`. Client JS is the single source of truth for rendering artists/albums (avoids template duplication). Client polls for now-playing updates every 30s.
 - **Game scores:** Stored as JSON files in `/data/scores/`, accessed via API routes with `async-mutex` for write safety. Leaderboards sync between localStorage and server.
 - **Guestbook + hit counter:** `src/lib/guestbook.ts` and `src/lib/hits.ts` use the same mutex + write-temp-then-rename pattern as the scores, writing `data/guestbook.json` and `data/hits.json`. The Dockerfile does not `COPY data/` — both rely on the volume mount the leaderboards already use, and degrade gracefully if it is not writable.
@@ -111,6 +112,9 @@ The whole point is that this is a *different site*, not a restyle — the layout
 
 - `npm run dev` – start development server at `localhost:4321`.
 - `npm run build` – build to `dist/`.
+- `npm run check` – I check TypeScript and checked JavaScript without emitting files. This does not type-check `.astro` templates, so I also run the build and production-render checks.
+- `npm test` – run my focused regression checks with Node's test runner via `tsx` (Node 20 compatible).
+- `npm run test:render` – after a build, I check real production responses in both skins without starting a server. React interaction checks use JSDOM and do not replace a visual browser pass.
 - `npm run preview` – preview the production build locally.
 - `docker compose up --build` – build and run in container (maps port 8484 → 4321).
 
@@ -138,7 +142,7 @@ For Decap CMS OAuth:
 - Whenever you make a change, add or modify this AGENTS.md file to enhance future updates, refactors and usability. Whether this is instructions, best habits, etc.
 - Whenever a change is made, keep a list of notes at the bottom of this AGENTS.md file that tracks the more "qualitative" wants of the user/client, such as themes, experiences, etc.
 - Keep commits focused and write a short imperative subject line (e.g. `Fix navbar links`).
-- Verify that `npm run build` succeeds; there are no automated tests.
+- I run `npm run check`, `npm test`, `npm run build` and `npm run test:render` before committing.
 - New pages go in `src/pages`, and reusable pieces belong in `src/components`.
 - Never apply a "codex" label to PRs; omit ChatGPT chat links.
 - Write documentation in first-person voice, from my perspective.
@@ -146,6 +150,17 @@ For Decap CMS OAuth:
 - GitHub Copilot instructions are configured in `.github/copilot-instructions.md`.
 
 ## Notes
+- I consolidated the site improvements from #70 with the theme persistence work from #69, retaining both histories. Theme checks cover initial server HTML, legacy migration, stale prefetched pages and blocked local storage in both skins. The modern picker observes `data-theme` rather than reading storage itself; the reconciliation script uses the live cookie before a stale HTML attribute when storage is unavailable.
+- I give each Star Pairs start a new round identifier and include it in the clock effect's dependencies. The interval resets on New game, including during active play, but does not restart on card flips. I check the first full second after a restart and the time saved with a completed personal best.
+- I derive the retro blog's newest post from the full collection in its Astro route and pass it separately from filtered results. The NEW! badge, modem caption, update date and entry total describe the whole blog, so filtering and sorting cannot make an old post look newly published.
+- I retain Tunes chart data by period, including SSR results. Artist and album refreshes settle independently, so one failure cannot discard the other chart; retries request only failed sections. I show an unavailable message only for a failed section with no retained data, and never reuse another period's chart under the active label.
+- I use `trackArtistName` for recent-track artist credits in duplicate filtering, Tunes and `/now`. It prefers `#text`, falling back to `name` when the former is missing or empty, so songs with the same title by different artists remain separate.
+- I keep strict TypeScript checks clean alongside the build. Canvas and typing callbacks are initialised after the DOM guards so they retain non-null types; persisted hit-counter JSON starts as `unknown` and is narrowed before use. This keeps my homepage effects and visitor counter working without weakening strict mode.
+- I load Tunes periods on demand instead of prefetching every chart. The active period owns its abortable request so slower responses cannot overwrite a newer selection. Live polling refreshes the whole recent list, updates playback even when the track name is unchanged, pauses in hidden tabs, and removes its timers/listeners on navigation. Missing cover art uses my local record illustration.
+- I share successful Last.fm requests across visitors, with a bounded cache and in-flight coalescing. Recent tracks expire after 15 seconds; charts after 15 minutes. I keep a five-second upstream timeout, validate public query parameters, return uncached 503s for outages, and let `/now` and `/tunes` render with empty music data when Last.fm is unavailable. I never log URLs containing my API key.
+- I added Star Pairs as a gentle cosmic memory game with three board sizes. Both skins wrap the same island, and the pure rules live in `src/lib/starPairs.ts`. I keep its scores on the visitor's device, pause when the tab is hidden, and support arrow keys plus Enter/Space. I never randomise the SSR board; it is dealt after Start to avoid hydration mismatches.
+- I give readers a table of contents from Astro's rendered heading slugs, an estimated reading time, and optional progress/copy tools in both skins. I keep article bodies static; `ReadingTools` only adds controls and cleans up its observers, scroll listener and injected code buttons on navigation.
+- I want my blog and portfolio to be easy to explore in either skin. Search and sorting live in URL query parameters and work without JavaScript; `src/lib/contentDiscovery.ts` owns filtering and ordering, so page components must preserve the supplied order. I keep full Markdown bodies on the server instead of shipping a search index to every visitor.
 - Tunes page normalizes track names to filter out duplicates across different language credits.
 - Cat toggle persists across pages so Oneko can follow you site-wide.
 - Theme bar allows switching between "dark", "light", and "forest" themes using a fixed selector on every page.

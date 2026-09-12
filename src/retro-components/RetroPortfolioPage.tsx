@@ -1,7 +1,9 @@
 import type { CollectionEntry } from "astro:content";
+import { ContentFilters, type ContentFiltersProps } from '../page-components/ContentFilters';
 
 interface Props {
   projects: CollectionEntry<"projects">[];
+  filters?: ContentFiltersProps;
 }
 
 /**
@@ -30,7 +32,7 @@ function status(project: CollectionEntry<"projects">): { label: string; bar: str
     : { label: "OFFLINE ARCHIVE", bar: "▓▓▓▓▓▓░░░░ 60%" };
 }
 
-export function RetroPortfolioPage({ projects }: Props) {
+export function RetroPortfolioPage({ projects, filters }: Props) {
   return (
     <>
       <h1 className="rt-heading">
@@ -60,13 +62,14 @@ export function RetroPortfolioPage({ projects }: Props) {
           </p>
 
           <div className="rt-inset rt-center rt-mono rt-small">
-            {projects.length} project(s) on file &nbsp;•&nbsp; sorted by vibes
+            {projects.length} project(s) on file &nbsp;•&nbsp; ready to explore
             &nbsp;•&nbsp; 0 bytes free
           </div>
 
           <div className="rt-hr" />
 
           <h2 className="rt-subhead">The Projects</h2>
+          {filters && <ContentFilters {...filters} retro />}
 
           <ul className="rt-cardgrid">
             {projects.map((project, index) => {

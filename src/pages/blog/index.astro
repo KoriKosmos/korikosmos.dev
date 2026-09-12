@@ -4,11 +4,17 @@ import { getCollection } from 'astro:content';
 import { isRetro } from '../../lib/skin';
 import { BlogIndexPage } from '../../page-components/BlogIndexPage.tsx';
 import { RetroBlogIndexPage } from '../../retro-components/RetroBlogIndexPage.tsx';
+import { discoverPosts, readDiscoveryState } from '../../lib/contentDiscovery';
 
-const posts = await getCollection('blog');
+const allPosts = await getCollection('blog');
+const newestPost = allPosts.reduce<(typeof allPosts)[number] | undefined>((latest, post) =>
+  !latest || post.data.pubDate > latest.data.pubDate ? post : latest, undefined);
+const state = readDiscoveryState(Astro.url.searchParams, 'blog');
+const posts = discoverPosts(allPosts, state);
+const filters = { kind: 'blog' as const, state, count: posts.length, total: allPosts.length };
 const retro = isRetro(Astro);
 ---
 
 <Layout title="Blog" description="Blog posts by Maan on tech, creativity, and personal projects.">
-  {retro ? <RetroBlogIndexPage posts={posts} /> : <BlogIndexPage posts={posts} />}
+  {retro ? <RetroBlogIndexPage posts={posts} newestPost={newestPost} filters={filters} /> : <BlogIndexPage posts={posts} filters={filters} />}
 </Layout>

@@ -1,10 +1,13 @@
 import type { CollectionEntry } from "astro:content";
+import { ContentFilters, type ContentFiltersProps } from './ContentFilters';
+import { readingMinutes } from '../lib/reading';
 
 interface Props {
   posts: CollectionEntry<"blog">[];
+  filters?: ContentFiltersProps;
 }
 
-export function BlogIndexPage({ posts }: Props) {
+export function BlogIndexPage({ posts, filters }: Props) {
   return (
     <>
       <div className="flex justify-between items-center mb-8">
@@ -29,15 +32,14 @@ export function BlogIndexPage({ posts }: Props) {
         </a>
       </div>
 
-      {posts.length === 0 ? (
+      {filters && <ContentFilters {...filters} />}
+      {posts.length === 0 && !filters?.total ? (
         <div className="text-center py-12 opacity-60">
           <p className="text-xl">No posts yet. Check back soon!</p>
         </div>
       ) : (
         <div className="grid gap-6 md:grid-cols-2">
-          {posts
-            .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
-            .map((post) => (
+          {posts.map((post) => (
               <a
                 key={post.slug}
                 href={`/blog/${post.slug}/`}
@@ -45,7 +47,7 @@ export function BlogIndexPage({ posts }: Props) {
               >
                 <h2 className="text-2xl font-bold mb-2">{post.data.title}</h2>
                 <p className="opacity-90 line-clamp-2">{post.data.description}</p>
-                <div className="mt-4 text-sm opacity-90 flex items-center gap-2">
+                <div className="mt-4 text-sm opacity-90 flex flex-wrap items-center gap-2">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="16"
@@ -62,11 +64,14 @@ export function BlogIndexPage({ posts }: Props) {
                     <line x1="8" y1="2" x2="8" y2="6"></line>
                     <line x1="3" y1="10" x2="21" y2="10"></line>
                   </svg>
-                  {new Date(post.data.pubDate).toLocaleDateString("en-US", {
+                  <time dateTime={post.data.pubDate.toISOString()}>{post.data.pubDate.toLocaleDateString("en-GB", {
                     year: "numeric",
                     month: "long",
                     day: "numeric",
-                  })}
+                    timeZone: "UTC",
+                  })}</time>
+                  <span aria-hidden="true">·</span>
+                  <span>{readingMinutes(post.body)} min read</span>
                 </div>
               </a>
             ))}
