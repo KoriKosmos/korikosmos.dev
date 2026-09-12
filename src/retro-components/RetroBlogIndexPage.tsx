@@ -1,4 +1,5 @@
 import type { CollectionEntry } from "astro:content";
+import { ContentFilters, type ContentFiltersProps } from '../page-components/ContentFilters';
 
 /**
  * The blog index, re-dressed as a 2003 "web log".
@@ -11,6 +12,7 @@ import type { CollectionEntry } from "astro:content";
 
 interface Props {
   posts: CollectionEntry<"blog">[];
+  filters?: ContentFiltersProps;
 }
 
 const LONG_DATE: Intl.DateTimeFormatOptions = {
@@ -28,11 +30,9 @@ function stampDate(date: Date): string {
   return `${day}-${month}-${date.getFullYear()}`;
 }
 
-export function RetroBlogIndexPage({ posts }: Props) {
-  const sorted = [...posts].sort(
-    (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
-  );
-  const newest = sorted[0];
+export function RetroBlogIndexPage({ posts: sorted, filters }: Props) {
+  const newest = sorted.reduce<(typeof sorted)[number] | undefined>((latest, post) =>
+    !latest || post.data.pubDate > latest.data.pubDate ? post : latest, undefined);
   const latestStamp = newest
     ? newest.data.pubDate.toLocaleDateString("en-GB", LONG_DATE)
     : null;
@@ -80,7 +80,8 @@ export function RetroBlogIndexPage({ posts }: Props) {
 
       <div className="rt-hr"></div>
 
-      {sorted.length === 0 ? (
+      {filters && <ContentFilters {...filters} retro />}
+      {sorted.length === 0 && !filters?.total ? (
         <div className="rt-panel">
           <div className="rt-panel__title">Error: 0 entries found</div>
           <div className="rt-panel__body rt-center">
@@ -117,7 +118,7 @@ export function RetroBlogIndexPage({ posts }: Props) {
                 <div className="rt-panel__body">
                   <h2 className="rt-subhead" style={{ marginTop: 0 }}>
                     <a href={`/blog/${post.slug}/`}>{post.data.title}</a>
-                    {index === 0 && (
+                    {post.slug === newest?.slug && (
                       <>
                         {" "}
                         <img

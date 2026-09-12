@@ -111,6 +111,7 @@ The whole point is that this is a *different site*, not a restyle — the layout
 
 - `npm run dev` – start development server at `localhost:4321`.
 - `npm run build` – build to `dist/`.
+- `npm test` – run my focused regression checks with Node's test runner via `tsx` (Node 20 compatible).
 - `npm run preview` – preview the production build locally.
 - `docker compose up --build` – build and run in container (maps port 8484 → 4321).
 
@@ -138,7 +139,7 @@ For Decap CMS OAuth:
 - Whenever you make a change, add or modify this AGENTS.md file to enhance future updates, refactors and usability. Whether this is instructions, best habits, etc.
 - Whenever a change is made, keep a list of notes at the bottom of this AGENTS.md file that tracks the more "qualitative" wants of the user/client, such as themes, experiences, etc.
 - Keep commits focused and write a short imperative subject line (e.g. `Fix navbar links`).
-- Verify that `npm run build` succeeds; there are no automated tests.
+- I run `npm test` and verify that `npm run build` succeeds before committing.
 - New pages go in `src/pages`, and reusable pieces belong in `src/components`.
 - Never apply a "codex" label to PRs; omit ChatGPT chat links.
 - Write documentation in first-person voice, from my perspective.
@@ -146,6 +147,7 @@ For Decap CMS OAuth:
 - GitHub Copilot instructions are configured in `.github/copilot-instructions.md`.
 
 ## Notes
+- I want my blog and portfolio to be easy to explore in either skin. Search and sorting live in URL query parameters and work without JavaScript; `src/lib/contentDiscovery.ts` owns filtering and ordering, so page components must preserve the supplied order. I keep full Markdown bodies on the server instead of shipping a search index to every visitor.
 - Tunes page normalizes track names to filter out duplicates across different language credits.
 - Cat toggle persists across pages so Oneko can follow you site-wide.
 - Theme bar allows switching between "dark", "light", and "forest" themes using a fixed selector on every page.

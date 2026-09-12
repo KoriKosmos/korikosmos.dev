@@ -1019,3 +1019,21 @@ a:hover > .rt-btn88 { border-color: var(--rt-accent); }
   }
   .rt-sparkle { display: none; }
 }
+/* Search uses the same URL state in both skins, with native form controls. */
+[data-skin='retro'] .rt-discovery { margin: 12px 0; }
+[data-skin='retro'] .rt-discovery__controls { display: flex; flex-wrap: wrap; align-items: end; gap: 8px; }
+[data-skin='retro'] .rt-discovery__controls label { flex: 1 1 140px; min-width: 0; }
+[data-skin='retro'] .rt-discovery__controls .rt-discovery__query { flex-basis: 220px; }
+[data-skin='retro'] .rt-discovery__field {
+  display: block;
+  width: 100%;
+  min-height: 40px;
+  padding: 6px;
+  color: var(--rt-ink);
+  background: var(--rt-panel);
+  border: 2px inset var(--rt-bevel-dark);
+  font-family: var(--rt-font-alt);
+}
+[data-skin='retro'] .rt-discovery__source { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+[data-skin='retro'] .rt-discovery__summary { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; margin-top: 10px; }
+[data-skin='retro'] .rt-discovery__summary p { margin: 0; overflow-wrap: anywhere; }
