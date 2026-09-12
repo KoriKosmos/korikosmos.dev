@@ -31,9 +31,9 @@
 }
 
 /* ---------------------------------------------------------------------------
-   Theme switching: circular reveal driven from ThemeBar.tsx.
+   Theme switching: circular reveal driven from lib/themeTransition.ts.
    While html[data-theme-switching] is set, every element is folded back into
-   the root snapshot and the default crossfade is disabled — ThemeBar animates
+   the root snapshot and the default crossfade is disabled. The coordinator animates
    a clip-path circle on the new snapshot instead.
 --------------------------------------------------------------------------- */
 html[data-theme-switching] :where(body *) {

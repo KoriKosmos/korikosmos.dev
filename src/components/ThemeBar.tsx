@@ -1,13 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import type { MouseEvent, ReactNode } from "react";
 import { flushSync } from "react-dom";
-import { parseTheme, persistTheme } from "../lib/theme";
+import { parseTheme } from "../lib/theme";
 import type { Theme } from "../lib/theme";
-
-type ViewTransitionLike = { ready: Promise<void>; finished: Promise<void> };
-type DocumentWithViewTransition = Document & {
-  startViewTransition?: (update: () => void) => ViewTransitionLike;
-};
+import { requestTheme, THEME_CHANGE_EVENT } from "../lib/themeTransition";
 
 const THEMES: { name: Theme; label: string; swatch: string; icon?: ReactNode }[] = [
   { name: "dark", label: "Dark theme", swatch: "bg-blue-600 border" },
@@ -66,91 +62,32 @@ const THEMES: { name: Theme; label: string; swatch: string; icon?: ReactNode }[]
 
 export function ThemeBar() {
   const [current, setCurrent] = useState<Theme | null>(null);
-  const activeTransition = useRef<ViewTransitionLike | null>(null);
-  const fadeTimeout = useRef<number | undefined>(undefined);
 
   useEffect(() => {
     // Follow the displayed theme, including cookie restores and palette changes.
     const root = document.documentElement;
     const sync = () => setCurrent(parseTheme(root.getAttribute("data-theme")));
+    // The shared coordinator commits both colours and the selected swatch
+    // before the browser takes its new snapshot, including palette requests.
+    const onThemeChange = () => flushSync(sync);
     sync();
+    root.addEventListener(THEME_CHANGE_EVENT, onThemeChange);
     const observer = new window.MutationObserver(sync);
     observer.observe(root, { attributes: true, attributeFilter: ["data-theme"] });
     return () => {
       observer.disconnect();
-      window.clearTimeout(fadeTimeout.current);
-      if (fadeTimeout.current !== undefined) root.removeAttribute("data-theme-fade");
+      root.removeEventListener(THEME_CHANGE_EVENT, onThemeChange);
     };
   }, []);
 
   function applyTheme(theme: Theme, event: MouseEvent<HTMLButtonElement>) {
-    const root = document.documentElement;
-    if (root.getAttribute("data-theme") === theme) return;
-
-    // Storage can block the main thread. Save before the browser freezes the
-    // old snapshot, keeping the transition update limited to visible changes.
-    persistTheme(theme);
-    const commitTheme = () => {
-      root.setAttribute("data-theme", theme);
-      // Capture the page colours and selected swatch in the same new snapshot.
-      flushSync(() => setCurrent(theme));
-    };
-    const doc = document as DocumentWithViewTransition;
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    window.clearTimeout(fadeTimeout.current);
-    root.removeAttribute("data-theme-fade");
-
-    if (reduceMotion) {
-      commitTheme();
-      return;
-    }
-
-    if (!doc.startViewTransition) {
-      root.setAttribute("data-theme-fade", "");
-      commitTheme();
-      fadeTimeout.current = window.setTimeout(() => root.removeAttribute("data-theme-fade"), 400);
-      return;
-    }
-
     // Circular reveal expanding from the clicked swatch (works for keyboard
     // activation too, since it uses the button's position rather than the cursor)
     const rect = event.currentTarget.getBoundingClientRect();
-    const x = rect.left + rect.width / 2;
-    const y = rect.top + rect.height / 2;
-    const radius = Math.hypot(
-      Math.max(x, window.innerWidth - x),
-      Math.max(y, window.innerHeight - y),
-    );
-
-    root.setAttribute("data-theme-switching", "");
-    const transition = doc.startViewTransition(commitTheme);
-    activeTransition.current = transition;
-    transition.ready.then(() => {
-      if (activeTransition.current !== transition) return;
-      root.animate(
-        {
-          clipPath: [
-            `circle(0px at ${x}px ${y}px)`,
-            `circle(${radius}px at ${x}px ${y}px)`,
-          ],
-        },
-        {
-          duration: 500,
-          easing: "cubic-bezier(0.4, 0, 0.2, 1)",
-          fill: "both",
-          pseudoElement: "::view-transition-new(root)",
-        },
-      );
-    }).catch(() => {
-      // A navigation or newer switch can skip the reveal. The update still runs.
+    requestTheme(theme, {
+      x: rect.left + rect.width / 2,
+      y: rect.top + rect.height / 2,
     });
-    const finish = () => {
-      // An older transition must not re-enable page animations mid-reveal.
-      if (activeTransition.current !== transition) return;
-      activeTransition.current = null;
-      root.removeAttribute("data-theme-switching");
-    };
-    void transition.finished.then(finish, finish);
   }
 
   return (
