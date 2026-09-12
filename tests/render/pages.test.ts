@@ -1,11 +1,13 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import test from 'node:test';
+import test, { mock } from 'node:test';
 import { App } from 'astro/app';
 import { JSDOM } from 'jsdom';
 
 // Exercise the real production routes in-process, without a listening socket.
 process.env.ASTRO_NODE_AUTOSTART = 'disabled';
+// Keep this suite independent of credentials and the live Last.fm service.
+mock.method(globalThis, 'fetch', async () => Response.json({ error: 'offline fixture' }, { status: 503 }));
 const build = new URL('../../dist/server/', import.meta.url);
 await import(new URL('entry.mjs', build).href);
 const entry = await readFile(new URL('entry.mjs', build), 'utf8');
@@ -64,4 +66,21 @@ for (const skin of ['modern', 'retro'] as const) {
     const games = await render('/games', skin);
     assert.ok(games.document.querySelector('main a[href="/games/star-pairs/"]'));
   });
+
+  test(`${skin}: music pages survive an unavailable upstream`, async () => {
+    assert.equal((await render('/tunes', skin)).response.status, 200);
+    assert.equal((await render('/now', skin)).response.status, 200);
+  });
 }
+
+test('music API rejects malformed requests and does not cache upstream failures', async () => {
+  for (const query of ['limit=-1', 'limit=10000', 'period=invalid', 'method=unknown']) {
+    const { response } = await render(`/api/lastfm?${query}`, 'modern');
+    assert.equal(response.status, 400);
+    assert.equal(response.headers.get('cache-control'), 'no-store');
+  }
+  const { response } = await render('/api/lastfm?method=recent&limit=10', 'modern');
+  assert.equal(response.status, 503);
+  assert.equal(response.headers.get('cache-control'), 'no-store');
+  assert.equal(response.headers.get('retry-after'), '30');
+});

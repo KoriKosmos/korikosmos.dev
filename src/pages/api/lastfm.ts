@@ -1,45 +1,30 @@
 import type { APIRoute } from 'astro';
 import { getRecentTracks, getTopArtists, getTopAlbums } from '../../lib/lastfm';
+import { readLastfmQuery } from '../../lib/lastfmClient';
 
-export const GET: APIRoute = async ({ request }) => {
-  const url = new URL(request.url);
-  const method = url.searchParams.get('method') || 'recent';
-  const limit = parseInt(url.searchParams.get('limit') || '10', 10);
-  const period = url.searchParams.get('period') || 'overall';
-  
-  let data;
+const json = (data: unknown, status: number, cacheControl: string, extraHeaders = {}) => new Response(JSON.stringify(data), {
+  status,
+  headers: { 'Content-Type': 'application/json', 'Cache-Control': cacheControl, ...extraHeaders },
+});
+
+export const GET: APIRoute = async ({ url }) => {
+  let query;
+  try {
+    query = readLastfmQuery(url.searchParams);
+  } catch (error) {
+    return json({ error: (error as Error).message }, 400, 'no-store');
+  }
 
   try {
-    let cacheControl = 'public, max-age=60, stale-while-revalidate=30';
-    
-    switch (method) {
-      case 'artists':
-        data = await getTopArtists(period, limit);
-        cacheControl = 'public, max-age=3600, stale-while-revalidate=1800';
-        break;
-      case 'albums':
-        data = await getTopAlbums(period, limit);
-        cacheControl = 'public, max-age=3600, stale-while-revalidate=1800';
-        break;
-      case 'recent':
-      default:
-        data = await getRecentTracks(limit);
-        // Short cache for recent tracks to allow near-realtime updates
-        cacheControl = 'public, max-age=30, stale-while-revalidate=15';
-        break;
-    }
-
-    return new Response(JSON.stringify(data), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Cache-Control': cacheControl
-      }
-    });
-  } catch (error) {
-    return new Response(JSON.stringify({ error: 'Failed to fetch data' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    const { method, period, limit } = query;
+    const data = method === 'artists' ? await getTopArtists(period, limit)
+      : method === 'albums' ? await getTopAlbums(period, limit)
+      : await getRecentTracks(limit);
+    return json(data, 200, method === 'recent'
+      ? 'public, max-age=15'
+      : 'public, max-age=900, stale-while-revalidate=60');
+  } catch {
+    // Do not cache an outage as a successful empty list, or log credential-bearing URLs.
+    return json({ error: 'Music updates are temporarily unavailable.' }, 503, 'no-store', { 'Retry-After': '30' });
   }
-}
+};

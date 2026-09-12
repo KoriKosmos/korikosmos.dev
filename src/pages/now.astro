@@ -5,7 +5,7 @@ import { isRetro } from '../lib/skin';
 import { NowPage } from '../page-components/NowPage.tsx';
 import { RetroNowPage } from '../retro-components/RetroNowPage.tsx';
 
-const recentTracks = await getRecentTracks(1);
+const recentTracks = await getRecentTracks(1).catch(() => []);
 const raw = recentTracks[0];
 const currentTrack = raw
   ? { name: raw.name, artist: raw.artist?.['#text'] ?? raw.artist?.name ?? '', url: raw.url }

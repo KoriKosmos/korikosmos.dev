@@ -5,9 +5,12 @@ import { isRetro } from '../lib/skin';
 import { Tunes } from '../page-components/Tunes.tsx';
 import RetroIslandShell from '../retro-components/RetroIslandShell.astro';
 
-const recentTracks = await getRecentTracks(10);
-const topArtists = await getTopArtists('overall', 5, false);
-const topAlbums = await getTopAlbums('overall', 5);
+// Independent requests run together; an upstream outage must not break the page.
+const [recentTracks, topArtists, topAlbums] = await Promise.all([
+  getRecentTracks(10).catch(() => []),
+  getTopArtists('overall', 5, false).catch(() => []),
+  getTopAlbums('overall', 5).catch(() => []),
+]);
 
 const currentTrack = recentTracks[0];
 const isPlaying = currentTrack?.['@attr']?.nowplaying === 'true';
