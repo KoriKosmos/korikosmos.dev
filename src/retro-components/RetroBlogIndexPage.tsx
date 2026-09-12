@@ -13,6 +13,7 @@ import { readingMinutes } from '../lib/reading';
 
 interface Props {
   posts: CollectionEntry<"blog">[];
+  newestPost: CollectionEntry<"blog"> | undefined;
   filters?: ContentFiltersProps;
 }
 
@@ -31,11 +32,10 @@ function stampDate(date: Date): string {
   return `${day}-${month}-${date.getFullYear()}`;
 }
 
-export function RetroBlogIndexPage({ posts: sorted, filters }: Props) {
-  const newest = sorted.reduce<(typeof sorted)[number] | undefined>((latest, post) =>
-    !latest || post.data.pubDate > latest.data.pubDate ? post : latest, undefined);
-  const latestStamp = newest
-    ? newest.data.pubDate.toLocaleDateString("en-GB", LONG_DATE)
+export function RetroBlogIndexPage({ posts: sorted, newestPost, filters }: Props) {
+  const total = filters?.total ?? sorted.length;
+  const latestStamp = newestPost
+    ? newestPost.data.pubDate.toLocaleDateString("en-GB", LONG_DATE)
     : null;
 
   return (
@@ -70,8 +70,8 @@ export function RetroBlogIndexPage({ posts: sorted, filters }: Props) {
 
           <div className="rt-inset rt-mono rt-small" style={{ marginTop: "10px" }}>
             <span aria-hidden="true">&gt; </span>
-            {sorted.length} {sorted.length === 1 ? "entry" : "entries"} on file
-            {latestStamp ? ` — most recent update ${latestStamp}` : ""}
+            {total} {total === 1 ? "entry" : "entries"} on file
+            {latestStamp ? ` · most recent update ${latestStamp}` : ""}
             <span className="rt-blink" aria-hidden="true">
               _
             </span>
@@ -108,7 +108,7 @@ export function RetroBlogIndexPage({ posts: sorted, filters }: Props) {
           className="rt-stack"
           style={{ listStyle: "none", margin: 0, padding: 0 }}
         >
-          {sorted.map((post, index) => (
+          {sorted.map(post => (
             <li key={post.slug} style={{ margin: 0 }}>
               <article className="rt-panel" style={{ marginBottom: 0 }}>
                 <div className="rt-panel__title">
@@ -119,7 +119,7 @@ export function RetroBlogIndexPage({ posts: sorted, filters }: Props) {
                 <div className="rt-panel__body">
                   <h2 className="rt-subhead" style={{ marginTop: 0 }}>
                     <a href={`/blog/${post.slug}/`}>{post.data.title}</a>
-                    {post.slug === newest?.slug && (
+                    {post.slug === newestPost?.slug && (
                       <>
                         {" "}
                         <img
@@ -156,7 +156,7 @@ export function RetroBlogIndexPage({ posts: sorted, filters }: Props) {
                       [ read more ]
                     </a>
                     <span className="rt-note">
-                      {index === 0
+                      {post.slug === newestPost?.slug
                         ? "Hot off the modem!"
                         : "Still perfectly good."}
                     </span>

@@ -73,6 +73,29 @@ for (const skin of ['modern', 'retro'] as const) {
   });
 }
 
+test('retro: newest-post decorations and site totals survive filtering and sorting', async () => {
+  const index = await render('/blog', 'retro');
+  const summary = 'main .rt-inset.rt-mono.rt-small';
+  const badge = 'main article img[alt="New!"]';
+  const newestHref = index.document.querySelector(badge)?.closest('article')?.querySelector('h2 a')?.getAttribute('href');
+  assert.ok(newestHref);
+  const originalSummary = index.document.querySelector(summary)?.textContent;
+  assert.match(originalSummary ?? '', /most recent update/);
+
+  for (const query of ['q=hello', 'q=unfindableword', 'sort=oldest', 'q=homelab']) {
+    const { document } = await render(`/blog?${query}`, 'retro');
+    assert.equal(document.querySelector(summary)?.textContent, originalSummary);
+    const articles = [...document.querySelectorAll('main article')];
+    for (const article of articles) {
+      const isNewest: boolean = article.querySelector('h2 a')?.getAttribute('href') === newestHref;
+      assert.equal(Boolean(article.querySelector('img[alt="New!"]')), isNewest);
+      assert.equal(article.textContent?.includes('Hot off the modem!'), isNewest);
+    }
+    assert.equal(document.querySelectorAll(badge).length, articles.some((article): boolean =>
+      article.querySelector('h2 a')?.getAttribute('href') === newestHref) ? 1 : 0);
+  }
+});
+
 test('music API rejects malformed requests and does not cache upstream failures', async () => {
   for (const query of ['limit=-1', 'limit=10000', 'period=invalid', 'method=unknown']) {
     const { response } = await render(`/api/lastfm?${query}`, 'modern');
