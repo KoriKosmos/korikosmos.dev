@@ -8,9 +8,8 @@ export interface NavLink {
   label: string;
   /**
    * Force a full browser navigation instead of a ClientRouter swap. Needed for
-   * routes that return a standalone HTML document (e.g. /amandata, a verbatim
-   * clone with its own <html>/<head>) which the view-transition swap can't
-   * merge into the current page.
+   * routes that return a standalone HTML document with its own <html>/<head>,
+   * which the view-transition swap can't merge into the current page.
    */
   reload?: boolean;
 }
@@ -51,5 +50,4 @@ export const NAV_ITEMS: NavItem[] = [
       { href: '/games/rock-paper-scissors', label: 'Rock Paper Scissors' },
     ],
   },
-  { href: '/amandata', label: 'My Wife', reload: true },
 ];
