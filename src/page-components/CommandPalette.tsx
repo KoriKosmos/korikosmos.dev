@@ -18,6 +18,8 @@ export interface PaletteLink {
   keywords?: string;
   /** Force a full browser navigation instead of a view-transition swap. */
   reload?: boolean;
+  /** Off-site link: opens in a new tab rather than leaving the site. */
+  external?: boolean;
 }
 
 interface PaletteAction {
@@ -26,6 +28,7 @@ interface PaletteAction {
   keywords?: string;
   href?: string;
   reload?: boolean;
+  external?: boolean;
   perform?: () => void;
 }
 
@@ -122,7 +125,8 @@ export function CommandPalette({ links }: { links: PaletteLink[] }) {
     hide();
     if (action.perform) action.perform();
     else if (action.href) {
-      if (action.reload) window.location.assign(action.href);
+      if (action.external) window.open(action.href, "_blank", "noopener");
+      else if (action.reload) window.location.assign(action.href);
       else navigate(action.href);
     }
   }
@@ -207,7 +211,10 @@ export function CommandPalette({ links }: { links: PaletteLink[] }) {
                 onMouseMove={() => setSelected(i)}
                 onClick={() => run(action)}
               >
-                <span className="truncate">{action.label}</span>
+                <span className="truncate">
+                  {action.label}
+                  {action.external && <span aria-hidden="true" className="ml-1 opacity-60">↗</span>}
+                </span>
                 <span className={`shrink-0 text-xs ${i === selected ? "opacity-80" : "text-base-content/40"}`}>
                   {action.section}
                 </span>

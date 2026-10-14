@@ -14,6 +14,9 @@ export interface NavLink {
   reload?: boolean;
 }
 
+/** Off-site links open in a new tab and get an outbound marker in the nav. */
+export const isExternal = (href: string) => /^https?:\/\//.test(href);
+
 export interface NavGroup {
   label: string;
   items: NavLink[];
@@ -50,4 +53,5 @@ export const NAV_ITEMS: NavItem[] = [
       { href: '/games/rock-paper-scissors', label: 'Rock Paper Scissors' },
     ],
   },
+  { href: 'https://amandata.dev', label: 'My Wife' },
 ];

@@ -13,7 +13,7 @@ import NavigationProgress from "../page-components/NavigationProgress.tsx";
 import SkinToggle from "../retro-components/SkinToggle.tsx";
 import SeoHead from "./SeoHead.astro";
 import type { PaletteLink } from "../page-components/CommandPalette.tsx";
-import { NAV_ITEMS, SITE_TITLE, SITE_DESCRIPTION } from "../config";
+import { NAV_ITEMS, SITE_TITLE, SITE_DESCRIPTION, isExternal } from "../config";
 import {
 	DEFAULT_THEME,
 	getTheme,
@@ -60,6 +60,8 @@ const paletteLinks: PaletteLink[] = [
 		href: link.href,
 		section: "Pages",
 		reload: link.reload,
+		external: isExternal(link.href),
+		keywords: isExternal(link.href) ? link.href : undefined,
 	})),
 	...paletteBlog.map(post => ({
 		label: post.data.title,
@@ -184,10 +186,12 @@ const paletteLinks: PaletteLink[] = [
 	Skip to content
 </a>
 <!-- Right padding keeps nav links clear of the fixed ThemeBar (search button +
-     5 swatches) in the top-right corner. relative z-30 lifts the header's
+     5 swatches) in the top-right corner. Below sm the bar would leave the nav a
+     narrow column, so it gets a row of its own (pt-16) and the nav runs full
+     width underneath. relative z-30 lifts the header's
      stacking context above page content so dropdown menus aren't covered by
      z-indexed elements in <main> -->
-<header class="relative z-30 p-4 pr-52 sm:pr-60 border-b border-base-content/10 shrink-0" transition:name="site-header">
+<header class="relative z-30 p-4 pt-16 sm:pt-4 sm:pr-60 border-b border-base-content/10 shrink-0" transition:name="site-header">
 	<nav class="flex flex-wrap items-center gap-x-4 gap-y-1 sm:gap-x-6" aria-label="Primary">
 		<a
 			href="/"
@@ -221,14 +225,24 @@ const paletteLinks: PaletteLink[] = [
 						</ul>
 					</div>
 				) : (
-					<a
-						href={item.href}
-						class={`nav-link ${isActive(item.href) ? "text-primary" : ""}`}
-						aria-current={isActive(item.href) ? "page" : undefined}
-						data-astro-reload={item.reload ? true : undefined}
-					>
-						{item.label}
-					</a>
+					isExternal(item.href) ? (
+						<a href={item.href} class="nav-link" target="_blank" rel="noopener">
+							{item.label}
+							<svg class="inline-block w-3 h-3 ml-0.5 opacity-60" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+								<path fill-rule="evenodd" d="M5.22 14.78a.75.75 0 0 0 1.06 0l7.22-7.22v5.69a.75.75 0 0 0 1.5 0v-7.5a.75.75 0 0 0-.75-.75h-7.5a.75.75 0 0 0 0 1.5h5.69l-7.22 7.22a.75.75 0 0 0 0 1.06Z" clip-rule="evenodd" />
+							</svg>
+							<span class="sr-only">(opens in a new tab)</span>
+						</a>
+					) : (
+						<a
+							href={item.href}
+							class={`nav-link ${isActive(item.href) ? "text-primary" : ""}`}
+							aria-current={isActive(item.href) ? "page" : undefined}
+							data-astro-reload={item.reload ? true : undefined}
+						>
+							{item.label}
+						</a>
+					)
 				)
 			)
 		}

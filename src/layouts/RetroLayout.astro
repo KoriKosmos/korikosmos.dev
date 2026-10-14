@@ -11,7 +11,7 @@ import OnekoToggle from "../components/OnekoToggle.tsx";
 import RetroChrome from "../retro-components/RetroChrome.tsx";
 import SkinToggle from "../retro-components/SkinToggle.tsx";
 import SeoHead from "./SeoHead.astro";
-import { NAV_ITEMS, SITE_TITLE, SITE_DESCRIPTION } from "../config";
+import { NAV_ITEMS, SITE_TITLE, SITE_DESCRIPTION, isExternal } from "../config";
 import { DEFAULT_RETRO_THEME, RETRO_THEMES } from "../lib/skin";
 import type { LayoutProps } from "./props";
 
@@ -170,9 +170,16 @@ const LAST_UPDATED = "26 July 2026";
 										{group.label && <li class="rt-nav__group">{group.label}</li>}
 										{group.items.map(link => (
 											<li>
-												<a href={link.href} aria-current={isActive(link.href) ? "page" : undefined}>
-													{link.label}
-												</a>
+												{isExternal(link.href) ? (
+													<a href={link.href} target="_blank" rel="noopener">
+														{link.label} <span aria-hidden="true">&#8599;</span>
+														<span class="rt-sr-only">(opens in a new window)</span>
+													</a>
+												) : (
+													<a href={link.href} aria-current={isActive(link.href) ? "page" : undefined}>
+														{link.label}
+													</a>
+												)}
 											</li>
 										))}
 									</>
