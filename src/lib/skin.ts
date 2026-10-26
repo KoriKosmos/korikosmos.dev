@@ -15,7 +15,11 @@
 export type Skin = 'modern' | 'retro' | 'mandy';
 
 export const SKIN_COOKIE = 'kk-skin';
-export const DEFAULT_SKIN: Skin = 'modern';
+/**
+ * What a visitor with no kk-skin cookie gets. Mandy mode since it shipped; the
+ * modern skin is one click away in the SkinToggle dock.
+ */
+export const DEFAULT_SKIN: Skin = 'mandy';
 
 /**
  * Retro sub-themes, mirrored in retro.css as [data-retro-theme="..."].
@@ -53,7 +57,9 @@ export function parseMandyTheme(value: string | undefined | null): MandyTheme {
 }
 
 export function parseSkin(value: string | undefined | null): Skin {
-  return value === 'retro' || value === 'mandy' ? value : DEFAULT_SKIN;
+  // 'modern' must be listed explicitly: it is no longer the fallback, so a
+  // visitor who chose it would otherwise be bounced back to the default.
+  return value === 'modern' || value === 'retro' || value === 'mandy' ? value : DEFAULT_SKIN;
 }
 
 /**

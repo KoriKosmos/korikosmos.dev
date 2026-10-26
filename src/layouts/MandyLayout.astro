@@ -1,7 +1,8 @@
 ---
 // "Mandy mode": the third skin, modelled on the general structure of
 // amandata.dev (Mandy's site) and re-made around Maan's own fandoms. Layout.astro
-// dispatches here when the kk-skin cookie says "mandy".
+// dispatches here when the kk-skin cookie says "mandy" or is absent — this is
+// the default skin (DEFAULT_SKIN in src/lib/skin.ts).
 //
 // Like the retro shell, there is deliberately no <ClientRouter />: amandata.dev
 // itself does full page loads, and it keeps the skins from ever swapping one

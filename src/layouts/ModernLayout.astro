@@ -1,7 +1,7 @@
 ---
-// The original (and default) skin. Layout.astro dispatches here when the
-// kk-skin cookie is absent or "modern"; see RetroLayout.astro for the Web 1.0
-// shell and src/lib/skin.ts for how the choice is made.
+// The original skin. Layout.astro dispatches here when the kk-skin cookie is
+// "modern" (absent now means Mandy mode — see DEFAULT_SKIN in src/lib/skin.ts);
+// see RetroLayout.astro for the Web 1.0 shell and src/lib/skin.ts for how the choice is made.
 import "../styles/global.css";
 import { ClientRouter } from "astro:transitions";
 import { getCollection } from "astro:content";
