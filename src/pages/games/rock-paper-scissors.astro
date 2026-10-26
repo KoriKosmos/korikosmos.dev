@@ -1,14 +1,15 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import { isRetro } from '../../lib/skin';
+import { getSkin } from '../../lib/skin';
 import { RockPaperScissors } from '../../page-components/RockPaperScissors.tsx';
 import RetroIslandShell from '../../retro-components/RetroIslandShell.astro';
+import MandyIslandShell from '../../mandy-components/MandyIslandShell.astro';
 
-const retro = isRetro(Astro);
+const skin = getSkin(Astro);
 ---
 
 <Layout title="Rock Paper Scissors" description="Challenge the CPU in Rock Paper Scissors with a global leaderboard.">
-  {retro ? (
+  {skin === 'retro' ? (
     <RetroIslandShell
       title="ROSHAMBO.EXE"
       blinkie="kawaii"
@@ -21,6 +22,19 @@ const retro = isRetro(Astro);
     >
       <RockPaperScissors client:load />
     </RetroIslandShell>
+  ) : skin === 'mandy' ? (
+    <MandyIslandShell
+      title="Hand battle"
+      tag="// best of forever"
+      level={0}
+      notes={[
+        'Pick rock, paper or scissors and take on the CPU.',
+        'It asks for your name in a pop-up first; wins and losses go on the global leaderboard.',
+        'Type advantage, Kanto rules: Onix loses to paper. Do not ask why.',
+      ]}
+    >
+      <RockPaperScissors client:load />
+    </MandyIslandShell>
   ) : (
     <RockPaperScissors client:load />
   )}

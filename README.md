@@ -2,7 +2,7 @@
 
 This repo contains the source for **korikosmos.dev**, my personal website built with [Astro](https://astro.build) (SSR) and [React](https://react.dev) islands, styled with Tailwind CSS + DaisyUI. Astro handles routing and server-side data fetching; every rendered component is React. Here I share my projects, CV, blog posts, games and the music I'm currently listening to.
 
-It ships in **two skins**. The default is the modern one. Click "Back to 20XX" in the corner and the whole site becomes a Web 1.0 personal homepage — tiled backgrounds, 88x31 buttons, blinkies, a marquee, a hit counter, a webring, and a guestbook. It is a parallel set of layouts and page bodies, not a restyle.
+It ships in **three skins**, switched from the buttons in the bottom-left corner. The default is **Mandy mode**: the structure of [amandata.dev](https://amandata.dev), my girlfriend's site, rebuilt around my own fandoms, with a pixel scene playing behind every page. There is also the modern skin, and a Web 1.0 personal homepage with tiled backgrounds, 88x31 buttons, blinkies, a marquee, a hit counter, a webring and a guestbook. Each skin is a parallel set of layouts and page bodies, not a restyle.
 
 ## Setup
 
@@ -60,8 +60,14 @@ A production build **without** those env vars ships no admin routes at all.
 - **Star Pairs** at `/games/star-pairs`: My constellation memory game has three board sizes, keyboard and touch controls, automatic pausing when leaving the tab, and personal bests stored on the device. It works in both skins and needs no account or external assets.
 - **Blog reading tools**: My posts show publication dates, reading-time estimates and a linked contents list. A progress strip tracks the article, and readers can copy a section link or a code block. The article and contents remain readable without JavaScript in either skin.
 - **Searchable blog and portfolio**: I can search titles, descriptions and post bodies, sort the results, and filter projects with public GitHub source. Filters are shareable URLs and work in both skins without JavaScript.
+- **Mandy mode**, my default skin:
+  - It follows amandata.dev's layout: a pixel nav with dropdowns, page search and a "Change Theme" menu, a slanted pixel wordmark with a sleeping pixel bat on it, a typewriter tagline, ruled sections and left-bordered cards.
+  - Its four themes are my fandoms, and each one draws its own self-playing pixel scene in place of her Othello board. Gotham (Batman) has a bat-signal over a rainy skyline, Basement (The Binding of Isaac) has a crying kid clearing a cellar, Kanto (Pokémon) has a trainer in tall grass, and Inkwell (comics) has halftone paper with POW! bursts.
+  - The theme is a cookie rendered on the server, so the first paint is already right. Reduced motion gets a single still frame.
+  - It works without JavaScript: the nav menus are native disclosures, and every section stays readable if scripts never run.
+  - The interactive islands are the same components, wrapped in `MandyIslandShell.astro`; each theme is also a DaisyUI theme, so they recolour without being forked. All the art is drawn in code.
 - **Webcore mode** — a full Web 1.0 skin behind a toggle:
-  - A `kk-skin` cookie, resolved in `src/middleware.ts` before anything renders. `src/layouts/Layout.astro` is a dispatcher that picks `ModernLayout.astro` or `RetroLayout.astro`, and each route renders either a `src/page-components/*` or a `src/retro-components/Retro*` body.
+  - A `kk-skin` cookie, resolved in `src/middleware.ts` before anything renders. `src/layouts/Layout.astro` is a dispatcher that picks `MandyLayout.astro`, `ModernLayout.astro` or `RetroLayout.astro`, and each route renders the matching `src/mandy-components/Mandy*`, `src/page-components/*` or `src/retro-components/Retro*` body.
   - Four sub-themes of its own — y2k (the default), kawaii, geocities, cyber — switched from the retro control panel and remembered in `localStorage`.
   - Every graphic is generated, not hotlinked: `npm run gen:retro` draws all 35 assets in `public/retro/` as animated SVG. The output is committed, so the build never runs the script.
   - The three interactive islands (Tetris, Rock Paper Scissors, Tunes) are the same components, wrapped in `RetroIslandShell.astro` and restyled from outside — not forked.
@@ -85,7 +91,7 @@ A production build **without** those env vars ships no admin routes at all.
 - Each Star Pairs round starts with a fresh timer, so restarting during play cannot carry an old timer tick into a new personal best.
 - Normalizes track names to avoid duplicates credited in different languages
 - Toggle a little cursor-following cat from the corner button
-- Switch between five DaisyUI themes (dark, light, forest, spider-man, batman) using the theme bar, or four retro sub-themes in webcore mode
+- Switch between five DaisyUI themes (dark, light, forest, spider-man, batman) using the theme bar, four retro sub-themes in webcore mode, or four fandom themes in Mandy mode
 - Showcases my projects from `src/content/projects`
 - Manage posts, projects, and CV via **Keystatic** at `/keystatic` (schemas in `keystatic.config.ts`).
 - Responsive Tailwind styling
@@ -103,16 +109,17 @@ A production build **without** those env vars ships no admin routes at all.
 │   ├── components/      # Reusable React components (design-sync surface)
 │   ├── page-components/ # Page-body React components (one per route)
 │   ├── retro-components/# Web 1.0 skin: a Retro* body per route + SkinToggle, RetroChrome
+│   ├── mandy-components/# Mandy mode: a Mandy* body per route + nav, effects, backdrop, island shell
 │   ├── config.ts        # Site configuration & navigation
 │   ├── data/            # Static data (CV) + data shared by both skins (uses, links, now)
 │   ├── env.d.ts         # Type definitions
-│   ├── layouts/         # Layout.astro (dispatcher), ModernLayout.astro, RetroLayout.astro
+│   ├── layouts/         # Layout.astro (dispatcher), ModernLayout, RetroLayout, MandyLayout
 │   ├── lib/             # Game engines, skin cookie, guestbook, hits, rate limiter, JSON store
 │   ├── middleware.ts    # Skin resolution, hit counter, Keystatic OAuth origin fix
 │   ├── pages/           # .astro routes: SSR data fetch → render the right body component
 │   │   ├── api/         # Server-side API endpoints
 │   │   └── ...
-│   ├── styles/          # global.css (Tailwind) + retro.css (the rt-* vocabulary)
+│   ├── styles/          # global.css (Tailwind), retro.css (rt-*), mandy.css (md-*)
 │   └── content/
 │       ├── blog/
 │       └── projects/
@@ -134,7 +141,7 @@ Run these from the project root:
 | `npm run check`     | Check TypeScript without emitting files |
 | `npm run build`     | Build the production site to `./dist/` |
 | `npm test`          | Run focused regression tests           |
-| `npm run test:render` | Check production HTML in both skins (build first) |
+| `npm run test:render` | Check production HTML in all three skins (build first) |
 | `npm run preview`   | Preview the built site locally         |
 | `npm run gen:retro` | Redraw the retro graphics in `public/retro/` |
 | `npm run astro ...` | Run additional Astro CLI commands      |

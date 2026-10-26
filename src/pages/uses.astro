@@ -1,12 +1,13 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { isRetro } from '../lib/skin';
+import { getSkin } from '../lib/skin';
 import { UsesPage } from '../page-components/UsesPage.tsx';
 import { RetroUsesPage } from '../retro-components/RetroUsesPage.tsx';
+import { MandyUsesPage } from '../mandy-components/MandyUsesPage.tsx';
 
-const retro = isRetro(Astro);
+const skin = getSkin(Astro);
 ---
 
 <Layout title="Uses" description="The hardware, software, and services Maan uses day to day.">
-  {retro ? <RetroUsesPage /> : <UsesPage />}
+  {skin === 'retro' ? <RetroUsesPage /> : skin === 'mandy' ? <MandyUsesPage /> : <UsesPage />}
 </Layout>

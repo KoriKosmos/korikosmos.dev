@@ -1,14 +1,15 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import { isRetro } from '../../lib/skin';
+import { getSkin } from '../../lib/skin';
 import { Tetris } from '../../page-components/Tetris.tsx';
 import RetroIslandShell from '../../retro-components/RetroIslandShell.astro';
+import MandyIslandShell from '../../mandy-components/MandyIslandShell.astro';
 
-const retro = isRetro(Astro);
+const skin = getSkin(Astro);
 ---
 
 <Layout title="Tetris" description="Play Tetris in your browser with leaderboard support.">
-  {retro ? (
+  {skin === 'retro' ? (
     <RetroIslandShell
       title="TETRIS.EXE"
       blinkie="welcome"
@@ -21,6 +22,19 @@ const retro = isRetro(Astro);
     >
       <Tetris client:load />
     </RetroIslandShell>
+  ) : skin === 'mandy' ? (
+    <MandyIslandShell
+      title="Insert coin"
+      tag="// stack responsibly"
+      level={0}
+      notes={[
+        'Arrow keys move, Z and X rotate, space hard-drops, C holds.',
+        'High scores go to the server leaderboard, so play like Batman is watching. He is.',
+        'Clearing four lines at once is the closest thing to a Holy Mantle this site has.',
+      ]}
+    >
+      <Tetris client:load />
+    </MandyIslandShell>
   ) : (
     <Tetris client:load />
   )}

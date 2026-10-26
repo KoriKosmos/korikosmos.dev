@@ -16,18 +16,21 @@ assert.ok(manifestFile, 'Run npm run build before the production render checks.'
 const { manifest } = await import(new URL(manifestFile, build).href);
 const app = new App(manifest);
 
-async function render(path: string, skin: 'modern' | 'retro', theme?: string) {
+// `skin: null` sends no kk-skin cookie at all, i.e. a first-time visitor.
+async function render(path: string, skin: 'modern' | 'retro' | 'mandy' | null, theme?: string, extraCookie = '') {
+  const cookies = [skin === null ? null : `kk-skin=${skin}`, 'kk-seen=1',
+    theme === undefined ? null : `kk-theme=${encodeURIComponent(theme)}`, extraCookie || null].filter(Boolean);
   const response = await app.render(new Request(`https://korikosmos.dev${path}`, {
-    headers: { cookie: `kk-skin=${skin}; kk-seen=1${theme === undefined ? '' : `; kk-theme=${encodeURIComponent(theme)}`}` },
+    headers: { cookie: cookies.join('; ') },
   }));
   return { response, document: new JSDOM(await response.text()).window.document };
 }
 
-for (const skin of ['modern', 'retro'] as const) {
+for (const skin of ['modern', 'retro', 'mandy'] as const) {
   test(`${skin}: shareable search, ordering, and empty results work without client scripts`, async () => {
     const blog = await render('/blog?q=homelab&sort=oldest', skin);
     assert.equal(blog.response.status, 200);
-    assert.equal(blog.document.querySelector<HTMLInputElement>('input[name="q"]')?.value, 'homelab');
+    assert.equal(blog.document.querySelector<HTMLInputElement>('main input[name="q"]')?.value, 'homelab');
     assert.match(blog.document.querySelector('main')?.textContent ?? '', /\d+ of \d+ posts/);
     assert.ok(blog.document.querySelector('main a[href="/blog/rebuilding-react-islands/"]'));
 
@@ -72,6 +75,38 @@ for (const skin of ['modern', 'retro'] as const) {
     assert.equal((await render('/now', skin)).response.status, 200);
   });
 }
+
+test('mandy: first-time visitors get Mandy mode, and a chosen skin sticks', async () => {
+  const fresh = await render('/', null);
+  assert.equal(fresh.document.documentElement.getAttribute('data-skin'), 'mandy');
+  assert.equal(fresh.document.documentElement.getAttribute('data-theme'), 'mandy-gotham');
+  for (const skin of ['modern', 'retro'] as const) {
+    assert.equal((await render('/', skin)).document.documentElement.getAttribute('data-skin'), skin);
+  }
+  const bogus = await render('/', null, undefined, 'kk-skin=nonsense');
+  assert.equal(bogus.document.documentElement.getAttribute('data-skin'), 'mandy');
+});
+
+test('mandy: the sub-theme comes from its cookie, server-side, with a safe fallback', async () => {
+  const kanto = await render('/about', 'mandy', undefined, 'kk-mandy-theme=kanto');
+  assert.equal(kanto.document.documentElement.getAttribute('data-theme'), 'mandy-kanto');
+  const bogus = await render('/about', 'mandy', undefined, 'kk-mandy-theme=<script>');
+  assert.equal(bogus.document.documentElement.getAttribute('data-theme'), 'mandy-gotham');
+});
+
+test('mandy: every nav dropdown link is reachable without JavaScript', async () => {
+  const { document } = await render('/', 'mandy');
+  const menus = [...document.querySelectorAll('nav[aria-label="Primary"] .md-nav__menu')];
+  assert.ok(menus.length >= 3, 'Me, Work and Play render as dropdowns');
+  for (const menu of menus) {
+    // A native <details> opens on its own; a [hidden] panel would need JS.
+    assert.equal(menu.parentElement?.tagName, 'DETAILS');
+    assert.equal(menu.parentElement?.firstElementChild?.tagName, 'SUMMARY');
+    assert.equal(menu.closest('[hidden]'), null);
+    assert.ok(menu.querySelectorAll('a[href]').length > 0);
+  }
+  assert.ok(document.querySelector('nav[aria-label="Primary"] a[href="/games/tetris"]'));
+});
 
 test('retro: newest-post decorations and site totals survive filtering and sorting', async () => {
   const index = await render('/blog', 'retro');

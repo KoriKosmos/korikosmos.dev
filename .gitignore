@@ -183,3 +183,4 @@ ds-bundle/
 data/hits.json
 data/guestbook.json
 data/reactions.json
+.playwright-mcp/

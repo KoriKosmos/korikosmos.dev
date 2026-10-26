@@ -1,9 +1,10 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import { getEntry } from 'astro:content';
-import { isRetro } from '../../lib/skin';
+import { getSkin } from '../../lib/skin';
 import { ProjectDetailPage } from '../../page-components/ProjectDetailPage.tsx';
 import { RetroProjectDetailPage } from '../../retro-components/RetroProjectDetailPage.tsx';
+import { MandyProjectDetailPage } from '../../mandy-components/MandyProjectDetailPage.tsx';
 
 // Server-rendered rather than prerendered — see blog/[slug].astro, which also
 // explains why this is getEntry and not the deprecated getEntryBySlug (which
@@ -13,14 +14,18 @@ const project = slug ? await getEntry('projects', slug) : undefined;
 if (!project) return Astro.rewrite('/404');
 
 const { Content } = await project.render();
-const retro = isRetro(Astro);
+const skin = getSkin(Astro);
 ---
 
 <Layout title={project.data.title} description={project.data.summary} image={`/og/portfolio/${slug}.png`}>
-  {retro ? (
+  {skin === 'retro' ? (
     <RetroProjectDetailPage project={project}>
       <Content />
     </RetroProjectDetailPage>
+  ) : skin === 'mandy' ? (
+    <MandyProjectDetailPage project={project}>
+      <Content />
+    </MandyProjectDetailPage>
   ) : (
     <ProjectDetailPage project={project}>
       <Content />

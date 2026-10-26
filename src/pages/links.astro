@@ -1,12 +1,13 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { isRetro } from '../lib/skin';
+import { getSkin } from '../lib/skin';
 import { LinksPage } from '../page-components/LinksPage.tsx';
 import { RetroLinksPage } from '../retro-components/RetroLinksPage.tsx';
+import { MandyLinksPage } from '../mandy-components/MandyLinksPage.tsx';
 
-const retro = isRetro(Astro);
+const skin = getSkin(Astro);
 ---
 
 <Layout title="Links" description="Everywhere else you can find KoriKosmos — socials, media trackers, and code.">
-  {retro ? <RetroLinksPage /> : <LinksPage />}
+  {skin === 'retro' ? <RetroLinksPage /> : skin === 'mandy' ? <MandyLinksPage /> : <LinksPage />}
 </Layout>

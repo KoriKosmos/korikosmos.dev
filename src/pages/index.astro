@@ -1,17 +1,22 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import { getCollection } from "astro:content";
-import { isRetro } from "../lib/skin";
+import cvData from "../data/cv.json";
+import { getSkin } from "../lib/skin";
 import { TypingHeading } from "../page-components/TypingHeading.tsx";
 import { RetroHomePage } from "../retro-components/RetroHomePage.tsx";
+import { MandyHomePage } from "../mandy-components/MandyHomePage.tsx";
 
-const retro = isRetro(Astro);
+const skin = getSkin(Astro);
+const retro = skin === "retro";
 
-// Only the retro homepage needs these — it's a 2004 front page, so it lists
-// everything on the site rather than linking to four cards.
-const [posts, projects] = retro
+// Only the retro and Mandy homepages need these. Retro is a 2004 front page that
+// lists everything on the site; Mandy shows projects, the latest posts and counts.
+// The modern homepage just links to four cards.
+const [posts, projects] = skin !== "modern"
 	? await Promise.all([getCollection("blog"), getCollection("projects")])
 	: [[], []];
+const skills = cvData.sections.find(s => s.title === "Technical Skills")?.items ?? [];
 ---
 
 <Layout description="Personal portfolio, blog, and games hub by Maan.">
@@ -24,6 +29,17 @@ const [posts, projects] = retro
 				pubDate: p.data.pubDate.toISOString(),
 			}))}
 			projects={projects.map(p => ({ slug: p.slug, title: p.data.title, summary: p.data.summary }))}
+		/>
+	) : skin === "mandy" ? (
+		<MandyHomePage
+			posts={posts.map(p => ({
+				slug: p.slug,
+				title: p.data.title,
+				description: p.data.description,
+				pubDate: p.data.pubDate.toISOString(),
+			}))}
+			projects={projects.map(p => ({ slug: p.slug, title: p.data.title, summary: p.data.summary }))}
+			skills={skills}
 		/>
 	) : (
 	<section class="text-center py-20">

@@ -1,11 +1,13 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import { getEntry } from 'astro:content';
-import { isRetro } from '../../lib/skin';
+import { getSkin } from '../../lib/skin';
 import { BlogPostPage } from '../../page-components/BlogPostPage.tsx';
 import { PostReactions } from '../../page-components/PostReactions.tsx';
 import { RetroBlogPostPage } from '../../retro-components/RetroBlogPostPage.tsx';
 import RetroIslandShell from '../../retro-components/RetroIslandShell.astro';
+import { MandyBlogPostPage } from '../../mandy-components/MandyBlogPostPage.tsx';
+import MandyIslandShell from '../../mandy-components/MandyIslandShell.astro';
 import { readingMinutes } from '../../lib/reading';
 import { ReadingTools } from '../../page-components/ReadingTools';
 
@@ -26,7 +28,7 @@ if (!post) return Astro.rewrite('/404');
 
 const { Content, headings } = await post.render();
 const minutes = readingMinutes(post.body);
-const retro = isRetro(Astro);
+const skin = getSkin(Astro);
 ---
 
 <Layout
@@ -37,8 +39,8 @@ const retro = isRetro(Astro);
   publishedTime={post.data.pubDate.toISOString()}
   modifiedTime={post.data.updatedDate?.toISOString()}
 >
-  <ReadingTools client:load retro={retro} />
-  {retro ? (
+  <ReadingTools client:load skin={skin} />
+  {skin === 'retro' ? (
     <>
       <RetroBlogPostPage
         title={post.data.title}
@@ -58,6 +60,22 @@ const retro = isRetro(Astro);
       >
         <PostReactions client:load slug={slug!} />
       </RetroIslandShell>
+    </>
+  ) : skin === 'mandy' ? (
+    <>
+      <MandyBlogPostPage
+        title={post.data.title}
+        description={post.data.description}
+        pubDate={post.data.pubDate.toISOString()}
+        updatedDate={post.data.updatedDate?.toISOString()}
+        minutes={minutes}
+        headings={headings}
+      >
+        <Content />
+      </MandyBlogPostPage>
+      <MandyIslandShell title="Reactions" tag="// one click, no account" level={2} first={false}>
+        <PostReactions client:load slug={slug!} />
+      </MandyIslandShell>
     </>
   ) : (
     <>
