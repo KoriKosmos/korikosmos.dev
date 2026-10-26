@@ -6,7 +6,7 @@ This project contains the source for **korikosmos.dev**, a personal portfolio, b
 
 - **Framework:** Astro 5 (`output: 'server'`, `@astrojs/node` standalone adapter)
 - **UI:** React 19 via `@astrojs/react` — `.astro` pages fetch data server-side and render a `.tsx` body component
-- **Styling:** Tailwind CSS 3.3 + DaisyUI 4.12 (5 custom themes: dark, light, forest, spider-man, batman) for the modern skin; `src/styles/retro.css` for the retro one
+- **Styling:** Tailwind CSS 3.3 + DaisyUI 4.12 (5 custom themes: dark, light, forest, spider-man, batman) for the modern skin; `src/styles/retro.css` for the retro one; `src/styles/mandy.css` plus four `mandy-*` DaisyUI themes for Mandy mode
 - **TypeScript:** Strict mode (`astro/tsconfigs/strict`)
 - **Deployment:** Docker (multi-stage build, Node 20 Alpine, port 4321)
 - **CMS:** Keystatic (admin at `/keystatic`, GitHub mode; `/admin` redirects there)
@@ -27,9 +27,10 @@ This project contains the source for **korikosmos.dev**, a personal portfolio, b
 - `src/pages/404.astro` – Custom 404 page.
 - `src/pages/guestbook.astro` – My guestbook. Both skins render it, backed by `src/lib/guestbook.ts` and `POST /api/guestbook`.
 - `src/pages/now.astro`, `uses.astro`, `links.astro` – Indie-web convention pages. Their data lives in `src/data/` so both skins share it.
-- `src/layouts/Layout.astro` – Thin dispatcher: picks `ModernLayout.astro` or `RetroLayout.astro` from the resolved skin. Accepts `title`, `description`, `image`, and `isWide` props.
+- `src/layouts/Layout.astro` – Thin dispatcher: picks `ModernLayout.astro`, `RetroLayout.astro` or `MandyLayout.astro` from the resolved skin. Accepts `title`, `description`, `image`, and `isWide` props.
 - `src/layouts/ModernLayout.astro` – The normal shell: SEO meta, skip link, nav, theme switcher, oneko toggle, command palette, `<ClientRouter />`, footer.
 - `src/layouts/RetroLayout.astro` – The Web 1.0 shell: table layout, badge sidebars, marquee, hit counter, webring. No `<ClientRouter />`.
+- `src/layouts/MandyLayout.astro` – The Mandy mode shell (my default skin): pixel nav with search and theme picker, fandom backdrop scene, footer. No `<ClientRouter />`.
 - `src/config.ts` – Centralized site config and navigation links.
 - `src/content/` – Markdown content managed via Decap CMS at `/admin`.
 
@@ -41,16 +42,17 @@ src/
 │                  #   — also the design-sync surface synced to claude.ai/design
 ├── page-components/   # One React body component per route, kept out of the design-sync scope
 ├── retro-components/  # Web 1.0 skin: a Retro* body per route, plus SkinToggle/RetroChrome
+├── mandy-components/  # Mandy mode: a Mandy* body per route, plus MandyNav/MandyEffects/MandyBackdrop/MandyIslandShell
 ├── content/       # Content collections (blog posts, projects) as Markdown
 │   ├── blog/      # Blog posts with frontmatter: title, description, pubDate
 │   └── projects/  # Project entries with frontmatter: title, summary, description, github?
 ├── data/          # Static data (cv.json) + data shared by BOTH skins (uses.ts, links.ts, now.ts)
-├── layouts/       # Layout.astro (skin dispatcher), ModernLayout.astro, RetroLayout.astro
+├── layouts/       # Layout.astro (skin dispatcher), ModernLayout.astro, RetroLayout.astro, MandyLayout.astro
 ├── lib/           # Shared utilities
 │   ├── constants.ts  # Shared constants (BLOCKED_ITEMS for Last.fm filtering)
 │   ├── images.ts     # getBestImage() — shared between server and client code
 │   ├── lastfm.ts     # Last.fm API wrapper (server-side, uses env vars)
-│   ├── skin.ts       # modern/retro skin cookie + getSkin()/isRetro()
+│   ├── skin.ts       # modern/retro/mandy skin cookie, Mandy sub-themes, getSkin()/isRetro()/isMandy()
 │   ├── guestbook.ts  # guestbook persistence + URL sanitising (server-only)
 │   ├── hits.ts       # retro hit counter persistence (server-only)
 │   ├── rateLimit.ts  # in-process sliding-window limiter (guestbook, reactions)
@@ -63,7 +65,7 @@ src/
 │   ├── games/     # Tetris, Rock Paper Scissors
 │   ├── og/        # [...route].ts — prerendered OG image endpoint
 │   └── ...        # index, about, cv, portfolio, blog, tunes, now, uses, links, guestbook, 404
-├── styles/        # global.css (Tailwind + custom utilities), retro.css (the whole rt-* vocabulary)
+├── styles/        # global.css (Tailwind + custom utilities), retro.css (rt-*), mandy.css (md-*)
 └── config.ts      # Centralized site config & navigation
 public/            # Static assets (favicon.svg, robots.txt, oneko.js)
 └── retro/         # Generated retro graphics — `npm run gen:retro`, output is committed
@@ -73,10 +75,10 @@ data/guestbook.json, data/hits.json  # Guestbook + hit counter, same volume moun
 
 ## Key Architecture Decisions
 
-- **Two skins, one site:** I ship a normal modern skin and a Web 1.0 "retro" skin. Which one renders is a `kk-skin` cookie, resolved in `src/middleware.ts` into `Astro.locals.skin` before anything renders. `Layout.astro` dispatches to `ModernLayout.astro` or `RetroLayout.astro`, and each route branches on `isRetro(Astro)` to render either a `page-components/*` or a `retro-components/Retro*` body. See "The retro skin" below.
+- **Three skins, one site:** I ship Mandy mode (the default), the modern skin, and a Web 1.0 "retro" skin. Which one renders is a `kk-skin` cookie, resolved in `src/middleware.ts` into `Astro.locals.skin` before anything renders. `Layout.astro` dispatches to the matching shell, and each route branches on `getSkin(Astro)` to render a `page-components/*`, `retro-components/Retro*` or `mandy-components/Mandy*` body. A visitor with no cookie gets `DEFAULT_SKIN` (`mandy`); `parseSkin` lists `modern` explicitly so choosing it still sticks. See "The retro skin" and "Mandy mode" below.
 - **No `prerender = true` on any route that uses `Layout.astro`:** a build-time render has no request, so the cookie is invisible and the skin toggle silently does nothing. That is why blog and portfolio `[slug]` pages are now SSR — content collections are in memory at runtime, so it costs nothing. `src/pages/og/[...route].ts` stays prerendered because it is request-independent.
 - **Sitemap:** because those slug routes are no longer prerendered, `@astrojs/sitemap` cannot discover them. `astro.config.mjs` feeds them back in via `customPages`, derived from the filenames in `src/content/`. If I ever override `slug` in frontmatter, that helper has to read frontmatter instead.
-- **Theme system:** DaisyUI themes configured in `tailwind.config.mjs` with `data-theme` attribute on `<html>`. Five themes: dark (default), light, forest, spider-man, batman, listed in `src/lib/theme.ts` which is the source of truth. Custom `--surface` and `--accent-dark` CSS vars extend DaisyUI for specific utilities. The retro skin has its own four sub-themes (`data-retro-theme`), unrelated to these.
+- **Theme system:** DaisyUI themes configured in `tailwind.config.mjs` with `data-theme` attribute on `<html>`. Five themes: dark (default), light, forest, spider-man, batman, listed in `src/lib/theme.ts` which is the source of truth. Custom `--surface` and `--accent-dark` CSS vars extend DaisyUI for specific utilities. The retro skin has its own four sub-themes (`data-retro-theme`), unrelated to these. Mandy mode's four sub-themes are separate DaisyUI themes named `mandy-*` (see below).
 - **The theme is server-rendered, not just restored by script.** The choice lives in a `kk-theme` cookie as well as `localStorage`; middleware resolves it into `locals.theme` and `ModernLayout` writes `data-theme` onto `<html>`, so the first paint is correct with no JavaScript. Always persist through `persistTheme()` so both stores stay in step. The pre-paint scripts in both shells carry `data-cfasync="false"`: Cloudflare Rocket Loader otherwise rewrites inline scripts to a token MIME type and replays them after load, which flashed the default blue theme for about a second on every load. Rocket Loader should stay **off** for this site — it also defers Astro's island and ClientRouter modules.
 - **Tunes page pattern:** SSR fetches initial data, passes to client via `<script define:vars>`. Client JS is the single source of truth for rendering artists/albums (avoids template duplication). Client polls for now-playing updates every 30s.
 - **Game scores:** Stored as JSON files in `/data/scores/`, accessed via API routes with `async-mutex` for write safety. Leaderboards sync between localStorage and server.
@@ -101,6 +103,18 @@ The whole point is that this is a *different site*, not a restyle — the layout
 - **Accessibility is deliberately not period-accurate.** Skip link, real `alt` text, `aria-label`s, and a reduced-motion block in §18 that stops every animation. Use the CSS marquee (`.rt-marquee__track`), never a real `<marquee>` — the element scrolls from the browser's layout engine, so no CSS rule can stop it. The chiptune defaults to off and only starts from a click.
 - **`SkinToggle.tsx` lives in `retro-components/` even though both shells use it.** `src/components/` is the design-sync surface (`.design-sync/config.json` globs that whole directory), and a control whose entire job is to set a cookie and reload the page is meaningless in a design tool — syncing it would also drag `src/lib/skin.ts` into that bundle.
 
+## Mandy mode (my default skin)
+
+Mandy mode takes the general structure of [amandata.dev](https://amandata.dev), my girlfriend's site, and rebuilds it around my own fandoms. Like the retro skin it is a different document, not a restyle, and `SkinToggle.tsx` switches to it the same way.
+
+- **Sub-themes are fandoms:** `gotham` (Batman, the default), `basement` (The Binding of Isaac), `kanto` (Pokémon), `inkwell` (comics). `MANDY_THEMES` / `DEFAULT_MANDY_THEME` in `src/lib/skin.ts` are the source of truth. The choice is a `kk-mandy-theme` cookie that middleware resolves into `locals.mandyTheme` and `MandyLayout` renders onto `<html>`, so there is no pre-paint script for Rocket Loader to defer. A new sub-theme needs a `MANDY_THEMES` entry, a token block in `mandy.css` §1, a `mandy-<name>` DaisyUI theme in `tailwind.config.mjs`, a critical-background line in `MandyLayout.astro`, a `MANDY_THEME_INFO` entry in `MandyNav.tsx` and a scene in `MandyBackdrop.tsx`.
+- **`data-theme="mandy-<name>"` does double duty:** it selects the `mandy.css` tokens and it is a DaisyUI theme, which is how Tetris, Tunes, the reactions and the other DaisyUI-styled islands take on the palette unchanged. I never reuse a bare name like `dark` or `light`, which are live modern-skin themes.
+- **`src/styles/mandy.css` is the single shared vocabulary.** Every class is `md-*`, every rule and keyframe is scoped or prefixed under `[data-skin="mandy"]`, because `global.css` ships on these pages too and amandata's original class names (`.btn`, `.hero`, `.footer`, `.stat`, `.progress`) collide with DaisyUI. Mandy components use these classes and inline styles, never Tailwind utilities or their own CSS.
+- **It works without JavaScript.** It is the default skin, so the nav dropdowns are native `<details>` disclosures that open with JS off; `MandyNav` only takes over `open` after hydration (one menu at a time, arrow keys, Escape). `MandyEffects` adds `md-js` to `<html>` before any hidden reveal state exists, so a failed hydration still leaves every section readable. The nav search box falls back to a `/blog?q=` search.
+- **The backdrop replaces amandata's Othello board.** `MandyBackdrop.tsx` draws one self-playing pixel scene per sub-theme into a small buffer upscaled without smoothing, and draws a single static frame under `prefers-reduced-motion`. All art is drawn in code; nothing is downloaded or hotlinked.
+- **Islands are wrapped, never forked**, in `MandyIslandShell.astro`, for the same reasons as `RetroIslandShell`. Pass `level={0}` when the island brings its own `<h1>` so the outline never runs h2 → h1, and `first={false}` when it is not the first section on the page. The guestbook has its own `MandyGuestbookPage.tsx` with the same API calls and `rel="nofollow ugc noopener"` links.
+- **Content is mine, not Mandy's.** Only the structure is borrowed; the bio, projects, stats and CV come from `src/data/*`, `cv.json` and the collections. The `/now` prose lives in three components (`NowPage`, `RetroNowPage`, `MandyNowPage`) that I edit together.
+
 ## Getting Started
 
 1. Install dependencies with `npm install`.
@@ -114,7 +128,7 @@ The whole point is that this is a *different site*, not a restyle — the layout
 - `npm run build` – build to `dist/`.
 - `npm run check` – I check TypeScript and checked JavaScript without emitting files. This does not type-check `.astro` templates, so I also run the build and production-render checks.
 - `npm test` – run my focused regression checks with Node's test runner via `tsx` (Node 20 compatible).
-- `npm run test:render` – after a build, I check real production responses in both skins without starting a server. React interaction checks use JSDOM and do not replace a visual browser pass.
+- `npm run test:render` – after a build, I check real production responses in all three skins (plus the no-cookie default) without starting a server. React interaction checks use JSDOM and do not replace a visual browser pass.
 - `npm run preview` – preview the production build locally.
 - `docker compose up --build` – build and run in container (maps port 8484 → 4321).
 
@@ -182,3 +196,4 @@ For Decap CMS OAuth:
 - Tetris saves high scores and shows leaderboards synced between localStorage and server.
 - Tetris scoring follows the official guidelines with soft and hard drop bonuses.
 - Rock Paper Scissors game with scores synced to server leaderboard.
+- I added Mandy mode, a third skin modelled on amandata.dev's structure but built around my fandoms (Batman, The Binding of Isaac, Pokémon, comics), and made it the default for visitors without a saved choice. Each fandom is a sub-theme with its own pixel backdrop scene and a server-rendered cookie, so the first paint is right. Because it is the default, it has to work without JavaScript: the nav dropdowns are native `<details>`, and the render tests check that every menu link is reachable in the server HTML.

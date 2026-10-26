@@ -6,9 +6,10 @@ import { MANDY_THEME_COOKIE, MANDY_THEMES, type MandyTheme } from '../lib/skin';
  * suggestions, dropdown menus, a quick "play" link, and a "Change Theme" menu.
  *
  * Server-rendered by Astro and hydrated with client:load, so every link is in
- * the HTML before any JS runs. Dropdowns follow the ARIA menu-button pattern:
- * Enter/Space/ArrowDown opens and focuses the first item, arrows move, Escape
- * closes and returns focus, Tab closes.
+ * the HTML before any JS runs. Dropdowns are native <details> disclosures, so
+ * they still open with JS off (this is the default skin, so that matters). Once
+ * hydrated: Enter/Space/ArrowDown opens and focuses the first item, arrows move,
+ * Escape closes and returns focus, Tab out closes, one menu open at a time.
  *
  * The theme is a cookie (rendered onto <html> server-side next time) and is
  * applied live by swapping data-theme; MandyBackdrop watches that attribute.
@@ -102,8 +103,8 @@ function Dropdown({
   open: boolean;
   setOpen: (key: string | null) => void;
 }) {
-  const wrap = useRef<HTMLDivElement>(null);
-  const toggle = useRef<HTMLButtonElement>(null);
+  const wrap = useRef<HTMLDetailsElement>(null);
+  const toggle = useRef<HTMLElement>(null);
   const [alignRight, setAlignRight] = useState(false);
 
   const items = () => Array.from(wrap.current?.querySelectorAll<HTMLAnchorElement>('.md-nav__menu-link') ?? []);
@@ -120,7 +121,11 @@ function Dropdown({
   };
 
   const onToggleKey = (e: ReactKeyboardEvent) => {
-    if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
+    if (e.key === 'Enter' || e.key === ' ') {
+      // the summary's native toggle would fight the controlled `open`
+      e.preventDefault();
+      if (open) setOpen(null); else openMenu('first');
+    } else if (e.key === 'ArrowDown') {
       e.preventDefault();
       openMenu('first');
     } else if (e.key === 'ArrowUp') {
@@ -143,35 +148,34 @@ function Dropdown({
     else if (e.key === 'Tab') setOpen(null);
   };
 
+  // A native <details> disclosure, so the menu opens and closes with no JS at
+  // all (nothing to hydrate, or hydration failed). Once React is running it
+  // takes over `open`, so only one menu is open at a time and the keyboard
+  // handling above applies.
   return (
-    <div ref={wrap} className={`md-nav__item${alignRight ? ' md-nav__item--right' : ''}`}>
-      <button
+    <details
+      ref={wrap}
+      className={`md-nav__item${alignRight ? ' md-nav__item--right' : ''}`}
+      open={open}
+    >
+      <summary
         ref={toggle}
-        type="button"
         className={`md-nav__toggle${group.active ? ' is-active' : ''}`}
-        aria-expanded={open}
-        aria-haspopup="true"
-        aria-controls={`md-menu-${group.key}`}
         id={`md-toggle-${group.key}`}
-        onClick={() => (open ? setOpen(null) : openMenu(null))}
+        onClick={e => {
+          e.preventDefault();
+          if (open) setOpen(null); else openMenu(null);
+        }}
         onKeyDown={onToggleKey}
       >
         {group.label}
         <span className="md-nav__caret" aria-hidden="true" />
-      </button>
-      <div
-        className="md-nav__menu"
-        id={`md-menu-${group.key}`}
-        role="menu"
-        aria-labelledby={`md-toggle-${group.key}`}
-        hidden={!open}
-        onKeyDown={onMenuKey}
-      >
+      </summary>
+      <div className="md-nav__menu" id={`md-menu-${group.key}`} aria-labelledby={`md-toggle-${group.key}`} onKeyDown={onMenuKey}>
         {group.links.map(link => (
           <a
             key={link.href}
             className="md-nav__menu-link"
-            role="menuitem"
             href={link.href}
             aria-current={link.active ? 'page' : undefined}
             {...(link.external ? { target: '_blank', rel: 'noopener' } : {})}
@@ -181,7 +185,7 @@ function Dropdown({
           </a>
         ))}
       </div>
-    </div>
+    </details>
   );
 }
 

@@ -331,7 +331,10 @@ html[data-skin='mandy'] {
   z-index: 60;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
 }
-[data-skin='mandy'] .md-nav__menu[hidden] { display: none; }
+/* dropdowns are native <details> (MandyNav.tsx), so they work with JS off;
+   the summary draws its own caret instead of the disclosure triangle */
+[data-skin='mandy'] summary.md-nav__toggle { display: inline-block; list-style: none; }
+[data-skin='mandy'] summary.md-nav__toggle::-webkit-details-marker { display: none; }
 [data-skin='mandy'] .md-nav__item--right .md-nav__menu { left: auto; right: 0; }
 [data-skin='mandy'] .md-nav__menu-link {
   display: block;
@@ -438,7 +441,8 @@ html[data-skin='mandy'] {
   }
   [data-skin='mandy'] .md-nav__links::-webkit-scrollbar { display: none; }
   /* an open menu must not be clipped by the scroll strip */
-  [data-skin='mandy'] .md-nav--menu-open .md-nav__links { overflow: visible; }
+  [data-skin='mandy'] .md-nav--menu-open .md-nav__links,
+  [data-skin='mandy'] .md-nav__links:has(details[open]) { overflow: visible; }
   [data-skin='mandy'] .md-nav__search { flex: 1 1 0; }
   [data-skin='mandy'] .md-theme__toggle { font-size: 0.95rem; padding: 0.22rem 0.5rem; }
 }
