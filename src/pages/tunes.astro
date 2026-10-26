@@ -1,9 +1,10 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { getRecentTracks, getTopArtists, getTopAlbums } from '../lib/lastfm';
-import { isRetro } from '../lib/skin';
+import { getSkin } from '../lib/skin';
 import { Tunes } from '../page-components/Tunes.tsx';
 import RetroIslandShell from '../retro-components/RetroIslandShell.astro';
+import MandyIslandShell from '../mandy-components/MandyIslandShell.astro';
 
 // Independent requests run together; an upstream outage must not break the page.
 const [recentTracks, topArtists, topAlbums] = await Promise.all([
@@ -12,11 +13,11 @@ const [recentTracks, topArtists, topAlbums] = await Promise.all([
   getTopAlbums('overall', 5).catch(() => []),
 ]);
 
-const retro = isRetro(Astro);
+const skin = getSkin(Astro);
 ---
 
 <Layout title="Tunes" description="What I'm listening to right now, powered by Last.fm scrobbles." isWide={true}>
-  {retro ? (
+  {skin === 'retro' ? (
     <RetroIslandShell
       title="MY MUSIC"
       blinkie="nowplaying"
@@ -33,6 +34,24 @@ const retro = isRetro(Astro);
         initialAlbums={topAlbums}
       />
     </RetroIslandShell>
+  ) : skin === 'mandy' ? (
+    <MandyIslandShell
+      title="Tunes"
+      tag="// live from Last.fm"
+      level={0}
+      wide
+      notes={[
+        'Straight from my Last.fm scrobbles; now playing refreshes every 30 seconds.',
+        'Basement-run soundtrack sold separately.',
+      ]}
+    >
+      <Tunes
+        client:load
+        recentTracks={recentTracks}
+        initialArtists={topArtists}
+        initialAlbums={topAlbums}
+      />
+    </MandyIslandShell>
   ) : (
     <Tunes
       client:load

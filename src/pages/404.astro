@@ -1,12 +1,13 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { isRetro } from '../lib/skin';
+import { getSkin } from '../lib/skin';
 import { NotFoundPage } from '../page-components/NotFoundPage.tsx';
 import { RetroNotFoundPage } from '../retro-components/RetroNotFoundPage.tsx';
+import { MandyNotFoundPage } from '../mandy-components/MandyNotFoundPage.tsx';
 
-const retro = isRetro(Astro);
+const skin = getSkin(Astro);
 ---
 
 <Layout title="Page Not Found" description="The page you're looking for doesn't exist.">
-  {retro ? <RetroNotFoundPage /> : <NotFoundPage />}
+  {skin === 'retro' ? <RetroNotFoundPage /> : skin === 'mandy' ? <MandyNotFoundPage /> : <NotFoundPage />}
 </Layout>

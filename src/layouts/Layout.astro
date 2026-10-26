@@ -3,19 +3,21 @@
 //
 // Every page keeps importing this one layout; the request's kk-skin cookie
 // (resolved into locals by middleware.ts) decides which shell actually renders.
-// Pages additionally branch on `isRetro(Astro)` to pick their *body* component
-// from src/retro-components/ — the retro skin is a different document, not a
-// restyle, so the markup differs too.
+// Pages additionally branch on `getSkin(Astro)` to pick their *body* component
+// from src/retro-components/ or src/mandy-components/ — those skins are
+// different documents, not restyles, so the markup differs too.
 //
 // Because this reads a cookie, no route that uses it can be `prerender = true`.
 import ModernLayout from "./ModernLayout.astro";
 import RetroLayout from "./RetroLayout.astro";
-import { isRetro } from "../lib/skin";
+import MandyLayout from "./MandyLayout.astro";
+import { getSkin } from "../lib/skin";
 import type { LayoutProps } from "./props";
 
 type Props = LayoutProps;
 
-const Shell = isRetro(Astro) ? RetroLayout : ModernLayout;
+const SHELLS = { modern: ModernLayout, retro: RetroLayout, mandy: MandyLayout };
+const Shell = SHELLS[getSkin(Astro)];
 ---
 
 <Shell {...Astro.props}><slot /></Shell>

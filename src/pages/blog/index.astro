@@ -1,9 +1,10 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import { getCollection } from 'astro:content';
-import { isRetro } from '../../lib/skin';
+import { getSkin } from '../../lib/skin';
 import { BlogIndexPage } from '../../page-components/BlogIndexPage.tsx';
 import { RetroBlogIndexPage } from '../../retro-components/RetroBlogIndexPage.tsx';
+import { MandyBlogIndexPage } from '../../mandy-components/MandyBlogIndexPage.tsx';
 import { discoverPosts, readDiscoveryState } from '../../lib/contentDiscovery';
 
 const allPosts = await getCollection('blog');
@@ -12,9 +13,15 @@ const newestPost = allPosts.reduce<(typeof allPosts)[number] | undefined>((lates
 const state = readDiscoveryState(Astro.url.searchParams, 'blog');
 const posts = discoverPosts(allPosts, state);
 const filters = { kind: 'blog' as const, state, count: posts.length, total: allPosts.length };
-const retro = isRetro(Astro);
+const skin = getSkin(Astro);
 ---
 
 <Layout title="Blog" description="Blog posts by Maan on tech, creativity, and personal projects.">
-  {retro ? <RetroBlogIndexPage posts={posts} newestPost={newestPost} filters={filters} /> : <BlogIndexPage posts={posts} filters={filters} />}
+  {skin === 'retro' ? (
+    <RetroBlogIndexPage posts={posts} newestPost={newestPost} filters={filters} />
+  ) : skin === 'mandy' ? (
+    <MandyBlogIndexPage posts={posts} newestPost={newestPost} filters={filters} />
+  ) : (
+    <BlogIndexPage posts={posts} filters={filters} />
+  )}
 </Layout>

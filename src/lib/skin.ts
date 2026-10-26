@@ -1,18 +1,18 @@
 /**
- * Skin selection ("modern" vs "retro").
+ * Skin selection ("modern", "retro", or "mandy").
  *
- * The retro skin is a *structurally* different document — table layout,
+ * The retro and Mandy skins are *structurally* different documents — table layout,
  * sidebars, marquees, hit counter — not a recolour, so the choice has to be
  * made server-side before rendering. It lives in a cookie that `middleware.ts`
  * reads into `locals.skin`; every `.astro` page branches on `getSkin(Astro)`
  * to pick which page-component to render, and `Layout.astro` dispatches to
- * `ModernLayout` or `RetroLayout` for the shell.
+ * `ModernLayout`, `RetroLayout`, or `MandyLayout` for the shell.
  *
  * Consequence: routes that need the toggle cannot be `prerender = true` —
  * there's no request at build time, so the cookie would never be seen.
  */
 
-export type Skin = 'modern' | 'retro';
+export type Skin = 'modern' | 'retro' | 'mandy';
 
 export const SKIN_COOKIE = 'kk-skin';
 export const DEFAULT_SKIN: Skin = 'modern';
@@ -32,8 +32,28 @@ export type RetroTheme = (typeof RETRO_THEMES)[number];
  */
 export const DEFAULT_RETRO_THEME: RetroTheme = 'y2k';
 
+/**
+ * Mandy mode's sub-themes, one per fandom, mirrored in mandy.css as
+ * [data-theme="mandy-..."] token blocks and in tailwind.config.mjs as DaisyUI
+ * themes of the same name (so the wrapped islands pick up the palette too).
+ * Listed default-first.
+ *
+ * Unlike the retro sub-theme this is cookie-backed and rendered server-side
+ * onto <html>, for the same reason the modern theme is: a pre-paint script is
+ * not guaranteed to run before paint (see src/lib/theme.ts).
+ */
+export const MANDY_THEMES = ['gotham', 'basement', 'kanto', 'inkwell'] as const;
+export type MandyTheme = (typeof MANDY_THEMES)[number];
+/** Changing this also means moving the bare critical-background rule in MandyLayout.astro. */
+export const DEFAULT_MANDY_THEME: MandyTheme = 'gotham';
+export const MANDY_THEME_COOKIE = 'kk-mandy-theme';
+
+export function parseMandyTheme(value: string | undefined | null): MandyTheme {
+  return (MANDY_THEMES as readonly string[]).includes(value ?? '') ? (value as MandyTheme) : DEFAULT_MANDY_THEME;
+}
+
 export function parseSkin(value: string | undefined | null): Skin {
-  return value === 'retro' ? 'retro' : DEFAULT_SKIN;
+  return value === 'retro' || value === 'mandy' ? value : DEFAULT_SKIN;
 }
 
 /**
@@ -51,4 +71,8 @@ export function getSkin(ctx: {
 
 export function isRetro(ctx: Parameters<typeof getSkin>[0]): boolean {
   return getSkin(ctx) === 'retro';
+}
+
+export function isMandy(ctx: Parameters<typeof getSkin>[0]): boolean {
+  return getSkin(ctx) === 'mandy';
 }

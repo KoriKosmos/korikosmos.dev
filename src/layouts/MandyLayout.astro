@@ -1,0 +1,133 @@
+---
+// "Mandy mode": the third skin, modelled on the general structure of
+// amandata.dev (Mandy's site) and re-made around Maan's own fandoms. Layout.astro
+// dispatches here when the kk-skin cookie says "mandy".
+//
+// Like the retro shell, there is deliberately no <ClientRouter />: amandata.dev
+// itself does full page loads, and it keeps the skins from ever swapping one
+// shell's markup into another's document.
+//
+// The sub-theme is rendered server-side onto <html> from the kk-mandy-theme
+// cookie (resolved by middleware), as `data-theme="mandy-<name>"`. That value is
+// both the mandy.css token selector and a DaisyUI theme, so the islands this
+// skin wraps unchanged (Tetris, Tunes, the guestbook) pick up the palette. No
+// pre-paint script: the attribute is already right in the HTML.
+import "../styles/mandy.css";
+import { getCollection } from "astro:content";
+import OnekoToggle from "../components/OnekoToggle.tsx";
+import SkinToggle from "../retro-components/SkinToggle.tsx";
+import MandyNav, { type MandyNavGroup, type MandySearchItem } from "../mandy-components/MandyNav.tsx";
+import MandyEffects from "../mandy-components/MandyEffects.tsx";
+import MandyBackdrop from "../mandy-components/MandyBackdrop.tsx";
+import SeoHead from "./SeoHead.astro";
+import { NAV_ITEMS, SITE_TITLE, SITE_DESCRIPTION, isExternal } from "../config";
+import { DEFAULT_MANDY_THEME } from "../lib/skin";
+import type { LayoutProps } from "./props";
+
+// isWide is accepted and ignored: Mandy-mode pages pick their own width with
+// .md-section--wide.
+type Props = LayoutProps;
+
+const {
+	title = SITE_TITLE,
+	description = SITE_DESCRIPTION,
+	image,
+	ogType,
+	publishedTime,
+	modifiedTime,
+} = Astro.props;
+
+const theme = Astro.locals.mandyTheme ?? DEFAULT_MANDY_THEME;
+const formattedTitle = title === SITE_TITLE ? SITE_TITLE : `${title} | ${SITE_TITLE}`;
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+const socialImage = new URL(image ?? '/og/site.png', Astro.site);
+const pathname = Astro.url.pathname;
+const isHome = pathname === "/";
+
+const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+
+// Dropdowns from the same NAV_ITEMS as the other shells. Plain top-level links
+// become one-item entries so the nav keeps NAV_ITEMS' order.
+const navGroups: MandyNavGroup[] = NAV_ITEMS.map((item, i) => {
+	const links = ("items" in item ? item.items : [item]).map(link => ({
+		href: link.href,
+		label: link.label,
+		external: isExternal(link.href),
+		active: !isExternal(link.href) && isActive(link.href),
+	}));
+	return {
+		key: `g${i}`,
+		label: "items" in item ? item.label : null,
+		links,
+		active: links.some(link => link.active),
+	};
+});
+
+// The nav search box suggests across pages, posts and projects — the same set
+// the modern skin's command palette searches.
+const [posts, projects] = await Promise.all([getCollection("blog"), getCollection("projects")]);
+const searchIndex: MandySearchItem[] = [
+	{ title: "Home", desc: "The front page", url: "/" },
+	...NAV_ITEMS.flatMap(item => ("items" in item ? item.items : [item]))
+		.filter(link => !isExternal(link.href))
+		.map(link => ({ title: link.label, desc: `Page · ${link.href}`, url: link.href })),
+	...posts.map(post => ({ title: post.data.title, desc: post.data.description, url: `/blog/${post.slug}` })),
+	...projects.map(project => ({ title: project.data.title, desc: project.data.summary, url: `/portfolio/${project.slug}` })),
+];
+---
+
+<html lang="en" data-skin="mandy" data-theme={`mandy-${theme}`}>
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>{formattedTitle}</title>
+	<SeoHead
+		title={formattedTitle}
+		pageTitle={title}
+		description={description}
+		canonicalURL={canonicalURL}
+		socialImage={socialImage}
+		type={ogType}
+		publishedTime={publishedTime}
+		modifiedTime={modifiedTime}
+	/>
+
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+	<link
+		rel="stylesheet"
+		href="https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:wght@400;500;600;700;800&family=Pixelify+Sans:wght@400;500;600;700&family=Silkscreen:wght@400;700&family=VT323&display=swap"
+	/>
+
+	<!-- Critical background per sub-theme, so the first paint isn't the modern
+	     skin's grey before mandy.css arrives. The bare rule is the default
+	     (gotham) — keep it in step with DEFAULT_MANDY_THEME. -->
+	<style is:inline>
+		html[data-skin="mandy"] { background-color: #0b0c10; }
+		html[data-skin="mandy"][data-theme="mandy-basement"] { background-color: #1a110c; }
+		html[data-skin="mandy"][data-theme="mandy-kanto"] { background-color: #f6f4ec; }
+		html[data-skin="mandy"][data-theme="mandy-inkwell"] { background-color: #f3ebd8; }
+	</style>
+</head>
+<body>
+<a href="#main-content" class="md-skip">Skip to content</a>
+
+<MandyBackdrop client:load />
+<div class="md-vignette" aria-hidden="true"></div>
+
+<MandyNav client:load groups={navGroups} search={searchIndex} isHome={isHome} theme={theme} />
+
+<main id="main-content" class="md-main">
+	<slot />
+</main>
+
+<footer class="md-footer">
+	<p>&copy; {new Date().getFullYear()} Maan &middot; korikosmos.dev &middot; <a href="/rss.xml">RSS</a></p>
+	<p>Mandy mode &mdash; built after <a href="https://amandata.dev" target="_blank" rel="noopener">amandata.dev</a>, with love</p>
+</footer>
+
+<MandyEffects client:load />
+<OnekoToggle client:load />
+<SkinToggle client:load skin="mandy" />
+</body>
+</html>

@@ -1,12 +1,21 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { isRetro } from '../lib/skin';
+import cvData from '../data/cv.json';
+import { getSkin } from '../lib/skin';
 import { AboutPage } from '../page-components/AboutPage.tsx';
 import { RetroAboutPage } from '../retro-components/RetroAboutPage.tsx';
+import { MandyAboutPage } from '../mandy-components/MandyAboutPage.tsx';
 
-const retro = isRetro(Astro);
+const skin = getSkin(Astro);
+const interests = cvData.sections.find(s => s.title === 'Interests')?.content ?? [];
 ---
 
 <Layout title="About" description="About Maan -- storytelling enthusiast, systems thinker, and lifelong learner.">
-  {retro ? <RetroAboutPage /> : <AboutPage />}
+  {skin === 'retro' ? (
+    <RetroAboutPage />
+  ) : skin === 'mandy' ? (
+    <MandyAboutPage interests={interests} />
+  ) : (
+    <AboutPage />
+  )}
 </Layout>

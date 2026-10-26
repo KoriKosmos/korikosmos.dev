@@ -1,0 +1,48 @@
+---
+// Mandy-mode frame around an interactive island (Tetris, Rock Paper Scissors,
+// Star Pairs, Tunes, post reactions).
+//
+// Wrapped, never forked — same rule as RetroIslandShell: those islands drive
+// their DOM through document.getElementById against their exact markup, so a
+// Mandy rewrite would render fine and silently stop working. They keep their
+// DaisyUI classes, and the active data-theme="mandy-*" DaisyUI theme recolours
+// them to match.
+//
+// .astro, not React: Astro pre-renders content slotted into a framework
+// component to static HTML, which would strip the island's hydration.
+interface Props {
+  /** Section title (the page's h1 unless `level` says otherwise). */
+  title: string;
+  /** The VT323 tag beside the title. */
+  tag?: string;
+  /** Short lines of preamble shown above the island. */
+  notes?: string[];
+  /**
+   * Heading level for the title; 1 when the island is the page. 0 renders the
+   * title as plain text, for islands that bring their own <h1> (Tetris, RPS,
+   * Star Pairs, Tunes) so the outline doesn't run h2 -> h1.
+   */
+  level?: 0 | 1 | 2;
+  wide?: boolean;
+  /** First section on the page (sits closer to the nav). */
+  first?: boolean;
+}
+
+const { title, tag, notes = [], level = 1, wide = false, first = true } = Astro.props;
+const Heading = level === 1 ? 'h1' : level === 2 ? 'h2' : 'p';
+---
+
+<section class:list={['md-section', 'md-section--static', { 'md-section--first': first, 'md-section--wide': wide }]}>
+  <div class="md-section__head">
+    <Heading class="md-section__title">{title}</Heading>
+    {tag && <span class="md-section__tag">{tag}</span>}
+  </div>
+  {notes.length > 0 && (
+    <div class="md-section__body">
+      {notes.map(note => <p class="md-note" style="margin:0 0 0.4rem">{note}</p>)}
+    </div>
+  )}
+  <div class="md-island">
+    <slot />
+  </div>
+</section>

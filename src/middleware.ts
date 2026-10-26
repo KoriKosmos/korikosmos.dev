@@ -1,5 +1,5 @@
 import { defineMiddleware, sequence } from 'astro:middleware';
-import { parseSkin, SKIN_COOKIE } from './lib/skin';
+import { MANDY_THEME_COOKIE, parseMandyTheme, parseSkin, SKIN_COOKIE } from './lib/skin';
 import { parseTheme, THEME_COOKIE } from './lib/theme';
 import { bumpHits, getHits } from './lib/hits';
 
@@ -72,6 +72,7 @@ const skinAndHits = defineMiddleware(async (context, next) => {
   const skin = parseSkin(context.cookies.get(SKIN_COOKIE)?.value);
   context.locals.skin = skin;
   context.locals.theme = parseTheme(context.cookies.get(THEME_COOKIE)?.value);
+  context.locals.mandyTheme = parseMandyTheme(context.cookies.get(MANDY_THEME_COOKIE)?.value);
   context.locals.hits = 0;
 
   if (skin !== 'retro' || !isCountablePageView(context.url.pathname)) {
