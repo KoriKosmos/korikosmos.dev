@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
+import { PixelBat } from '../page-components/PixelBat';
 
 /**
  * Switches the site between its three skins: modern, Web 1.0, and Mandy mode.
@@ -16,10 +17,10 @@ type Skin = 'modern' | 'retro' | 'mandy';
 const SKIN_COOKIE = 'kk-skin';
 const ONE_YEAR = 60 * 60 * 24 * 365;
 
-const LABELS: Record<Skin, { short: string; aria: string; icon: string }> = {
+const LABELS: Record<Skin, { short: string; aria: string; icon: ReactNode }> = {
   modern: { short: 'Modern', aria: 'Switch back to the modern site', icon: '✦' },
   retro: { short: 'Web 1.0 mode', aria: 'Switch to the Web 1.0 version of this site', icon: '🌐' },
-  mandy: { short: 'Mandy mode', aria: 'Switch to Mandy mode, the pixel fandom version of this site', icon: '🦇' },
+  mandy: { short: 'Mandy mode', aria: 'Switch to Mandy mode, the pixel fandom version of this site', icon: <PixelBat className="inline-block align-middle" /> },
 };
 
 interface Props {

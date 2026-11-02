@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { BAT_ROWS } from "../page-components/PixelBat";
 import { DEFAULT_MANDY_THEME, MANDY_THEMES, type MandyTheme } from "../lib/skin";
 
 /* =========================================================================
@@ -122,20 +123,10 @@ const GOTHAM_PAL: GothamPalette = {
 	bat: "#3A3F4D",
 };
 
-/* the emblem the searchlight throws — a 20x7 reduction of the nav mark's bat
-   (MandyNav's BatMark), redrawn by hand so the ears stay separate. Sized like
-   the original emblem: the scene buffer is upscaled PIXEL (3x) on screen, so
-   every cell here is 3 css px or more — a wider sprite gets big fast. Every
-   row a palindrome, or it reads lopsided. */
-const SIGNAL_BAT = [
-	"#######.#..#.#######",
-	".######.####.######.",
-	"..################..",
-	"..################..",
-	"......########......",
-	"........####........",
-	".........##.........",
-];
+/* the emblem the searchlight throws: the site's bat (page-components/PixelBat).
+   Sized like the original emblem, because the scene buffer is upscaled PIXEL
+   (3x) on screen, so a wider sprite gets big fast. */
+const SIGNAL_BAT = BAT_ROWS;
 const BAT_FRAMES = [
 	["#.....#", "##.#.##", ".#####.", "...#..."],
 	["..#.#..", ".#####.", "##...##", "#.....#"],

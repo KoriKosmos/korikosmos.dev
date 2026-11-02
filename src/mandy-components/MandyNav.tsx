@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactElement, type RefObject } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type RefObject } from 'react';
+import { PixelBat } from '../page-components/PixelBat';
 import { MANDY_THEME_COOKIE, MANDY_THEMES, type MandyTheme } from '../lib/skin';
 
 /**
@@ -51,42 +52,6 @@ export const MANDY_THEME_INFO: Record<MandyTheme, { label: string; blurb: string
   kanto: { label: 'Kanto', blurb: 'Pokémon', swatches: ['#F6F4EC', '#D7261E', '#2A62B8'] },
   inkwell: { label: 'Inkwell', blurb: 'Comics', swatches: ['#F3EBD8', '#C8006E', '#00739E'] },
 };
-
-/** Pixel bat — the home mark. 36x12 grid, one rect per pixel run, decoded
- *  from Maan's braille-art bat. Keep every row a palindrome (mirror the left
- *  half), or the bat comes out a pixel lopsided. */
-function BatMark() {
-  const rows = [
-    'XXXXXXXXXXXX....X..X....XXXXXXXXXXXX',
-    '..XXXXXXXXXX....XXXX....XXXXXXXXXX..',
-    '...XXXXXXXXXX...XXXX...XXXXXXXXXX...',
-    '....XXXXXXXXXXXXXXXXXXXXXXXXXXXX....',
-    '....XXXXXXXXXXXXXXXXXXXXXXXXXXXX....',
-    '....XXXXXXXXXXXXXXXXXXXXXXXXXXXX....',
-    '.....XXXXXXXXXXXXXXXXXXXXXXXXXX.....',
-    '..........XXXXXXXXXXXXXXXX..........',
-    '.............XXXXXXXXXX.............',
-    '...............XXXXXX...............',
-    '................XXXX................',
-    '.................XX.................',
-  ];
-  const rects: ReactElement[] = [];
-  rows.forEach((row, y) => {
-    let x = 0;
-    while (x < row.length) {
-      if (row[x] !== 'X') { x++; continue; }
-      let w = 0;
-      while (row[x + w] === 'X') w++;
-      rects.push(<rect key={`${x}-${y}`} className="px" x={x} y={y} width={w} height={1} />);
-      x += w;
-    }
-  });
-  return (
-    <svg viewBox="0 0 36 12" width="36" height="12" shapeRendering="crispEdges" aria-hidden="true">
-      {rects}
-    </svg>
-  );
-}
 
 function useOutsideClose(ref: RefObject<HTMLElement | null>, active: boolean, close: () => void) {
   useEffect(() => {
@@ -360,7 +325,7 @@ export function MandyNav({ groups, search, isHome, theme }: Props) {
   return (
     <nav ref={navRef} className={`md-nav${openKey ? ' md-nav--menu-open' : ''}`} aria-label="Primary">
       <a className={`md-nav__mark${isHome ? ' is-active' : ''}`} href={isHome ? '#top' : '/'} aria-label="Home">
-        <BatMark />
+        <PixelBat scale={2} pixelClassName="px" />
       </a>
       <Search items={search} />
       <div className="md-nav__links">
