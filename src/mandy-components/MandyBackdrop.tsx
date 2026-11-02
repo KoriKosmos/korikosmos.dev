@@ -151,10 +151,14 @@ function makeGotham(): Scene<GothamPalette> {
 	let bats: { x: number; y: number; vx: number; phase: number }[] = [];
 	let batTimer = 0;
 	let srcX = 0;
+	let skyTop = 0; // nav bar height in buffer px: the signal must clear it
 
 	return {
 		init(w, h, r) {
 			W = w; H = h; rnd = r; t = 0;
+			// The nav is sticky over the top of the canvas (and wraps taller on
+			// phones); re-measured here because init re-runs on every resize.
+			skyTop = (document.querySelector<HTMLElement>(".md-nav")?.offsetHeight ?? 0) / PIXEL;
 			buildings = [];
 			for (let x = -2; x < W; ) {
 				const bw = Math.round(between(rnd, 10, 26));
@@ -229,10 +233,11 @@ function makeGotham(): Scene<GothamPalette> {
 			/* searchlight: a beam from a right-hand rooftop up into the clouds */
 			const sweep = 0.5 + 0.5 * Math.sin(t * 0.11);
 			const tx = W * (0.56 + 0.38 * sweep);
-			const ty = H * 0.09;
-			const sy = H - (buildings.find(b => srcX >= b.x && srcX < b.x + b.w)?.h ?? H * 0.2);
 			const s = W > 500 ? 2 : 1;
 			const rx = 12 * s, ry = 6 * s;
+			// Whole lit ellipse (rim included) below the nav bar, with a gap.
+			const ty = Math.max(H * 0.09, skyTop + ry + 2 * s + 3);
+			const sy = H - (buildings.find(b => srcX >= b.x && srcX < b.x + b.w)?.h ?? H * 0.2);
 			ctx.fillStyle = p.beam;
 			ctx.beginPath();
 			ctx.moveTo(srcX - 1, sy);
@@ -248,7 +253,9 @@ function makeGotham(): Scene<GothamPalette> {
 			}
 			/* where the beam lands: the ellipse and the bat cut out of it */
 			pixelBlob(ctx, tx, ty, rx + 2 * s, ry + 2 * s, p.signal);
-			sprite(ctx, SIGNAL_BAT, tx - (SIGNAL_BAT[0].length * s) / 2, ty - (SIGNAL_BAT.length * s) / 2, { "#": p.signalBat }, false, s);
+			// One cell lower than box-centred: the bat's weight is in its wide top
+			// rows (the tail tapers to 2px), so box-centred reads as too high.
+			sprite(ctx, SIGNAL_BAT, tx - (SIGNAL_BAT[0].length * s) / 2, ty - (SIGNAL_BAT.length * s) / 2 + s, { "#": p.signalBat }, false, s);
 
 			for (const b of bats) {
 				const f = BAT_FRAMES[Math.floor(t * 7 + b.phase) % 2];
