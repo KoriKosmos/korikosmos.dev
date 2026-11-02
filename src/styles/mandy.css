@@ -358,7 +358,8 @@ html[data-skin='mandy'] {
   display: inline-flex; align-items: center; padding: 0.35rem;
   text-decoration: none; position: relative; flex: 0 0 auto;
 }
-[data-skin='mandy'] .md-nav__mark svg { display: block; transform: rotate(-10deg); }
+/* No rotation: turning pixel art off the pixel grid smears it into a blob. */
+[data-skin='mandy'] .md-nav__mark svg { display: block; }
 [data-skin='mandy'] .md-nav__mark .px { fill: var(--md-nav-tag); }
 [data-skin='mandy'] .md-nav__mark:hover .px { fill: var(--md-accent-2); }
 [data-skin='mandy'] .md-nav__links { display: flex; gap: 1.5rem; align-items: center; }

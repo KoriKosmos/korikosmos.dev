@@ -122,15 +122,19 @@ const GOTHAM_PAL: GothamPalette = {
 	bat: "#3A3F4D",
 };
 
-/* the emblem the searchlight throws — an original chunky bat */
+/* the emblem the searchlight throws — an original chunky bat, same shape as
+   the nav mark (MandyNav's BatMark). Odd width for a true centre column, and
+   every row a palindrome, or the emblem reads lopsided. */
 const SIGNAL_BAT = [
-	".......#...#.......",
-	"##.....#####.....##",
-	"####...#####...####",
+	"##.....#...#.....##",
+	"###....#####....###",
+	"####..#######..####",
+	"###################",
 	"###################",
 	".#################.",
-	"..######.#.######..",
-	"...###...#...###...",
+	"..###.#######.###..",
+	".......#####.......",
+	".........#.........",
 ];
 const BAT_FRAMES = [
 	["#.....#", "##.#.##", ".#####.", "...#..."],

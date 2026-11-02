@@ -52,18 +52,20 @@ export const MANDY_THEME_INFO: Record<MandyTheme, { label: string; blurb: string
   inkwell: { label: 'Inkwell', blurb: 'Comics', swatches: ['#F3EBD8', '#C8006E', '#00739E'] },
 };
 
-/** Pixel bat — the home mark. 16x9 grid, one rect per pixel run. */
+/** Pixel bat — the home mark. 17x9 grid, one rect per pixel run. The width is
+ *  odd on purpose: the ears, head and tail need a true centre column, or the
+ *  bat comes out a pixel lopsided. Keep every row a palindrome. */
 function BatMark() {
   const rows = [
-    '.......X..X.....',
-    'X.....XXXXXX...X',
-    'XX...XXXXXXXX.XX',
-    'XXXXXXXXXXXXXXXX',
-    'XXXXXXXXXXXXXXXX',
-    '.XXXXXXXXXXXXXX.',
-    '..XX..XXXXX..XX.',
-    '.......XXX......',
-    '........X.......',
+    'X.....X...X.....X',
+    'XX....XXXXX....XX',
+    'XXX..XXXXXXX..XXX',
+    'XXXXXXXXXXXXXXXXX',
+    'XXXXXXXXXXXXXXXXX',
+    '.XXXXXXXXXXXXXXX.',
+    '..XX.XXXXXXX.XX..',
+    '......XXXXX......',
+    '........X........',
   ];
   const rects: ReactElement[] = [];
   rows.forEach((row, y) => {
@@ -77,7 +79,7 @@ function BatMark() {
     }
   });
   return (
-    <svg viewBox="0 0 16 9" width="32" height="18" shapeRendering="crispEdges" aria-hidden="true">
+    <svg viewBox="0 0 17 9" width="34" height="18" shapeRendering="crispEdges" aria-hidden="true">
       {rects}
     </svg>
   );
