@@ -122,19 +122,21 @@ const GOTHAM_PAL: GothamPalette = {
 	bat: "#3A3F4D",
 };
 
-/* the emblem the searchlight throws — an original chunky bat, same shape as
-   the nav mark (MandyNav's BatMark). Odd width for a true centre column, and
-   every row a palindrome, or the emblem reads lopsided. */
+/* the emblem the searchlight throws — the same bat as the nav mark
+   (MandyNav's BatMark). Every row a palindrome, or it reads lopsided. */
 const SIGNAL_BAT = [
-	"##.....#...#.....##",
-	"###....#####....###",
-	"####..#######..####",
-	"###################",
-	"###################",
-	".#################.",
-	"..###.#######.###..",
-	".......#####.......",
-	".........#.........",
+	"############....#..#....############",
+	"..##########....####....##########..",
+	"...##########...####...##########...",
+	"....############################....",
+	"....############################....",
+	"....############################....",
+	".....##########################.....",
+	"..........################..........",
+	".............##########.............",
+	"...............######...............",
+	"................####................",
+	".................##.................",
 ];
 const BAT_FRAMES = [
 	["#.....#", "##.#.##", ".#####.", "...#..."],
@@ -232,7 +234,7 @@ function makeGotham(): Scene<GothamPalette> {
 			const ty = H * 0.09;
 			const sy = H - (buildings.find(b => srcX >= b.x && srcX < b.x + b.w)?.h ?? H * 0.2);
 			const s = W > 500 ? 2 : 1;
-			const rx = 12 * s, ry = 6 * s;
+			const rx = 22 * s, ry = 10 * s; // the lit ellipse; fits SIGNAL_BAT's 36x12 with a rim
 			ctx.fillStyle = p.beam;
 			ctx.beginPath();
 			ctx.moveTo(srcX - 1, sy);
