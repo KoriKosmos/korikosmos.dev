@@ -11,6 +11,8 @@ import ConstellationField from "../page-components/ConstellationField.tsx";
 import CommandPalette from "../page-components/CommandPalette.tsx";
 import NavigationProgress from "../page-components/NavigationProgress.tsx";
 import SkinToggle from "../retro-components/SkinToggle.tsx";
+import HeartRate from "../page-components/HeartRate.tsx";
+import { heartRateEnabled, initialHeartRate } from "../lib/pulsoid";
 import SeoHead from "./SeoHead.astro";
 import type { PaletteLink } from "../page-components/CommandPalette.tsx";
 import { NAV_ITEMS, SITE_TITLE, SITE_DESCRIPTION, isExternal } from "../config";
@@ -255,6 +257,7 @@ const paletteLinks: PaletteLink[] = [
 
 <footer class="text-center text-sm text-base-content/60 p-6 shrink-0" transition:name="site-footer">
 	&copy; {new Date().getFullYear()} Maan &ndash; KoriKosmos
+	{heartRateEnabled && <HeartRate client:load skin="modern" initial={initialHeartRate()} transition:persist="heart-rate" />}
 </footer>
 <OnekoToggle client:load transition:persist="oneko-toggle" />
 <ThemeBar client:load transition:persist="theme-bar" />

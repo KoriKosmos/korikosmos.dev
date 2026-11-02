@@ -17,6 +17,8 @@ import "../styles/mandy.css";
 import { getCollection } from "astro:content";
 import OnekoToggle from "../components/OnekoToggle.tsx";
 import SkinToggle from "../retro-components/SkinToggle.tsx";
+import HeartRate from "../page-components/HeartRate.tsx";
+import { heartRateEnabled, initialHeartRate } from "../lib/pulsoid";
 import MandyNav, { type MandyNavGroup, type MandySearchItem } from "../mandy-components/MandyNav.tsx";
 import MandyEffects from "../mandy-components/MandyEffects.tsx";
 import MandyBackdrop from "../mandy-components/MandyBackdrop.tsx";
@@ -125,6 +127,7 @@ const searchIndex: MandySearchItem[] = [
 <footer class="md-footer">
 	<p>&copy; {new Date().getFullYear()} Maan &middot; korikosmos.dev &middot; <a href="/rss.xml">RSS</a></p>
 	<p>Mandy mode &mdash; built after <a href="https://amandata.dev" target="_blank" rel="noopener">amandata.dev</a>, with love</p>
+	{heartRateEnabled && <HeartRate client:load skin="mandy" initial={initialHeartRate()} />}
 </footer>
 
 <MandyEffects client:load />

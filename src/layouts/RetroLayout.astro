@@ -10,6 +10,8 @@ import "../styles/retro.css";
 import OnekoToggle from "../components/OnekoToggle.tsx";
 import RetroChrome from "../retro-components/RetroChrome.tsx";
 import SkinToggle from "../retro-components/SkinToggle.tsx";
+import HeartRate from "../page-components/HeartRate.tsx";
+import { heartRateEnabled, initialHeartRate } from "../lib/pulsoid";
 import SeoHead from "./SeoHead.astro";
 import { NAV_ITEMS, SITE_TITLE, SITE_DESCRIPTION, isExternal } from "../config";
 import { DEFAULT_RETRO_THEME, RETRO_THEMES } from "../lib/skin";
@@ -294,6 +296,7 @@ const LAST_UPDATED = "26 July 2026";
 				&nbsp;•&nbsp; <span class="rt-blink">No frames were harmed.</span>
 			</p>
 			<p class="rt-note" style="margin:4px 0 0">{SITE_DESCRIPTION}</p>
+			{heartRateEnabled && <HeartRate client:load skin="retro" initial={initialHeartRate()} />}
 		</div>
 	</footer>
 </div>

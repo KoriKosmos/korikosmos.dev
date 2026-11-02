@@ -247,6 +247,40 @@ html[data-skin='mandy'] {
 [data-skin='mandy'] .md-footer p { margin: 0.15rem 0; }
 [data-skin='mandy'] .md-footer a { color: var(--md-nav-tag); }
 
+/* live heart rate (HeartRate.tsx), a little HUD readout in the footer.
+   kk-heartbeat comes from global.css; the duration is set inline from BPM. */
+[data-skin='mandy'] .md-heart {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  margin: 0.5rem 0 0.1rem;
+  padding: 0.2rem 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 4px;
+  font-family: var(--md-micro);
+  font-size: 1.15rem;
+  letter-spacing: 0.06em;
+  color: var(--md-nav-ink);
+}
+[data-skin='mandy'] .md-heart__icon {
+  display: inline-block;
+  color: var(--md-nav-tag);
+  animation: kk-heartbeat 1s ease-in-out infinite;
+}
+[data-skin='mandy'] .md-heart__label { text-transform: uppercase; opacity: 0.7; }
+[data-skin='mandy'] .md-heart__bpm {
+  font-family: var(--md-display);
+  font-size: 1.3rem;
+  color: var(--md-nav-tag);
+  font-variant-numeric: tabular-nums;
+}
+[data-skin='mandy'] .md-heart__unit { opacity: 0.7; }
+[data-skin='mandy'] .md-heart__dot {
+  width: 0.45rem; height: 0.45rem; border-radius: 50%;
+  background: var(--md-nav-tag);
+  animation: md-heart-live 1.6s ease-in-out infinite;
+}
+@keyframes md-heart-live { 50% { opacity: 0.25; } }
+[data-skin='mandy'] .md-heart--widget { padding: 0.25rem; }
+
 /* skin switcher dock (SkinToggle.tsx, mandy branch) */
 [data-skin='mandy'] .md-skins {
   position: fixed; bottom: 1rem; left: 1rem; z-index: 70;
