@@ -3,9 +3,24 @@
 // Rendered server-side with no client:* directive, so everything here is static
 // HTML; all the movement comes from retro.css animations.
 
+// Split in two so about.astro can slot the live heart-monitor island between
+// the bio and the stats (an island can't be passed into a static React
+// component as children without losing its hydration). RetroAboutPage still
+// renders both, for anything that wants the page without it.
+
 export function RetroAboutPage() {
   return (
     <div className="rt-stack">
+      <RetroAboutIntro />
+      <RetroAboutRest />
+    </div>
+  );
+}
+
+/** Heading + bio panel. Renders fragments: the caller supplies `.rt-stack`. */
+export function RetroAboutIntro() {
+  return (
+    <>
       <h1 className="rt-heading">
         <span className="rt-wobble">ABOUT ME!!</span>
       </h1>
@@ -63,7 +78,14 @@ export function RetroAboutPage() {
           </p>
         </div>
       </div>
+    </>
+  );
+}
 
+/** Stats, contact, marquee, links. */
+export function RetroAboutRest() {
+  return (
+    <>
       {/* ---------------- The obligatory stats table ---------------- */}
       <div className="rt-panel">
         <div className="rt-panel__title">My Stats!</div>
@@ -171,7 +193,7 @@ export function RetroAboutPage() {
         <a href="/now">What I&rsquo;m up to now</a> <span aria-hidden="true">&bull;</span>{' '}
         <a href="/uses">What I use</a>
       </p>
-    </div>
+    </>
   );
 }
 

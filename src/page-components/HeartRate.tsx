@@ -1,28 +1,23 @@
-import { useEffect, useState } from 'react';
 import type { HeartStatus } from '../lib/pulsoidClient';
+import { useHeartRate } from '../lib/heartRateStore';
+import { PulsoidWidgetFrame, type Skin } from './heartRateParts';
 
 /**
- * Maan's live heart rate (Pulsoid), rendered in the footer of every skin.
+ * Maan's live heart rate (Pulsoid): the compact footer readout in every skin.
+ * Its siblings are HeartRateCard (the /about box) and HeartRateFloat (the
+ * toggleable floating window); all three share one poller via
+ * src/lib/heartRateStore.ts.
  *
- * With a token: polls /api/heartrate, a server proxy that holds the token and
- * shares one cached upstream answer between all visitors. Renders nothing until
- * a live reading arrives, and hides again once the monitor goes quiet, so a
- * switched-off strap just makes the widget disappear.
+ * With a token, /api/heartrate proxies Pulsoid's API and this renders a native
+ * readout, hidden until a live reading arrives and again once the strap goes
+ * quiet. Fallback: with no token, or once Pulsoid rejects it (BRO plan lapsed),
+ * the proxy answers `mode: 'widget'` and this frames Pulsoid's free widget in
+ * the skin's chrome; polling continues so the native readout returns by itself.
  *
- * Fallback: when there's no token, or Pulsoid rejects it (BRO plan lapsed), the
- * proxy answers `mode: 'widget'` and this frames Pulsoid's free widget instead,
- * in the skin's own chrome. Without a token that is the server-rendered
- * `initial` state and nothing polls; with one, polling continues so the native
- * readout comes back by itself once the token works again.
- *
- * The heart pulses at the actual BPM (animation-duration = 60/bpm s). Each
- * skin's reduced-motion block stops it. No aria-live: announcing a number
- * every few seconds would be relentless.
+ * The heart pulses at the actual BPM (animation-duration = 60/bpm s); each
+ * skin's reduced-motion block stops it. No aria-live: announcing a number every
+ * few seconds would be relentless.
  */
-
-type Skin = 'modern' | 'retro' | 'mandy';
-
-const POLL_MS = 5_000;
 
 interface Props {
   skin: Skin;
@@ -30,39 +25,15 @@ interface Props {
   initial: HeartStatus;
 }
 
-const OFFLINE: HeartStatus = { mode: 'offline' };
-
 export function HeartRate({ skin, initial }: Props) {
-  const [reading, setReading] = useState<HeartStatus>(initial);
-  // A widget-only setup has no token, so there is nothing for the API to add.
-  const polls = initial.mode !== 'widget';
-
-  useEffect(() => {
-    if (!polls) return;
-    let cancelled = false;
-    const poll = async () => {
-      if (document.hidden) return;
-      try {
-        const response = await fetch('/api/heartrate', { cache: 'no-store' });
-        const next = response.ok ? await response.json() as HeartStatus : OFFLINE;
-        if (!cancelled) setReading(next);
-      } catch {
-        if (!cancelled) setReading(OFFLINE);
-      }
-    };
-    poll();
-    const timer = window.setInterval(poll, POLL_MS);
-    const onVisible = () => { if (!document.hidden) poll(); };
-    document.addEventListener('visibilitychange', onVisible);
-    return () => {
-      cancelled = true;
-      window.clearInterval(timer);
-      document.removeEventListener('visibilitychange', onVisible);
-    };
-  }, [polls]);
+  const reading = useHeartRate(initial);
 
   if (reading.mode === 'offline') return null;
-  if (reading.mode === 'widget') return <HeartWidget skin={skin} src={reading.src} />;
+  if (reading.mode === 'widget') {
+    if (skin === 'retro') return <div className="rt-heart rt-heart--widget"><PulsoidWidgetFrame src={reading.src} /></div>;
+    if (skin === 'mandy') return <div className="md-heart md-heart--widget"><PulsoidWidgetFrame src={reading.src} /></div>;
+    return <div className="mt-2 flex justify-center"><PulsoidWidgetFrame src={reading.src} /></div>;
+  }
 
   const { bpm } = reading;
   const beat = { animationDuration: `${(60 / bpm).toFixed(3)}s` };
@@ -106,29 +77,6 @@ export function HeartRate({ skin, initial }: Props) {
       </span>
     </p>
   );
-}
-
-/**
- * Pulsoid's free widget. It draws at roughly 400×200 and is shown at half
- * scale, as the widget's own embed guide does. Cross-origin, so it can't be
- * recoloured: style it on pulsoid.net with a transparent background so it sits
- * on any skin. It is blank while the monitor is off.
- */
-function HeartWidget({ skin, src }: { skin: Skin; src: string }) {
-  const frame = (
-    <span className="kk-heart-widget">
-      <iframe
-        src={src}
-        title="Maan's live heart rate (Pulsoid widget)"
-        loading="lazy"
-        referrerPolicy="no-referrer"
-        {...{ allowtransparency: 'true' }}
-      />
-    </span>
-  );
-  if (skin === 'retro') return <div className="rt-heart rt-heart--widget">{frame}</div>;
-  if (skin === 'mandy') return <div className="md-heart md-heart--widget">{frame}</div>;
-  return <div className="mt-2 flex justify-center">{frame}</div>;
 }
 
 export default HeartRate;

@@ -12,37 +12,53 @@ export interface MandyAboutPageProps {
 
 const PLACES = ['Pakistan', 'Indonesia', 'Wales', 'England'];
 
+// Split in two so about.astro can slot the live heart-monitor island between
+// the bio and the rest (an island can't be passed into a static React
+// component as children without losing its hydration).
 export function MandyAboutPage({ interests }: MandyAboutPageProps) {
+  return (
+    <>
+      <MandyAboutIntro />
+      <MandyAboutRest interests={interests} />
+    </>
+  );
+}
+
+export function MandyAboutIntro() {
+  return (
+    <section className="md-section md-section--first" aria-labelledby="md-about-title">
+      <div className="md-section__head">
+        <h1 className="md-section__title" id="md-about-title">About me</h1>
+        <span className="md-section__tag">player one</span>
+      </div>
+      <div className="md-section__body">
+        <p>
+          Hi, I&rsquo;m Maan. I&rsquo;m someone who enjoys <mark className="md-key">thoughtful storytelling</mark>,
+          whether it comes from comics, manga, films, or games. I&rsquo;ve always been drawn to creative worlds and
+          the ideas behind them &mdash; not just how they&rsquo;re made, but why they resonate with people.
+        </p>
+        <p>
+          I&rsquo;ve lived in <mark className="md-key">several countries</mark>, and that experience has shaped my
+          perspective &mdash; I adapt quickly, stay curious, and value open-minded conversations. In my free time, I
+          enjoy reading, watching character-driven dramas or animation, and diving into games that offer more than
+          just action &mdash; ones that tell a story or challenge the way you think.
+        </p>
+        <p>
+          Outside of entertainment, I like to <mark className="md-key">organise and improve things</mark>. Whether
+          that&rsquo;s setting up my home server, building tools, or just refining a small personal project, I find
+          satisfaction in making systems work better. I enjoy learning new skills, but I also value quiet time to
+          reflect or explore new ideas at my own pace.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+export function MandyAboutRest({ interests }: MandyAboutPageProps) {
   const tags = interests.flatMap(line => line.split(',')).map(s => s.trim()).filter(Boolean);
 
   return (
     <>
-      <section className="md-section md-section--first" aria-labelledby="md-about-title">
-        <div className="md-section__head">
-          <h1 className="md-section__title" id="md-about-title">About me</h1>
-          <span className="md-section__tag">player one</span>
-        </div>
-        <div className="md-section__body">
-          <p>
-            Hi, I&rsquo;m Maan. I&rsquo;m someone who enjoys <mark className="md-key">thoughtful storytelling</mark>,
-            whether it comes from comics, manga, films, or games. I&rsquo;ve always been drawn to creative worlds and
-            the ideas behind them &mdash; not just how they&rsquo;re made, but why they resonate with people.
-          </p>
-          <p>
-            I&rsquo;ve lived in <mark className="md-key">several countries</mark>, and that experience has shaped my
-            perspective &mdash; I adapt quickly, stay curious, and value open-minded conversations. In my free time, I
-            enjoy reading, watching character-driven dramas or animation, and diving into games that offer more than
-            just action &mdash; ones that tell a story or challenge the way you think.
-          </p>
-          <p>
-            Outside of entertainment, I like to <mark className="md-key">organise and improve things</mark>. Whether
-            that&rsquo;s setting up my home server, building tools, or just refining a small personal project, I find
-            satisfaction in making systems work better. I enjoy learning new skills, but I also value quiet time to
-            reflect or explore new ideas at my own pace.
-          </p>
-        </div>
-      </section>
-
       <section className="md-section" aria-labelledby="md-about-places">
         <div className="md-section__head">
           <h2 className="md-section__title" id="md-about-places">Places I&rsquo;ve lived</h2>

@@ -11,6 +11,7 @@ import OnekoToggle from "../components/OnekoToggle.tsx";
 import RetroChrome from "../retro-components/RetroChrome.tsx";
 import SkinToggle from "../retro-components/SkinToggle.tsx";
 import HeartRate from "../page-components/HeartRate.tsx";
+import HeartRateFloat from "../page-components/HeartRateFloat.tsx";
 import { heartRateEnabled, initialHeartRate } from "../lib/pulsoid";
 import SeoHead from "./SeoHead.astro";
 import { NAV_ITEMS, SITE_TITLE, SITE_DESCRIPTION, isExternal } from "../config";
@@ -302,6 +303,7 @@ const LAST_UPDATED = "26 July 2026";
 </div>
 
 <OnekoToggle client:load />
+{heartRateEnabled && <HeartRateFloat client:load skin="retro" initial={initialHeartRate()} />}
 <SkinToggle client:load skin="retro" />
 <RetroChrome client:load />
 </body>

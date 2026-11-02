@@ -3,19 +3,34 @@ import Layout from '../layouts/Layout.astro';
 import cvData from '../data/cv.json';
 import { getSkin } from '../lib/skin';
 import { AboutPage } from '../page-components/AboutPage.tsx';
-import { RetroAboutPage } from '../retro-components/RetroAboutPage.tsx';
-import { MandyAboutPage } from '../mandy-components/MandyAboutPage.tsx';
+import { RetroAboutIntro, RetroAboutRest } from '../retro-components/RetroAboutPage.tsx';
+import { MandyAboutIntro, MandyAboutRest } from '../mandy-components/MandyAboutPage.tsx';
+import HeartRateCard from '../page-components/HeartRateCard.tsx';
+import { heartRateEnabled, initialHeartRate } from '../lib/pulsoid';
 
 const skin = getSkin(Astro);
 const interests = cvData.sections.find(s => s.title === 'Interests')?.content ?? [];
 ---
 
 <Layout title="About" description="About Maan -- storytelling enthusiast, systems thinker, and lifelong learner.">
+  {/* The heart box is its own island between the page-body halves; see the
+      note on RetroAboutIntro/MandyAboutIntro for why it isn't passed in. */}
   {skin === 'retro' ? (
-    <RetroAboutPage />
+    <div class="rt-stack">
+      <RetroAboutIntro />
+      {heartRateEnabled && <HeartRateCard client:load skin="retro" initial={initialHeartRate()} />}
+      <RetroAboutRest />
+    </div>
   ) : skin === 'mandy' ? (
-    <MandyAboutPage interests={interests} />
+    <>
+      <MandyAboutIntro />
+      {heartRateEnabled && <HeartRateCard client:load skin="mandy" initial={initialHeartRate()} />}
+      <MandyAboutRest interests={interests} />
+    </>
   ) : (
-    <AboutPage />
+    <>
+      <AboutPage />
+      {heartRateEnabled && <HeartRateCard client:load skin="modern" initial={initialHeartRate()} />}
+    </>
   )}
 </Layout>

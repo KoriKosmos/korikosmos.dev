@@ -281,6 +281,54 @@ html[data-skin='mandy'] {
 @keyframes md-heart-live { 50% { opacity: 0.25; } }
 [data-skin='mandy'] .md-heart--widget { padding: 0.25rem; }
 
+/* The heart monitor (HeartRateCard / HeartRateFloat) */
+[data-skin='mandy'] .md-heartmon__screen {
+  background: var(--md-nav-bg);
+  border: 1px solid var(--md-line);
+  border-radius: 6px;
+  padding: 0.4rem;
+}
+[data-skin='mandy'] .md-heartmon__trace { color: var(--md-nav-tag); }
+[data-skin='mandy'] .md-heartmon__readout {
+  display: flex; align-items: baseline; gap: 0.5rem;
+  margin: 0.75rem 0 0;
+  color: var(--md-heading);
+}
+[data-skin='mandy'] .md-heartmon__readout .md-heart__icon { color: var(--md-accent); font-size: 1.5rem; }
+[data-skin='mandy'] .md-heartmon__bpm {
+  font-family: var(--md-display); font-size: 2.6rem; line-height: 1;
+  color: var(--md-data); font-variant-numeric: tabular-nums;
+}
+[data-skin='mandy'] .md-heartmon__unit { font-family: var(--md-micro); font-size: 1.3rem; color: var(--md-dim); }
+[data-skin='mandy'] .md-heartmon__zone { margin: 0.2rem 0 0; font-family: var(--md-micro); font-size: 1.2rem; color: var(--md-dim); }
+[data-skin='mandy'] .md-heartmon__widget { display: flex; justify-content: center; }
+/* floating window */
+[data-skin='mandy'] .md-heartwin {
+  position: fixed; z-index: 75;
+  width: 290px; max-width: calc(100vw - 16px);
+  background: var(--md-panel);
+  color: var(--md-ink);
+  border: 1px solid var(--md-line);
+  border-radius: 8px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+[data-skin='mandy'] .md-heartwin__bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.35rem 0.6rem;
+  background: var(--md-nav-bg); color: var(--md-nav-ink);
+  font-family: var(--md-micro); font-size: 1.15rem; letter-spacing: 0.08em; text-transform: uppercase;
+  cursor: move; user-select: none; touch-action: none;
+}
+[data-skin='mandy'] .md-heartwin__bar span:first-child { color: var(--md-nav-tag); }
+[data-skin='mandy'] .md-heartwin__close {
+  background: none; border: 0; color: var(--md-nav-ink); cursor: pointer;
+  font-size: 1rem; padding: 0.1rem 0.35rem; border-radius: 3px;
+}
+[data-skin='mandy'] .md-heartwin__close:hover { background: rgba(255, 255, 255, 0.12); }
+[data-skin='mandy'] .md-heartwin__body { padding: 0.75rem; }
+[data-skin='mandy'] .md-heartdock { position: fixed; right: 1rem; bottom: 4rem; z-index: 70; }
+
 /* skin switcher dock (SkinToggle.tsx, mandy branch) */
 [data-skin='mandy'] .md-skins {
   position: fixed; bottom: 1rem; left: 1rem; z-index: 70;
