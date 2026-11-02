@@ -82,7 +82,7 @@ function BatMark() {
     }
   });
   return (
-    <svg viewBox="0 0 36 12" width="54" height="18" shapeRendering="crispEdges" aria-hidden="true">
+    <svg viewBox="0 0 36 12" width="36" height="12" shapeRendering="crispEdges" aria-hidden="true">
       {rects}
     </svg>
   );

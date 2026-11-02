@@ -233,8 +233,10 @@ function makeGotham(): Scene<GothamPalette> {
 			const tx = W * (0.56 + 0.38 * sweep);
 			const ty = H * 0.09;
 			const sy = H - (buildings.find(b => srcX >= b.x && srcX < b.x + b.w)?.h ?? H * 0.2);
-			const s = W > 500 ? 2 : 1;
-			const rx = 22 * s, ry = 10 * s; // the lit ellipse; fits SIGNAL_BAT's 36x12 with a rim
+			// The lit ellipse fits SIGNAL_BAT's 36x12 with a rim. The emblem is drawn
+			// at 1px per cell, finer than the rest of the scene's chunky pixels: at
+			// 2x the 36-wide bat swamps the sky.
+			const rx = 22, ry = 10;
 			ctx.fillStyle = p.beam;
 			ctx.beginPath();
 			ctx.moveTo(srcX - 1, sy);
@@ -249,8 +251,8 @@ function makeGotham(): Scene<GothamPalette> {
 				pixelBlob(ctx, c.x - c.rx * 0.2, c.y - c.ry * 0.4, c.rx * 0.5, Math.max(2, c.ry * 0.4), p.cloudHi);
 			}
 			/* where the beam lands: the ellipse and the bat cut out of it */
-			pixelBlob(ctx, tx, ty, rx + 2 * s, ry + 2 * s, p.signal);
-			sprite(ctx, SIGNAL_BAT, tx - (SIGNAL_BAT[0].length * s) / 2, ty - (SIGNAL_BAT.length * s) / 2, { "#": p.signalBat }, false, s);
+			pixelBlob(ctx, tx, ty, rx + 2, ry + 2, p.signal);
+			sprite(ctx, SIGNAL_BAT, tx - SIGNAL_BAT[0].length / 2, ty - SIGNAL_BAT.length / 2, { "#": p.signalBat });
 
 			for (const b of bats) {
 				const f = BAT_FRAMES[Math.floor(t * 7 + b.phase) % 2];
