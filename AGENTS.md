@@ -1,126 +1,179 @@
 # Development Guidelines
 
-This project contains the source for **korikosmos.dev**, a personal portfolio, blog, and games hub built with [Astro](https://astro.build/) 5 (SSR mode), styled with Tailwind CSS 3 + DaisyUI 4.
+This project contains the source for **korikosmos.dev**, a personal portfolio, blog, and games hub with three switchable skins: Mandy mode (my default), the modern skin, and a Web 1.0 "retro" skin. Built with [Astro](https://astro.build/) 5 (SSR mode) and React 19 islands (`@astrojs/react`), styled with Tailwind CSS 3 + DaisyUI 4.
 
 ## Tech Stack
 
-- **Framework:** Astro 5 (`output: 'server'`, `@astrojs/node` standalone adapter)
-- **UI:** React 19 via `@astrojs/react` — `.astro` pages fetch data server-side and render a `.tsx` body component
-- **Styling:** Tailwind CSS 3.3 + DaisyUI 4.12 (5 custom themes: dark, light, forest, spider-man, batman) for the modern skin; `src/styles/retro.css` for the retro one; `src/styles/mandy.css` plus four `mandy-*` DaisyUI themes for Mandy mode
+- **Framework:** Astro 5 (`output: 'server'`, `@astrojs/node` standalone adapter) for routing, SSR data fetching, content collections, and API routes
+- **UI:** React 19 via `@astrojs/react` — all component and page-body markup is `.tsx`; `.astro` pages are thin wrappers that fetch data server-side and render a React body component with the result as props
+- **Styling:** Tailwind CSS 3.3 + DaisyUI 4.12 (5 custom themes: `dark`, `light`, `forest`, `spider-man`, `batman`) for the modern skin; `src/styles/retro.css` for the retro one; `src/styles/mandy.css` plus four `mandy-*` DaisyUI themes for Mandy mode
 - **TypeScript:** Strict mode (`astro/tsconfigs/strict`)
 - **Deployment:** Docker (multi-stage build, Node 20 Alpine, port 4321)
-- **CMS:** Keystatic (admin at `/keystatic`, GitHub mode; `/admin` redirects there)
+- **CMS:** Keystatic (admin at `/keystatic`; schemas in `keystatic.config.ts`). GitHub mode everywhere: edits authenticate via a GitHub App and land as commits (`KEYSTATIC_GITHUB_CLIENT_ID`/`KEYSTATIC_GITHUB_CLIENT_SECRET`/`KEYSTATIC_SECRET` + `PUBLIC_KEYSTATIC_GITHUB_APP_SLUG`). In production the admin routes are only built when the client id is present at build time (guard in `astro.config.mjs`; Dockerfile passes it as a build arg). `keystatic.config.ts` is imported by the browser — only `import.meta.env`, never `process.env`. `/admin` 301-redirects to `/keystatic`. `src/middleware.ts` forces the request origin on `/api/keystatic/github/*` routes to the canonical `site` (only in `import.meta.env.PROD`): behind the container's reverse proxy the Node server sees the internal host (`localhost:4321`), so Keystatic would otherwise build `redirect_uri=https://localhost/...` and GitHub rejects the OAuth sign-in. The GitHub App must have both `https://korikosmos.dev/api/keystatic/github/oauth/callback` (prod) and `http://127.0.0.1:4321/api/keystatic/github/oauth/callback` (dev) registered as callback URLs.
 
 ## Site Structure & Objectives
 
 - `src/pages/index.astro` – Landing page with a short greeting and link to the portfolio.
-- `src/pages/about.astro` – Short biography using card styling.
+- `src/pages/about.astro` – Short biography using card styling, plus my live heart-rate card when Pulsoid is configured.
 - `src/pages/cv.astro` – Full curriculum vitae including education, skills and work history.
-- `src/pages/portfolio.astro` – Lists projects from `src/content/projects`.
+- `src/pages/portfolio.astro` – Lists projects from `src/content/projects` with URL-driven search, GitHub-source filter, and sorting.
 - `src/pages/portfolio/[slug].astro` – Individual project pages (SSR — see the skin note below).
-- `src/pages/blog/` – Blog posts generated from Markdown content.
-- `src/pages/blog/[slug].astro` – Individual blog post pages (SSR — see the skin note below).
-- `src/pages/tunes.astro` – Displays recent Last.fm tracks, top artists and albums. SSR fetches initial data, client JS renders and polls for updates every 30s.
+- `src/pages/blog/index.astro` – Blog listing generated from Markdown content with URL-driven search and sorting.
+- `src/pages/blog/[slug].astro` – Individual blog post pages with reading time, table of contents, reading tools, and per-post emoji reactions (SSR — see the skin note below).
+- `src/pages/tunes.astro` – Displays recent Last.fm tracks, top artists and albums. SSR fetches initial data and passes it as props to `Tunes.tsx`, which polls for updates every 30s and loads other chart periods on demand.
 - `src/pages/games/index.astro` – Games listing page.
-- `src/pages/games/tetris.astro` – Tetris game with SRS rotation, hold, and leaderboards.
+- `src/pages/games/tetris.astro` – Tetris game with SRS rotation, hold, mobile touch controls, and leaderboards.
 - `src/pages/games/rock-paper-scissors.astro` – Rock Paper Scissors game with leaderboards.
-- `src/pages/404.astro` – Custom 404 page.
-- `src/pages/guestbook.astro` – My guestbook. Both skins render it, backed by `src/lib/guestbook.ts` and `POST /api/guestbook`.
-- `src/pages/now.astro`, `uses.astro`, `links.astro` – Indie-web convention pages. Their data lives in `src/data/` so both skins share it.
-- `src/layouts/Layout.astro` – Thin dispatcher: picks `ModernLayout.astro`, `RetroLayout.astro` or `MandyLayout.astro` from the resolved skin. Accepts `title`, `description`, `image`, and `isWide` props.
-- `src/layouts/ModernLayout.astro` – The normal shell: SEO meta, skip link, nav, theme switcher, oneko toggle, command palette, `<ClientRouter />`, footer.
-- `src/layouts/RetroLayout.astro` – The Web 1.0 shell: table layout, badge sidebars, marquee, hit counter, webring. No `<ClientRouter />`.
-- `src/layouts/MandyLayout.astro` – The Mandy mode shell (my default skin): pixel nav with search and theme picker, fandom backdrop scene, footer. No `<ClientRouter />`.
-- `src/config.ts` – Centralized site config and navigation links.
-- `src/content/` – Markdown content managed via Decap CMS at `/admin`.
+- `src/pages/games/star-pairs.astro` – Star Pairs constellation memory game with three board sizes and device-local personal bests.
+- `src/pages/404.astro` – Custom 404 page rendered in the active skin.
+- `src/pages/guestbook.astro` – My guestbook. All three skins render it, backed by `src/lib/guestbook.ts` and `POST /api/guestbook`.
+- `src/pages/now.astro`, `uses.astro`, `links.astro` – Indie-web convention pages. Their data lives in `src/data/` so all three skins share it.
+- `src/pages/og/[...route].ts` – Prerendered Open Graph card generator (`astro-og-canvas`) for `/og/site.png`, `/og/blog/<slug>.png`, and `/og/portfolio/<slug>.png`.
+- `src/layouts/Layout.astro` – Thin dispatcher: picks `MandyLayout.astro`, `ModernLayout.astro`, or `RetroLayout.astro` from the resolved skin. Accepts `title`, `description`, `image`, `isWide`, `ogType`, `publishedTime`, and `modifiedTime` props (typed in `src/layouts/props.ts`).
+- `src/layouts/MandyLayout.astro` – The Mandy mode shell (my default skin): pixel nav with native `<details>` dropdowns, search and theme picker, fandom backdrop scene, floating heart monitor, footer. No `<ClientRouter />`.
+- `src/layouts/ModernLayout.astro` – The modern shell: SEO meta, skip link, nav, navigation progress bar, constellation background, theme switcher, oneko toggle, floating heart monitor, command palette, `<ClientRouter />`, footer.
+- `src/layouts/RetroLayout.astro` – The Web 1.0 shell: table layout, badge sidebars, marquee, hit counter, webring, floating heart monitor. No `<ClientRouter />`.
+- `src/layouts/SeoHead.astro` – Emits description, canonical, icon, Open Graph, and Twitter metadata for all three shells.
+- `src/config.ts` – Centralized site config and navigation links (`NAV_ITEMS`).
+- `src/content/` – Markdown content managed via Keystatic CMS at `/keystatic` (`/admin` redirects there).
 
 ## Project Structure
 
 ```
 src/
-├── components/    # Reusable React components (CvSection, ProjectCard, ThemeBar, OnekoToggle)
-│                  #   — also the design-sync surface synced to claude.ai/design
-├── page-components/   # One React body component per route, kept out of the design-sync scope
-├── retro-components/  # Web 1.0 skin: a Retro* body per route, plus SkinToggle/RetroChrome
-├── mandy-components/  # Mandy mode: a Mandy* body per route, plus MandyNav/MandyEffects/MandyBackdrop/MandyIslandShell
-├── content/       # Content collections (blog posts, projects) as Markdown
-│   ├── blog/      # Blog posts with frontmatter: title, description, pubDate
-│   └── projects/  # Project entries with frontmatter: title, summary, description, github?
-├── data/          # Static data (cv.json) + data shared by BOTH skins (uses.ts, links.ts, now.ts)
-├── layouts/       # Layout.astro (skin dispatcher), ModernLayout.astro, RetroLayout.astro, MandyLayout.astro
-├── lib/           # Shared utilities
-│   ├── constants.ts  # Shared constants (BLOCKED_ITEMS for Last.fm filtering)
-│   ├── images.ts     # getBestImage() — shared between server and client code
-│   ├── lastfm.ts     # Last.fm API wrapper (server-side, uses env vars)
-│   ├── skin.ts       # modern/retro/mandy skin cookie, Mandy sub-themes, getSkin()/isRetro()/isMandy()
-│   ├── guestbook.ts  # guestbook persistence + URL sanitising (server-only)
-│   ├── hits.ts       # retro hit counter persistence (server-only)
-│   ├── rateLimit.ts  # in-process sliding-window limiter (guestbook, reactions)
-│   ├── sameOrigin.ts # same-origin guard shared by the public write endpoints
-│   ├── jsonStore.ts  # read/lock/atomic-write helper for the small data/ JSON files
-│   └── tetris.js     # Tetris game engine (decoupled from UI)
-├── middleware.ts  # Keystatic OAuth origin fix + skin resolution + hit counter
-├── pages/         # File-based routing
-│   ├── api/       # API routes (lastfm, scores/[game], guestbook, auth callbacks)
-│   ├── games/     # Tetris, Rock Paper Scissors
-│   ├── og/        # [...route].ts — prerendered OG image endpoint
-│   └── ...        # index, about, cv, portfolio, blog, tunes, now, uses, links, guestbook, 404
-├── styles/        # global.css (Tailwind + custom utilities), retro.css (rt-*), mandy.css (md-*)
-└── config.ts      # Centralized site config & navigation
-public/            # Static assets (favicon.svg, robots.txt, oneko.js)
-└── retro/         # Generated retro graphics — `npm run gen:retro`, output is committed
-data/scores/       # Persistent game leaderboard data (JSON files, written by API)
-data/guestbook.json, data/hits.json  # Guestbook + hit counter, same volume mount as scores
+├── components/        # Reusable React components (CvSection, ProjectCard, ThemeBar, OnekoToggle)
+│                      #   — also the design-sync surface synced to claude.ai/design (see .design-sync/)
+├── page-components/   # Modern-skin React page bodies (one per route) + shared interactive islands
+│                      #   and widgets (Tetris, RockPaperScissors, StarPairs, Tunes, PostReactions,
+│                      #   ReadingTools, PostContents, ContentFilters, HeartRate*, PixelBat,
+│                      #   CommandPalette, NavigationProgress, ConstellationField, TypingHeading),
+│                      #   kept out of the design-sync scope
+├── retro-components/  # Web 1.0 skin: a Retro* body per route, plus SkinToggle/RetroChrome and
+│                      #   RetroIslandShell.astro
+├── mandy-components/  # Mandy mode (default skin): a Mandy* body per route, plus MandyNav,
+│                      #   MandyEffects, MandyBackdrop, and MandyIslandShell.astro
+├── content/           # Content collections (blog posts, projects) as Markdown
+│   ├── blog/          # Blog posts with frontmatter: title, description, pubDate, updatedDate?, tags?
+│   └── projects/      # Project entries with frontmatter: title, summary, description, github?, tags?
+├── data/              # Static data (cv.json) + data shared by all three skins (uses.ts, links.ts, now.ts)
+├── assets/og/         # Generated OG card artwork (starfields + site mark) — see scripts/gen-og-assets.mjs
+│                      #   Build-time only; never served, so it must not live under public/og/
+├── fonts/             # Vendored Noto Sans TTFs (400 + 800) used by the OG image endpoint
+├── layouts/           # Layout.astro (skin dispatcher), MandyLayout.astro, ModernLayout.astro,
+│                      #   RetroLayout.astro, SeoHead.astro, props.ts
+├── lib/               # Shared utilities & engines
+│   ├── asyncCache.ts         # Bounded TTL cache + in-flight request coalescing (used by Last.fm)
+│   ├── constants.ts          # Shared constants (BLOCKED_ITEMS for Last.fm filtering)
+│   ├── contentDiscovery.ts   # URL-driven search, tag/GitHub filtering, and sorting for blog & portfolio
+│   ├── guestbook.ts          # Guestbook persistence + URL sanitising (server-only)
+│   ├── heartRateStore.ts     # Shared 5s client-side heart-rate poller (useSyncExternalStore) + float state
+│   ├── hits.ts               # Retro hit counter persistence (server-only)
+│   ├── images.ts             # getBestImage() — shared between server and client code
+│   ├── jsonStore.ts          # Read/mutex-lock/atomic-write helper for the small data/ JSON files
+│   ├── lastfm.ts             # Last.fm API wrapper (server-only, uses env vars + asyncCache)
+│   ├── lastfmClient.ts       # Client-side Last.fm chart/recent fetcher + period state helpers
+│   ├── lastfmTrack.ts        # trackArtistName() (#text vs name) + track title normalisation
+│   ├── lastfmTypes.ts        # Shared Last.fm TypeScript interfaces
+│   ├── pulsoid.ts            # Server-only Pulsoid config + singleton client binding
+│   ├── pulsoidClient.ts      # Pure Pulsoid fetcher: 3s shared cache, 60s stale cutoff, widget fallback
+│   ├── rateLimit.ts          # In-process sliding-window rate limiter (guestbook, reactions)
+│   ├── reactions.ts          # Per-post emoji reactions persistence (server-only, data/reactions.json)
+│   ├── readBody.ts           # Byte-capped request body reader for public write endpoints
+│   ├── reading.ts            # Reading-time estimate + heading TOC builder
+│   ├── rockPaperScissors.ts  # initRockPaperScissors() — imperative game logic, driven from RockPaperScissors.tsx
+│   ├── sameOrigin.ts         # Same-origin guard shared by the public write endpoints
+│   ├── skin.ts               # modern/retro/mandy skin cookie, retro & Mandy sub-themes, getSkin()/isRetro()/isMandy()
+│   ├── starPairs.ts          # Pure rules, deck dealer, and storage helpers for Star Pairs memory game
+│   ├── tetris.js             # Tetris game engine (decoupled from UI)
+│   └── theme.ts              # Modern theme allowlist + kk-theme cookie + getTheme()/persistTheme()
+├── middleware.ts      # Keystatic OAuth origin fix + skin/theme/mandyTheme resolution + hit counter
+├── pages/             # File-based routing
+│   ├── api/           # API routes (lastfm, heartrate, guestbook, scores/[game], reactions/[slug])
+│   ├── games/         # index, tetris, rock-paper-scissors, star-pairs
+│   ├── og/            # [...route].ts — prerendered OG image endpoint
+│   └── ...            # index, about, cv, portfolio, blog, tunes, now, uses, links, guestbook, 404, admin, rss.xml
+├── styles/            # global.css (Tailwind + custom utilities + shared animations),
+│                      #   retro.css (rt-*), mandy.css (md-*)
+└── config.ts          # Centralized site config & navigation
+public/                # Static assets (favicon.svg, robots.txt, oneko.js)
+└── retro/             # Generated retro graphics — `npm run gen:retro`, output is committed
+data/                  # Runtime state (volume-mounted): scores/, guestbook.json, hits.json, reactions.json
+tests/                 # Unit tests (tests/*.test.ts) + post-build SSR render tests (tests/render/pages.test.ts)
+keystatic.config.ts    # Keystatic CMS schemas (blog, projects collections + cv singleton)
+.design-sync/          # Config/notes/previews for syncing src/components/ to a Claude Design project
 ```
 
 ## Key Architecture Decisions
 
 - **Three skins, one site:** I ship Mandy mode (the default), the modern skin, and a Web 1.0 "retro" skin. Which one renders is a `kk-skin` cookie, resolved in `src/middleware.ts` into `Astro.locals.skin` before anything renders. `Layout.astro` dispatches to the matching shell, and each route branches on `getSkin(Astro)` to render a `page-components/*`, `retro-components/Retro*` or `mandy-components/Mandy*` body. A visitor with no cookie gets `DEFAULT_SKIN` (`mandy`); `parseSkin` lists `modern` explicitly so choosing it still sticks. See "The retro skin" and "Mandy mode" below.
+- **Astro for routing/SSR, React for everything rendered:** `.astro` pages do server-side data fetching (content collections, `lastfm.ts`, `cv.json`) and render the skin's React body component with the result as props. Purely presentational components need no `client:*` directive — Astro renders them to static HTML with zero client JS. Interactive islands (`ThemeBar`, `OnekoToggle`, `Tetris`, `RockPaperScissors`, `StarPairs`, `Tunes`, `PostReactions`, `ReadingTools`, `HeartRate`, `HeartRateCard`, `HeartRateFloat`, `TypingHeading`, `MandyNav`, `MandyEffects`, `MandyBackdrop`, `RetroChrome`, `SkinToggle`) use `client:load`.
+- **Faithful-port & pure-rule game islands:** `Tetris.tsx` and `RockPaperScissors.tsx` wrap pre-existing imperative game logic (`src/lib/tetris.js`'s `TetrisGame` class, `src/lib/rockPaperScissors.ts`'s `initRockPaperScissors()`) inside a single mount `useEffect`, using `document.getElementById` against the JSX-rendered markup. `StarPairs.tsx` (`src/pages/games/star-pairs.astro`) is a cosmic memory game with three board sizes whose pure rules live in `src/lib/starPairs.ts`: I never randomise the SSR board (it is dealt after Start to avoid hydration mismatches), each start gets a new round ID in the clock effect's dependencies so restarting during active play resets the timer cleanly without restarting on card flips, play pauses when the tab is hidden, arrow keys + Enter/Space and touch are supported, and personal bests stay in `localStorage`.
 - **No `prerender = true` on any route that uses `Layout.astro`:** a build-time render has no request, so the cookie is invisible and the skin toggle silently does nothing. That is why blog and portfolio `[slug]` pages are now SSR — content collections are in memory at runtime, so it costs nothing. `src/pages/og/[...route].ts` stays prerendered because it is request-independent.
 - **Sitemap:** because those slug routes are no longer prerendered, `@astrojs/sitemap` cannot discover them. `astro.config.mjs` feeds them back in via `customPages`, derived from the filenames in `src/content/`. If I ever override `slug` in frontmatter, that helper has to read frontmatter instead.
-- **Theme system:** DaisyUI themes configured in `tailwind.config.mjs` with `data-theme` attribute on `<html>`. Five themes: dark (default), light, forest, spider-man, batman, listed in `src/lib/theme.ts` which is the source of truth. Custom `--surface` and `--accent-dark` CSS vars extend DaisyUI for specific utilities. The retro skin has its own four sub-themes (`data-retro-theme`), unrelated to these. Mandy mode's four sub-themes are separate DaisyUI themes named `mandy-*` (see below).
-- **The theme is server-rendered, not just restored by script.** The choice lives in a `kk-theme` cookie as well as `localStorage`; middleware resolves it into `locals.theme` and `ModernLayout` writes `data-theme` onto `<html>`, so the first paint is correct with no JavaScript. Always persist through `persistTheme()` so both stores stay in step. The pre-paint scripts in both shells carry `data-cfasync="false"`: Cloudflare Rocket Loader otherwise rewrites inline scripts to a token MIME type and replays them after load, which flashed the default blue theme for about a second on every load. Rocket Loader should stay **off** for this site — it also defers Astro's island and ClientRouter modules.
-- **Tunes page pattern:** SSR fetches initial data, passes to client via `<script define:vars>`. Client JS is the single source of truth for rendering artists/albums (avoids template duplication). Client polls for now-playing updates every 30s.
-- **Game scores:** Stored as JSON files in `/data/scores/`, accessed via API routes with `async-mutex` for write safety. Leaderboards sync between localStorage and server.
-- **Guestbook + hit counter:** `src/lib/guestbook.ts` and `src/lib/hits.ts` use the same mutex + write-temp-then-rename pattern as the scores, writing `data/guestbook.json` and `data/hits.json`. The Dockerfile does not `COPY data/` — both rely on the volume mount the leaderboards already use, and degrade gracefully if it is not writable.
-- **Anything unauthenticated that writes needs abuse controls:** `POST /api/guestbook` and the reaction endpoints are same-origin only (`isSameOrigin()` compares `Origin` against `site`, never `Astro.url.origin`, which is the internal proxy host in production), body-capped, and rate limited via `lib/rateLimit.ts`. The control that actually matters for the guestbook is structural: `signGuestbook()` **rejects** when the book is full instead of evicting the oldest entry, so no volume of spam can destroy a real signature. Rate limiting alone would not have closed that — the key is best-effort and resets on restart.
-- **Shared code between server and client:** `src/lib/images.ts` and `src/lib/constants.ts` are importable from both Astro frontmatter (server) and `<script>` tags (client bundles). `src/lib/lastfm.ts` is server-only (uses env vars).
-- **Content Collections**: Use `getCollection()` and `getEntry()` from `astro:content` — *not* `getEntryBySlug()`, which is deprecated and throws for these collections instead of returning undefined, so a miss branch written after it never runs and an unknown slug 500s. A dynamic route that misses should `return Astro.rewrite('/404')` so the visitor gets the real 404 page, in whichever skin, with a 404 status.
-- **API routes**: Export `APIRoute` type from Astro and return `new Response()`.
-- **Modals**: Use `<dialog>` elements instead of `prompt()`/`alert()`.
-- **Accessibility**: All interactive elements need `aria-label` if text-only isn't descriptive; canvas elements get `role="img"` + `aria-label`.
+- **Theme system:** DaisyUI themes configured in `tailwind.config.mjs` with `data-theme` attribute on `<html>`. Five modern themes: `dark` (default), `light`, `forest`, `spider-man`, `batman`, listed in **`src/lib/theme.ts` which is the source of truth**. A new modern theme needs an entry in `THEMES` there, an entry in `tailwind.config.mjs`, a critical-background line in `ModernLayout.astro`'s inline `<style>`, a `ThemeBar.tsx` swatch, and a `CommandPalette.tsx` theme action. Custom `--surface` and `--accent-dark` CSS vars extend DaisyUI for specific utilities. Theme switching animates via a `startViewTransition` circular reveal (CSS hooks under `html[data-theme-switching]` in `global.css`), with a CSS color-fade fallback (`data-theme-fade`) and instant switch under reduced motion. The retro skin has its own four sub-themes (`data-retro-theme`), unrelated to these. Mandy mode's four sub-themes are separate DaisyUI themes named `mandy-*` (see below).
+- **The theme is server-rendered, not just restored by script (view transitions / no-FOUC):** `ModernLayout.astro` uses Astro's `<ClientRouter />` for SPA-style navigation. The theme choice lives in a `kk-theme` cookie as well as `localStorage`; middleware resolves it into `locals.theme` and `ModernLayout` writes `data-theme` onto `<html>` alongside critical inline `<style>` backgrounds, so the first paint is correct with no JavaScript. Always persist through `persistTheme()` so both stores stay in step (legacy theme names migrate automatically, and `ThemeBar` observes the displayed `data-theme` attribute rather than reading storage itself). An inline reconciler script re-applies the active theme on `astro:after-swap` (falling back to the live cookie before a stale HTML attribute when `localStorage` is blocked). The pre-paint scripts in both shells carry `data-cfasync="false"`: Cloudflare Rocket Loader otherwise rewrites inline scripts to a token MIME type and replays them after load, which flashed the default blue theme for about a second on every load. Rocket Loader should stay **off** for this site — it also defers Astro's island and ClientRouter modules. Header/footer have `transition:name` so they stay static during navigation; `ThemeBar`/`OnekoToggle` use `transition:persist` (with `oneko.js` mounted inside `OnekoToggle` so the cat survives navigations), and islands with global listeners or rAF loops clean up on unmount.
+- **Modern shell chrome (`NavigationProgress`, `CommandPalette`, `ConstellationField`, `NAV_ITEMS`):**
+  - `NAV_ITEMS` in `src/config.ts` mixes plain links and categorised groups (Me / Work / Blog / Tunes / Play), rendered as CSS-only DaisyUI `dropdown-hover` menus in `ModernLayout.astro`, as a grouped sidebar list in `RetroLayout.astro`, and as native `<details>` disclosures in `MandyNav.tsx`.
+  - `NavigationProgress.tsx` (`client:load` + `transition:persist` in `ModernLayout.astro`) shows a slim top bar during `<ClientRouter />` navigations after a 150ms grace period.
+  - `CommandPalette.tsx` (`client:load` + `transition:persist` in `ModernLayout.astro`) is a hand-rolled ⌘K/Ctrl-K fuzzy launcher over a `<dialog>` (opened via shortcut or `[data-palette-trigger]` in `ThemeBar.tsx`), navigating with `navigate()` from `astro:transitions/client`.
+  - `ConstellationField.tsx` (`client:load` + `transition:persist` in `ModernLayout.astro`) draws a full-viewport `-z-10` canvas starfield behind the content, sampling theme colors from the DOM via a `data-theme` `MutationObserver` and drawing one static frame under `prefers-reduced-motion`. It relies on `bg-base-100` living on `<html>` (not `<body>`) and explicit `w-full h-full` on the `<canvas>`.
+- **Tunes page & resilient Last.fm integration:**
+  - Server-side (`src/lib/lastfm.ts`, `src/lib/asyncCache.ts`, `/api/lastfm`): I share successful Last.fm requests across visitors with a bounded cache and in-flight coalescing (recent tracks expire after 15s, charts after 15m). I keep a 5s upstream timeout, validate public query parameters, return uncached 503s for outages, let `/now` and `/tunes` render with empty music data when Last.fm is unavailable, and never log URLs containing my API key.
+  - Client-side (`Tunes.tsx`, `src/lib/lastfmClient.ts`, `src/lib/lastfmTrack.ts`): SSR fetches initial data and passes it as props to `Tunes.tsx`. React state is the single source of truth, retaining chart data by period (including SSR results) and loading non-default periods on demand via abortable requests owned by the active period. Artist and album refreshes settle independently so one failure cannot discard the other chart, and retries request only failed sections. Live polling (every 30s) refreshes the whole recent list, updates playback even when the track name is unchanged, pauses in hidden tabs, and cleans up timers/listeners on unmount. `trackArtistName` prefers `#text` and falls back to `name` in duplicate filtering, Tunes, and `/now`, and track titles are normalised across language credits. Missing cover art falls back to my local record illustration.
+- **Searchable blog/portfolio & reading tools:**
+  - `src/lib/contentDiscovery.ts` + `ContentFilters.tsx`: search (`q`), tag/GitHub-source filtering, and sorting live in shareable URL query parameters and work without JavaScript in all three skins. Full Markdown bodies stay on the server; page components must preserve the supplied order. On the retro blog (`blog/index.astro` → `RetroBlogIndexPage.tsx`), global freshness metadata (`newestSlug`, `lastUpdated`, `totalCount`) is derived from the full collection before filtering so the `NEW!` badge, modem caption, update date, and entry total always describe the whole blog.
+  - `src/lib/reading.ts`, `PostContents.tsx`, `ReadingTools.tsx`: posts render an estimated reading time and a table of contents built from Astro's rendered heading slugs in all three skins. Article bodies remain static; `ReadingTools` progressively adds a reading-progress strip, active-heading tracking, and section-link / code-block copy buttons, cleaning up its observers, scroll listener, and injected buttons on navigation.
+- **Live heart rate:** three islands in `page-components/`, each rendering per-skin vocabulary (Tailwind / `rt-heart*` / `md-heart*`; the shared `kk-heartbeat` keyframes and `kk-heart-widget` frame live in `global.css`):
+  - `HeartRate.tsx`: the footer pill in all three shells.
+  - `HeartRateCard.tsx`: the `/about` box. `about.astro` places it *between* the split page-body halves (`RetroAboutIntro`/`RetroAboutRest`, `MandyAboutIntro`/`MandyAboutRest`), because an island passed into a static React component as children loses its hydration.
+  - `HeartRateFloat.tsx`: a ♥ dock button (above the cat toggle) that opens a draggable floating monitor. Open state and position live in `localStorage`, so it survives the full-reload navigations of retro and Mandy. In modern it is also `transition:persist`ed.
+  - Shared pieces: `heartRateParts.tsx` holds the ECG canvas (`EcgTrace`, colour from CSS `color`, a static frame under reduced motion) and the widget iframe. `src/lib/heartRateStore.ts` is one client-side poller (5s, paused while the tab is hidden) shared by all islands on a page via `useSyncExternalStore`, plus the floating window's state. Don't give an island its own `fetch`.
+  - Data source: `/api/heartrate`, a proxy over Pulsoid's HTTP API. `src/lib/pulsoid.ts` is server-only and holds the token. `src/lib/pulsoidClient.ts` is pure and tested: one 3s cache shared by every visitor, and readings older than 60s count as offline, so the widget hides when the strap is off. **Fallback:** with no token, or once Pulsoid answers 401/402/403 (the BRO plan lapsed), the proxy returns `mode: 'widget'` and the island frames the free Pulsoid widget from `PULSOID_WIDGET_URL` instead. It backs off for 5 minutes, then retries the token so the native readout returns by itself. Widget URLs are allowlisted to `https://pulsoid.net/widget/view/<id>`. With neither env var set, the shells don't mount the island at all.
+- **OG / social images & `SeoHead.astro`:**
+  - `src/pages/og/[...route].ts` uses `astro-og-canvas` (prerendered) to generate cards for the site default (`/og/site.png`), every blog post (`/og/blog/<slug>.png`), and every project (`/og/portfolio/<slug>.png`), using vendored Noto Sans TTFs in `src/fonts/` (the 800-weight TTF registers as `'Noto Sans ExtraBold'`). Cards are drawn over a seeded constellation starfield PNG committed to `src/assets/og/`, generated by `scripts/gen-og-assets.mjs` (`npm run gen:og`; composed as SVG with no `<text>` and rasterised with `sharp` because CanvasKit has no SVG decoder). Because `astro-og-canvas` clamps the text block below the logo, the card mounts the site mark so the bottom of the card isn't dead space.
+  - `src/layouts/SeoHead.astro` emits the description/canonical/icon and all Open Graph + Twitter tags for **all three** shells — edit there, not in a layout, or the skins drift. `theme-color` is a fixed indigo, `og:title` keeps `{page} | {site}`, and `og:image:width`/`height` are declared upfront.
+- **Game scores:** Stored as JSON files in `/data/scores/`, accessed via API routes with `async-mutex` for write safety. Leaderboards sync between `localStorage` and server.
+- **Guestbook, reactions + hit counter:** `src/lib/guestbook.ts`, `src/lib/reactions.ts`, and `src/lib/hits.ts` use `src/lib/jsonStore.ts` (mutex + write-temp-then-rename) to write `data/guestbook.json`, `data/reactions.json`, and `data/hits.json`. The Dockerfile does not `COPY data/` — all of them rely on the volume mount the leaderboards already use, and degrade gracefully if it is not writable.
+- **Anything unauthenticated that writes needs abuse controls:** `POST /api/guestbook` and `POST /api/reactions/[slug]` are same-origin only (`isSameOrigin()` compares `Origin` against `site`, never `Astro.url.origin`, which is the internal proxy host in production), body-capped (`src/lib/readBody.ts`), and rate limited via `lib/rateLimit.ts`. The control that actually matters for the guestbook is structural: `signGuestbook()` **rejects** when the book is full instead of evicting the oldest entry, so no volume of spam can destroy a real signature. Rate limiting alone would not have closed that — the key is best-effort and resets on restart. Submitted guestbook URLs are allowlisted to `http:`/`https:` via `sanitizeUrl()` and rendered with `rel="nofollow ugc noopener"`.
+- **Shared code between server and client:** `src/lib/images.ts`, `src/lib/constants.ts`, `src/lib/contentDiscovery.ts`, `src/lib/reading.ts`, `src/lib/lastfmClient.ts`, `src/lib/lastfmTrack.ts`, `src/lib/lastfmTypes.ts`, and `src/lib/starPairs.ts` are importable from both Astro frontmatter (server) and React components (client bundles). `src/lib/lastfm.ts` and `src/lib/pulsoid.ts` are server-only (use env vars).
+- **Content Collections:** Use `getCollection()` and `getEntry()` from `astro:content` — *not* `getEntryBySlug()`, which is deprecated and throws for these collections instead of returning undefined, so a miss branch written after it never runs and an unknown slug 500s. A dynamic route that misses should `return Astro.rewrite('/404')` so the visitor gets the real 404 page, in whichever skin, with a 404 status.
+- **design-sync & component conventions:** Only `src/components/` (the 4 reusable components) is synced to Claude Design. Components in `src/components/` and `src/page-components/` export both a named export and `export default <Name>` (`export *` in design-sync's synth-entry bundler does not forward default exports). `.design-sync/config.json`'s `dtsPropsFor.ProjectCard` hand-writes a plain shape matching `CollectionEntry<"projects">` — keep both in sync if the `projects` schema changes.
+- **API routes:** Export `APIRoute` type from Astro and return `new Response()`.
+- **Modals:** Use `<dialog>` elements instead of `prompt()`/`alert()` for new code (`RockPaperScissors`'s `prompt()` username flow is legacy, preserved from the React port).
+- **Accessibility:** All interactive elements need `aria-label` if text-only isn't descriptive; canvas elements get `role="img"` + `aria-label`.
 
 ## The retro skin (Web 1.0 / webcore mode)
 
-The whole point is that this is a *different site*, not a restyle — the layout, the chrome, and the page bodies are all separate. `SkinToggle.tsx` writes the `kk-skin` cookie and does a full `location.reload()`, never a ClientRouter navigation, because the two skins are different documents.
+The whole point is that this is a *different site*, not a restyle — the layout, the chrome, and the page bodies are all separate. `SkinToggle.tsx` (rendered in all three shells) writes the `kk-skin` cookie and does a full `location.reload()`, never a ClientRouter navigation, because the skins are different documents.
 
-- **`src/styles/retro.css` is the single shared vocabulary.** Every class is `rt-*` and every rule is scoped under `[data-skin="retro"]`, because `Layout.astro` statically imports both shells so Astro bundles `global.css` (Tailwind + DaisyUI) onto retro pages too. Section 1 is a deliberate **un-reset**: Tailwind's Preflight strips list bullets, heading sizes, `hr`/table borders and inline images — exactly the browser defaults this aesthetic is built from — so they are handed back, wrapped in `:where()` so the `rt-*` classes still win. Add primitives here centrally; page components use the vocabulary plus inline styles, never their own CSS.
-- **Colour goes through variables, never literals.** Section 2 defines each sub-theme (`kawaii`, `geocities`, `cyber`, `y2k`), including the *derived* inks: `--rt-on-accent` / `--rt-on-accent-2` for text sitting on an accent, `--rt-link-hover-ink`, `--rt-focus`, `--rt-heading-ink`, and a per-theme `--rt-rainbow` ramp. Those exist because a single hard-coded `#ffffff` or a reused `--rt-accent` is legible in two themes and invisible in the other two — white on geocities' yellow is 1.07:1. A new sub-theme needs a full var block, a critical-background line in `RetroLayout.astro`, and a swatch in `RetroChrome.tsx`.
+- **`src/styles/retro.css` is the single shared vocabulary.** Every class is `rt-*` and every rule is scoped under `[data-skin="retro"]`, because `Layout.astro` statically imports all shells so Astro bundles `global.css` (Tailwind + DaisyUI) onto retro pages too. Section 1 is a deliberate **un-reset**: Tailwind's Preflight strips list bullets, heading sizes, `hr`/table borders and inline images — exactly the browser defaults this aesthetic is built from — so they are handed back, wrapped in `:where()` so the `rt-*` classes still win. Add primitives here centrally; page components use the vocabulary plus inline styles, never their own CSS.
+- **Colour goes through variables, never literals.** Section 2 defines each sub-theme (`y2k` default, `kawaii`, `geocities`, `cyber`), set as `data-retro-theme` on `<html>` from `localStorage` by an inline pre-paint script in `RetroLayout.astro` (`data-cfasync="false"`) and switched by `RetroChrome.tsx`, including the *derived* inks: `--rt-on-accent` / `--rt-on-accent-2` for text sitting on an accent, `--rt-link-hover-ink`, `--rt-focus`, `--rt-heading-ink`, and a per-theme `--rt-rainbow` ramp. Those exist because a single hard-coded `#ffffff` or a reused `--rt-accent` is legible in two themes and invisible in the other two — white on geocities' yellow is 1.07:1. `RETRO_THEMES`/`DEFAULT_RETRO_THEME` in `src/lib/skin.ts` are the source of truth. A new sub-theme needs a full var block in `retro.css` §2, a critical-background line in `RetroLayout.astro`, and a swatch in `RetroChrome.tsx`.
 - **No `<ClientRouter />` in the retro shell.** Full page loads are period-accurate and avoid cross-skin swap bugs. The consequence is that the chiptune stops on navigation and islands remount every page.
-- **The interactive islands are wrapped, never forked.** `Tetris.tsx`, `RockPaperScissors.tsx` and `Tunes.tsx` render unchanged inside `RetroIslandShell.astro` and are restyled from outside by retro.css §17. Their logic drives the DOM through `document.getElementById` against that exact markup, so a retro rewrite would render fine and silently stop working. `RetroIslandShell` is `.astro` rather than React because Astro pre-renders content slotted into a framework component to static HTML, stripping the island's hydration.
-- **Graphics are generated, never hotlinked.** `scripts/gen-retro-assets.mjs` (`npm run gen:retro`) draws every asset in `public/retro/` as SVG with its animation CSS embedded in the file — external CSS does not apply inside an `<img>`. Output is committed so the build never runs the script. Two traps: an `<img>` is a separate document, so the page's `prefers-reduced-motion` cannot reach inside it and each file needs its own media query; and an XML comment may not contain a double hyphen, so a CSS custom property name inside emitted SVG is a parse error.
-- **Data that both skins render lives in `src/data/`.** `uses.ts`, `links.ts`, `now.ts`. Editing a copy inside one component updates only one skin. The retro components keep their period flavour (fake window captions, `NEW!` badges) in local lookups keyed by title/label, so a new entry still renders, just without flavour.
+- **The interactive islands are wrapped, never forked.** `Tetris.tsx`, `RockPaperScissors.tsx`, `StarPairs.tsx`, `Tunes.tsx`, and `PostReactions.tsx` render unchanged inside `RetroIslandShell.astro` and are restyled from outside by `retro.css` §17. Their logic drives the DOM through `document.getElementById` against that exact markup, so a retro rewrite would render fine and silently stop working. `RetroIslandShell` is `.astro` rather than React because Astro pre-renders content slotted into a framework component to static HTML, stripping the island's hydration.
+- **Graphics are generated, never hotlinked.** `scripts/gen-retro-assets.mjs` (`npm run gen:retro`) draws every asset in `public/retro/` as SVG with its animation CSS embedded in the file — external CSS does not apply inside an `<img>`. Output is committed so the build never runs the script. Graphics with text labels need an opaque plate behind the label so dark text doesn't vanish on dark `--rt-panel` themes. Two traps: an `<img>` is a separate document, so the page's `prefers-reduced-motion` cannot reach inside it and each file needs its own media query; and an XML comment may not contain a double hyphen, so a CSS custom property name inside emitted SVG is a parse error.
+- **Data that all three skins render lives in `src/data/`.** `uses.ts`, `links.ts`, `now.ts`. Editing a copy inside one component updates only one skin. The retro components keep their period flavour (fake window captions, `NEW!` badges) in local lookups keyed by title/label, so a new entry still renders, just without flavour.
 - **Accessibility is deliberately not period-accurate.** Skip link, real `alt` text, `aria-label`s, and a reduced-motion block in §18 that stops every animation. Use the CSS marquee (`.rt-marquee__track`), never a real `<marquee>` — the element scrolls from the browser's layout engine, so no CSS rule can stop it. The chiptune defaults to off and only starts from a click.
-- **`SkinToggle.tsx` lives in `retro-components/` even though both shells use it.** `src/components/` is the design-sync surface (`.design-sync/config.json` globs that whole directory), and a control whose entire job is to set a cookie and reload the page is meaningless in a design tool — syncing it would also drag `src/lib/skin.ts` into that bundle.
+- **`SkinToggle.tsx` lives in `retro-components/` even though all three shells use it.** `src/components/` is the design-sync surface (`.design-sync/config.json` globs that whole directory), and a control whose entire job is to set a cookie and reload the page is meaningless in a design tool — syncing it would also drag `src/lib/skin.ts` into that bundle.
 
 ## Mandy mode (my default skin)
 
 Mandy mode takes the general structure of [amandata.dev](https://amandata.dev), my girlfriend's site, and rebuilds it around my own fandoms. Like the retro skin it is a different document, not a restyle, and `SkinToggle.tsx` switches to it the same way.
 
 - **Sub-themes are fandoms:** `gotham` (Batman, the default), `basement` (The Binding of Isaac), `kanto` (Pokémon), `inkwell` (comics). `MANDY_THEMES` / `DEFAULT_MANDY_THEME` in `src/lib/skin.ts` are the source of truth. The choice is a `kk-mandy-theme` cookie that middleware resolves into `locals.mandyTheme` and `MandyLayout` renders onto `<html>`, so there is no pre-paint script for Rocket Loader to defer. A new sub-theme needs a `MANDY_THEMES` entry, a token block in `mandy.css` §1, a `mandy-<name>` DaisyUI theme in `tailwind.config.mjs`, a critical-background line in `MandyLayout.astro`, a `MANDY_THEME_INFO` entry in `MandyNav.tsx` and a scene in `MandyBackdrop.tsx`.
-- **`data-theme="mandy-<name>"` does double duty:** it selects the `mandy.css` tokens and it is a DaisyUI theme, which is how Tetris, Tunes, the reactions and the other DaisyUI-styled islands take on the palette unchanged. I never reuse a bare name like `dark` or `light`, which are live modern-skin themes.
+- **`data-theme="mandy-<name>"` does double duty:** it selects the `mandy.css` tokens and it is a DaisyUI theme, which is how Tetris, Star Pairs, Tunes, the reactions and the other DaisyUI-styled islands take on the palette unchanged. I never reuse a bare name like `dark` or `light`, which are live modern-skin themes.
 - **`src/styles/mandy.css` is the single shared vocabulary.** Every class is `md-*`, every rule and keyframe is scoped or prefixed under `[data-skin="mandy"]`, because `global.css` ships on these pages too and amandata's original class names (`.btn`, `.hero`, `.footer`, `.stat`, `.progress`) collide with DaisyUI. Mandy components use these classes and inline styles, never Tailwind utilities or their own CSS.
 - **It works without JavaScript.** It is the default skin, so the nav dropdowns are native `<details>` disclosures that open with JS off; `MandyNav` only takes over `open` after hydration (one menu at a time, arrow keys, Escape). `MandyEffects` adds `md-js` to `<html>` before any hidden reveal state exists, so a failed hydration still leaves every section readable. The nav search box falls back to a `/blog?q=` search.
 - **The backdrop replaces amandata's Othello board.** `MandyBackdrop.tsx` draws one self-playing pixel scene per sub-theme into a small buffer upscaled without smoothing, and draws a single static frame under `prefers-reduced-motion`. All art is drawn in code; nothing is downloaded or hotlinked.
+- **One bat emblem:** `src/page-components/PixelBat.tsx` (`BAT_ROWS`, a 20×7 pixel bat with palindromic rows reduced from my braille-art bat) is the Mandy nav mark, the gotham Bat-Signal, the modern Batman theme swatch, and the skin button's Mandy icon. Edit it there, and keep `scale` a whole number so the pixels stay crisp. The backdrop canvas is upscaled 3× (`PIXEL`), so a wider sprite there gets big fast.
 - **Islands are wrapped, never forked**, in `MandyIslandShell.astro`, for the same reasons as `RetroIslandShell`. Pass `level={0}` when the island brings its own `<h1>` so the outline never runs h2 → h1, and `first={false}` when it is not the first section on the page. The guestbook has its own `MandyGuestbookPage.tsx` with the same API calls and `rel="nofollow ugc noopener"` links.
-- **Content is mine, not Mandy's.** Only the structure is borrowed; the bio, projects, stats and CV come from `src/data/*`, `cv.json` and the collections. The `/now` prose lives in three components (`NowPage`, `RetroNowPage`, `MandyNowPage`) that I edit together.
+- **Content is mine, not Mandy's.** Only the structure is borrowed; the bio, projects, stats and CV come from `src/data/*`, `cv.json` and the collections. The `/now` prose lives in three components (`NowPage`, `RetroNowPage`, `MandyNowPage`) that I edit together. Google Fonts (Pixelify Sans, VT323, Silkscreen, Nunito, Bangers) load only in this shell.
 
 ## Getting Started
 
 1. Install dependencies with `npm install`.
-2. Copy `.env.example` to `.env` and provide your Last.fm credentials.
+2. Copy `.env.example` to `.env` and provide your Last.fm (and optional Pulsoid / Keystatic) credentials.
 3. Use `npm run dev` to start the local dev server.
-4. Run `npm run build` to generate the production build before committing.
+4. Run `npm run check`, `npm test`, `npm run build`, and `npm run test:render` before committing.
 
 ## Useful Commands
 
@@ -130,17 +183,18 @@ Mandy mode takes the general structure of [amandata.dev](https://amandata.dev), 
 - `npm test` – run my focused regression checks with Node's test runner via `tsx` (Node 20 compatible).
 - `npm run test:render` – after a build, I check real production responses in all three skins (plus the no-cookie default) without starting a server. React interaction checks use JSDOM and do not replace a visual browser pass.
 - `npm run preview` – preview the production build locally.
+- `npm run gen:retro` – redraw the retro skin's graphics into `public/retro/` (output is committed).
+- `npm run gen:og` – redraw the OG card artwork into `src/assets/og/` (output is committed).
+- `npm run new-post` – scaffold a new blog post in `src/content/blog/`.
 - `docker compose up --build` – build and run in container (maps port 8484 → 4321).
 
 ## Environment Variables
 
-Required in `.env`:
 - `LASTFM_USER` – Last.fm username for scrobble data
 - `LASTFM_API_KEY` – Last.fm API key
-
-For Decap CMS OAuth:
-- `OAUTH_CLIENT_ID` – GitHub OAuth app client ID
-- `OAUTH_CLIENT_SECRET` – GitHub OAuth app client secret
+- `PULSOID_ACCESS_TOKEN` – Pulsoid token (BRO plan, scope `data:heart_rate:read`) for the native live heart rate; runtime only
+- `PULSOID_WIDGET_URL` – free Pulsoid widget URL (`https://pulsoid.net/widget/view/<id>`), the fallback when the token is missing or rejected; runtime only
+- `KEYSTATIC_GITHUB_CLIENT_ID` / `KEYSTATIC_GITHUB_CLIENT_SECRET` / `KEYSTATIC_SECRET` / `PUBLIC_KEYSTATIC_GITHUB_APP_SLUG` – Keystatic GitHub mode; client id + public slug are needed at build time (route guard, client inline), all four at runtime. Written to `.env` by the `/keystatic` setup flow in dev
 
 ## Style Guidelines
 
@@ -153,8 +207,8 @@ For Decap CMS OAuth:
 ## Contributing
 
 - Follow the existing coding style (two-space indentation, semicolons in JS/TS).
-- Whenever you make a change, add or modify this AGENTS.md file to enhance future updates, refactors and usability. Whether this is instructions, best habits, etc.
-- Whenever a change is made, keep a list of notes at the bottom of this AGENTS.md file that tracks the more "qualitative" wants of the user/client, such as themes, experiences, etc.
+- Whenever you make a change, add or modify this `AGENTS.md` file (and keep `CLAUDE.md` in parity) to enhance future updates, refactors and usability. Whether this is instructions, best habits, etc.
+- Whenever a change is made, keep a list of notes at the bottom of this `AGENTS.md` file that tracks the more "qualitative" wants of the user/client, such as themes, experiences, etc.
 - Keep commits focused and write a short imperative subject line (e.g. `Fix navbar links`).
 - I run `npm run check`, `npm test`, `npm run build` and `npm run test:render` before committing.
 - New pages go in `src/pages`, and reusable pieces belong in `src/components`.
@@ -172,14 +226,14 @@ For Decap CMS OAuth:
 - I keep strict TypeScript checks clean alongside the build. Canvas and typing callbacks are initialised after the DOM guards so they retain non-null types; persisted hit-counter JSON starts as `unknown` and is narrowed before use. This keeps my homepage effects and visitor counter working without weakening strict mode.
 - I load Tunes periods on demand instead of prefetching every chart. The active period owns its abortable request so slower responses cannot overwrite a newer selection. Live polling refreshes the whole recent list, updates playback even when the track name is unchanged, pauses in hidden tabs, and removes its timers/listeners on navigation. Missing cover art uses my local record illustration.
 - I share successful Last.fm requests across visitors, with a bounded cache and in-flight coalescing. Recent tracks expire after 15 seconds; charts after 15 minutes. I keep a five-second upstream timeout, validate public query parameters, return uncached 503s for outages, and let `/now` and `/tunes` render with empty music data when Last.fm is unavailable. I never log URLs containing my API key.
-- I added Star Pairs as a gentle cosmic memory game with three board sizes. Both skins wrap the same island, and the pure rules live in `src/lib/starPairs.ts`. I keep its scores on the visitor's device, pause when the tab is hidden, and support arrow keys plus Enter/Space. I never randomise the SSR board; it is dealt after Start to avoid hydration mismatches.
-- I give readers a table of contents from Astro's rendered heading slugs, an estimated reading time, and optional progress/copy tools in both skins. I keep article bodies static; `ReadingTools` only adds controls and cleans up its observers, scroll listener and injected code buttons on navigation.
-- I want my blog and portfolio to be easy to explore in either skin. Search and sorting live in URL query parameters and work without JavaScript; `src/lib/contentDiscovery.ts` owns filtering and ordering, so page components must preserve the supplied order. I keep full Markdown bodies on the server instead of shipping a search index to every visitor.
+- I added Star Pairs as a gentle cosmic memory game with three board sizes. All three skins wrap the same island, and the pure rules live in `src/lib/starPairs.ts`. I keep its scores on the visitor's device, pause when the tab is hidden, and support arrow keys plus Enter/Space. I never randomise the SSR board; it is dealt after Start to avoid hydration mismatches.
+- I give readers a table of contents from Astro's rendered heading slugs, an estimated reading time, and optional progress/copy tools in all three skins. I keep article bodies static; `ReadingTools` only adds controls and cleans up its observers, scroll listener and injected code buttons on navigation.
+- I want my blog and portfolio to be easy to explore in every skin. Search and sorting live in URL query parameters and work without JavaScript; `src/lib/contentDiscovery.ts` owns filtering and ordering, so page components must preserve the supplied order. I keep full Markdown bodies on the server instead of shipping a search index to every visitor.
 - Tunes page normalizes track names to filter out duplicates across different language credits.
 - Cat toggle persists across pages so Oneko can follow you site-wide.
-- Theme bar allows switching between "dark", "light", and "forest" themes using a fixed selector on every page.
+- Theme bar allows switching between five modern themes ("dark", "light", "forest", "spider-man", and "batman") using a fixed selector on every page.
 - Portfolio includes pages for my Final Year Project and Year 2 Java calculator.
-- Games page lists playable Tetris and Rock Paper Scissors subpages.
+- Games page lists playable Tetris, Rock Paper Scissors, and Star Pairs subpages.
 - Tetris game supports on-screen mobile controls for touch devices.
 - Tetris shows the next piece and lets me hold one with C or Shift.
 - The site has a "webcore mode" toggle: one click swaps the whole thing for a Web 1.0 personal homepage — tiled backgrounds, 88x31 buttons, blinkies, a marquee, a real hit counter, a webring, a waving cat mascot, and a guestbook. It is meant to feel like a different site I made in 2003, not like a theme.
@@ -197,3 +251,6 @@ For Decap CMS OAuth:
 - Tetris scoring follows the official guidelines with soft and hard drop bonuses.
 - Rock Paper Scissors game with scores synced to server leaderboard.
 - I added Mandy mode, a third skin modelled on amandata.dev's structure but built around my fandoms (Batman, The Binding of Isaac, Pokémon, comics), and made it the default for visitors without a saved choice. Each fandom is a sub-theme with its own pixel backdrop scene and a server-rendered cookie, so the first paint is right. Because it is the default, it has to work without JavaScript: the nav dropdowns are native `<details>`, and the render tests check that every menu link is reachable in the server HTML.
+- I added a live Pulsoid heart-rate readout across all three skins: a footer pill (`HeartRate.tsx`), an `/about` card with a sweeping ECG trace (`HeartRateCard.tsx`), and a draggable floating monitor (`HeartRateFloat.tsx`) toggled from a ♥ dock button whose open state and position persist across navigations. All heart islands share one 5s client poller (`src/lib/heartRateStore.ts`) backed by `/api/heartrate`, which caches Pulsoid's API for 3s across visitors, hides the readout when the strap is off (>60s old), and falls back to the free Pulsoid widget iframe (`PULSOID_WIDGET_URL`) if the BRO token is missing or lapses.
+- I unified the site's bat emblem into `src/page-components/PixelBat.tsx` (`BAT_ROWS`, a 20×7 palindromic pixel bat reduced from my braille-art bat) so the Mandy nav mark, the Gotham Bat-Signal backdrop, the modern Batman theme swatch, and the Mandy skin button all draw from one crisp pixel definition.
+- I keep `AGENTS.md`, `CLAUDE.md`, `README.md`, and `.github/copilot-instructions.md` in sync so every coding assistant has the same accurate map of the three-skin architecture, islands, and verification workflow.

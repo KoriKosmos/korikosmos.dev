@@ -2,172 +2,63 @@
 
 ## Project Overview
 
-Personal portfolio, blog, and games hub at **korikosmos.dev**. Built with Astro 5 (SSR mode) using the Node standalone adapter, styled with Tailwind CSS 3 + DaisyUI 5.
+Personal portfolio, blog, and games hub at **korikosmos.dev**, with three switchable skins: Mandy mode (my default), the modern skin, and a Web 1.0 "retro" skin. Built with Astro 5 (SSR mode) using the Node standalone adapter and React 19 islands (`@astrojs/react`), styled with Tailwind CSS 3 + DaisyUI 4.
+
+For full architectural details, always consult `AGENTS.md` and `CLAUDE.md` in the repository root.
 
 ## Tech Stack
 
 - **Framework:** Astro 5 (`output: 'server'`, `@astrojs/node` standalone adapter)
-- **Styling:** Tailwind CSS 3.3 + DaisyUI 5.5 (3 custom themes: dark, light, forest)
+- **UI:** React 19 via `@astrojs/react` — `.astro` pages fetch data server-side and render a `.tsx` body component for the active skin (`mandy-components/Mandy*`, `page-components/*`, or `retro-components/Retro*`)
+- **Styling:** Tailwind CSS 3.3 + DaisyUI 4.12 (5 custom themes: `dark`, `light`, `forest`, `spider-man`, `batman` for the modern skin; `src/styles/retro.css` (`rt-*`) for the retro skin; `src/styles/mandy.css` (`md-*`) plus four `mandy-*` DaisyUI themes for Mandy mode)
 - **TypeScript:** Strict mode (`astro/tsconfigs/strict`)
 - **Deployment:** Docker (multi-stage build, Node 20 Alpine, port 4321)
-- **CMS:** Decap CMS (admin at `/admin`, GitHub OAuth backend)
+- **CMS:** Keystatic (admin at `/keystatic`, GitHub mode; schemas in `keystatic.config.ts`; `/admin` 301-redirects there)
 - **Key Features:**
-  - Last.fm integration (server-side proxy at `/api/lastfm`)
-  - Interactive games (Tetris with SRS rotation, Rock Paper Scissors)
-  - Persistent oneko cat cursor companion
-  - Theme switcher with localStorage persistence
+  - Three parallel skins resolved via `kk-skin` cookie in `src/middleware.ts` (`mandy` default, `modern`, `retro`)
+  - Last.fm integration (server-side proxy at `/api/lastfm` with bounded cache + request coalescing)
+  - Live Pulsoid heart rate (`/api/heartrate`, footer pill, `/about` ECG card, draggable floating monitor)
+  - Interactive games (Tetris with SRS rotation, Rock Paper Scissors, Star Pairs constellation memory game) wrapped in `MandyIslandShell.astro` and `RetroIslandShell.astro` without forking
+  - Persistent guestbook (`/guestbook`), per-post emoji reactions, and retro hit counter with same-origin, body-cap, and rate-limit guards
+  - URL-driven blog & portfolio search/filtering (`src/lib/contentDiscovery.ts`) and blog reading tools (`src/lib/reading.ts`, `ReadingTools.tsx`)
+  - Prerendered Open Graph cards (`src/pages/og/[...route].ts`, `src/layouts/SeoHead.astro`)
 
 ## Code Style Guidelines
 
 - **Indentation**: Use 2 spaces (no tabs)
 - **JavaScript/TypeScript**: Always use semicolons
 - **Voice**: Write documentation in first-person perspective
-- **Commits**: Use imperative mood (e.g., "Fix navbar links", "Add Tetris game")
+- **Commits**: Use imperative mood (e.g., "Fix navbar links")
 - **File Organization**:
   - Pages go in `src/pages/`
-  - Reusable components in `src/components/`
+  - Reusable modern components in `src/components/` (design-sync surface — export both named and default)
+  - Modern page bodies and shared interactive islands in `src/page-components/`
+  - Mandy mode components in `src/mandy-components/`
+  - Web 1.0 retro components in `src/retro-components/`
   - Game engines and shared logic in `src/lib/`
-  - Static data (like CV) in `src/data/`
+  - Static and multi-skin data in `src/data/` (`cv.json`, `uses.ts`, `links.ts`, `now.ts`)
   - Configuration in `src/config.ts`
 
-## Architecture & Key Patterns
+## Key Architecture Decisions
 
-### Directory Structure
+- **No `prerender = true` on any route using `Layout.astro`**: Skin selection lives in a request cookie (`kk-skin`), so all page routes (including `blog/[slug]` and `portfolio/[slug]`) are SSR. Sitemap entries for dynamic routes are supplied via `customPages` in `astro.config.mjs`. Only `src/pages/og/[...route].ts` is prerendered.
+- **Content Collections**: Use `getCollection()` and `getEntry()` from `astro:content` — **never `getEntryBySlug()`** (deprecated and throws on unknown slugs). Missing dynamic routes should `return Astro.rewrite('/404')`.
+- **Server-rendered themes**: Modern theme (`kk-theme` cookie + `localStorage` via `persistTheme()` in `src/lib/theme.ts`) and Mandy sub-theme (`kk-mandy-theme` cookie in `src/lib/skin.ts`) are rendered onto `<html>` server-side to prevent FOUC. Pre-paint scripts carry `data-cfasync="false"`.
+- **Islands are wrapped, never forked**: `Tetris.tsx`, `RockPaperScissors.tsx`, `StarPairs.tsx`, `Tunes.tsx`, and `PostReactions.tsx` are wrapped in `MandyIslandShell.astro` / `RetroIslandShell.astro` (`.astro` so slotted islands retain hydration).
+- **Single bat emblem**: `src/page-components/PixelBat.tsx` (`BAT_ROWS`, 20×7 palindromic pixel bat) is shared across the Mandy nav mark, Gotham Bat-Signal, modern Batman theme swatch, and skin toggle button.
+- **Modals & Accessibility**: Use `<dialog>` elements instead of `prompt()`/`alert()`. All interactive elements need `aria-label` if text-only isn't descriptive; canvas elements get `role="img"` + `aria-label`; respect `prefers-reduced-motion`.
 
-```
-src/
-├── components/    # Reusable Astro components (CvSection, ProjectCard, ThemeBar, OnekoToggle)
-├── content/       # Content collections (blog posts, projects) as Markdown
-│   ├── blog/      # Blog posts with frontmatter: title, description, pubDate
-│   └── projects/  # Project entries with frontmatter: title, summary, description, github?
-├── data/          # Static data (cv.json)
-├── layouts/       # Layout.astro — single layout with SEO meta, skip link, nav, footer
-├── lib/           # Shared utilities
-│   ├── constants.ts  # Shared constants (BLOCKED_ITEMS for Last.fm filtering)
-│   ├── images.ts     # getBestImage() — shared between server and client code
-│   ├── lastfm.ts     # Last.fm API wrapper (server-side, uses env vars)
-│   └── tetris.js     # Tetris game engine (decoupled from UI)
-├── pages/         # File-based routing
-│   ├── api/       # API routes (lastfm, scores/[game], auth callbacks)
-│   ├── games/     # Tetris, Rock Paper Scissors
-│   └── ...        # index, about, cv, portfolio, blog, tunes, 404
-├── styles/        # global.css (Tailwind directives + custom utilities)
-└── config.ts      # Centralized site config & navigation
-public/            # Static assets (favicon.svg, robots.txt, oneko.js, admin config)
-data/scores/       # Persistent game leaderboard data (JSON files, written by API)
-```
+## Verification & Commands
 
-### Key Files
-
-- `src/layouts/Layout.astro` - Base layout with navigation, theme switcher, oneko cat toggle
-- `src/config.ts` - Centralized navigation and site settings
-- `src/data/cv.json` - Data-driven CV content
-- `src/lib/tetris.js` - Tetris game engine (decoupled from UI)
-- `src/pages/api/lastfm.ts` - Server-side proxy for Last.fm API
-
-### Key Architecture Decisions
-
-- **SSR with selective prerendering:** Most pages are server-rendered. Blog and portfolio `[slug]` pages use `export const prerender = true` with `getStaticPaths()` for static generation.
-- **Theme system:** DaisyUI themes configured in `tailwind.config.mjs` with `data-theme` attribute on `<html>`. Three themes: dark (default), light, forest. Custom `--surface` and `--accent-dark` CSS vars extend DaisyUI for specific utilities.
-- **Layout props:** `Layout.astro` accepts `title`, `description`, `image`, and `isWide` props. Title is auto-formatted as `{title} | KoriKosmos` (homepage uses bare site name).
-- **Tunes page pattern:** SSR fetches initial data, passes to client via `<script define:vars>`. Client JS is the single source of truth for rendering artists/albums (avoids template duplication). Client polls for now-playing updates every 30s.
-- **Game scores:** Stored as JSON files in `/data/scores/`, accessed via API routes with `async-mutex` for write safety. Leaderboards sync between localStorage and server.
-- **Shared code between server and client:** `src/lib/images.ts` and `src/lib/constants.ts` are importable from both Astro frontmatter (server) and `<script>` tags (client bundles). `src/lib/lastfm.ts` is server-only (uses env vars).
-
-### Important Patterns
-
-1. **Content Collections**: Blog and projects use Astro's content collections with `getCollection()` and `getEntryBySlug()`
-2. **Data-Driven Components**: CV page uses JSON data with reusable `CvSection` components
-3. **Game Engines**: Game logic lives in `/lib` and is decoupled from UI components
-4. **API Proxy Pattern**: Last.fm credentials are kept secure via server-side proxy
-5. **Client-Side State**: Theme preferences persist via localStorage
-6. **Inline Scripts**: Some pages use `define:vars` to inject server-side variables securely
-7. **API routes**: Export `APIRoute` type from Astro and return `new Response()`
-8. **Modals**: Use `<dialog>` elements instead of `prompt()`/`alert()`
-9. **Accessibility**: All interactive elements need `aria-label` if text-only isn't descriptive; canvas elements get `role="img"` + `aria-label`
-
-## Development Workflow
-
-### Setup
-```bash
-npm install
-cp .env.example .env  # Add LASTFM_USER and LASTFM_API_KEY
-```
-
-### Commands
-- `npm run dev` - Start dev server at http://localhost:4321
-- `npm run build` - Build for production (always verify before committing)
-- `npm run preview` - Preview production build locally
-
-### Before Committing
-- **Always run `npm run build`** to verify no build errors
-- There are no automated tests in this project
-- Review changes carefully for unintended modifications
-
-### Docker Support
-- `docker compose up --build` - Build and run in container (maps port 8484 → 4321)
-- Multi-stage build: Node 20 Alpine, runs `node ./dist/server/entry.mjs`
-- Scores data persisted via Docker volume
-
-## Content Management
-
-- **Decap CMS**: Access at `/admin` to manage blog posts and projects (GitHub OAuth backend)
-- **Blog Posts**: Markdown files in `src/content/blog/`
-- **Projects**: Markdown files in `src/content/projects/`
-- **CV Data**: Edit `src/data/cv.json` directly
-
-## Style Guidelines
-
-- Use DaisyUI semantic classes (`bg-base-100`, `text-base-content`, `bg-primary`, `text-primary-content`, etc.) for theme-aware colors
-- Use `bg-base-200` for card/surface backgrounds, `bg-base-100` for page background
-- Use `from-primary to-secondary` for gradient accents
-- The custom `hover:bg-accent-dark` utility is defined in `global.css` for the accent dark hover state
-- Button style: `bg-neutral text-neutral-content rounded` for game controls, `bg-primary text-primary-content` for CTAs
-
-## Important Notes & Gotchas
-
-### Security & Privacy
-- Last.fm API keys are protected via server-side proxy (`/api/lastfm`)
-- Never expose API keys in client-side code
-
-### State Persistence
-- Oneko cat toggle persists across pages via localStorage
-- Theme selection persists across pages via localStorage
-- Game high scores sync between localStorage and server-side leaderboards
-
-### Game Features
-- **Tetris**:
-  - Uses official Super Rotation System (SRS)
-  - Seven-piece grab bag for spawning
-  - Hold function (C or Shift)
-  - Lock delay for piece sliding
-  - Level-based speed scaling
-  - Official scoring with soft/hard drop bonuses
-  - Mobile controls with touch support
-- **Rock Paper Scissors**: Simple game with scores synced to server leaderboard
-
-### Known Behaviors
-- Tunes page normalizes track names to filter duplicates across different language credits
-- `.env` variables are injected at build time for client-side code, available at runtime for server-side code
-
-## Environment Variables
-
-Required in `.env`:
-- `LASTFM_USER` - Last.fm username for scrobble data
-- `LASTFM_API_KEY` - Last.fm API key
-
-For Decap CMS OAuth:
-- `OAUTH_CLIENT_ID` - GitHub OAuth app client ID
-- `OAUTH_CLIENT_SECRET` - GitHub OAuth app client secret
+Before committing, always run all four verification commands:
+- `npm run check` — TypeScript check (`tsc --noEmit`)
+- `npm test` — Unit/integration tests (`tests/*.test.ts`)
+- `npm run build` — Production build to `dist/`
+- `npm run test:render` — Production SSR render & JSDOM checks across all three skins (`tests/render/*.test.ts`)
 
 ## Contributing Best Practices
 
-1. **Minimal Changes**: Make the smallest possible modifications to achieve goals
-2. **Update Documentation**:
-   - Update `AGENTS.md` when making significant changes
-   - Keep `README.md` in sync with features
-   - Add notes to the bottom of `AGENTS.md` for qualitative user preferences
-3. **No Codex Labels**: Never apply "codex" label to PRs; omit ChatGPT chat links
-4. **First-Person Voice**: Write all documentation from my (the owner's) perspective
-5. **Verify Builds**: Ensure `npm run build` succeeds before finalizing changes
-6. **Consistency**: Match existing patterns and styles in the codebase
+1. **Minimal Changes**: Make the smallest possible modifications to achieve goals.
+2. **Update Documentation**: Keep `AGENTS.md`, `CLAUDE.md`, and `README.md` in sync, and append qualitative notes to the bottom of `AGENTS.md`.
+3. **No Codex Labels**: Never apply a "codex" label to PRs; omit ChatGPT chat links.
+4. **First-Person Voice**: Write all documentation from my (the owner's) perspective.

@@ -57,12 +57,14 @@ A production build **without** those env vars ships no admin routes at all.
 - **Saved themes on first paint**: I keep my modern theme in a cookie as well as local storage, so the server sends the selected theme in the HTML. Legacy choices migrate automatically. The picker follows the displayed theme, and cookie restoration still works during client navigation when local storage is blocked. Retro keeps its own independent scheme.
 - **Live Tunes updates**: The playing badge and recent history update together, including when the same song stops. Period changes cancel obsolete requests, charts load when selected, and live polling pauses in background tabs. Missing artwork has a local fallback.
 - **Resilient music loading**: I fetch independent Last.fm sections together and share cached requests between visitors. Recent tracks refresh quickly, charts are cached for 15 minutes, and a slow or unavailable Last.fm service cannot hold the page open indefinitely. API failures return an uncached retry response.
-- **Star Pairs** at `/games/star-pairs`: My constellation memory game has three board sizes, keyboard and touch controls, automatic pausing when leaving the tab, and personal bests stored on the device. It works in both skins and needs no account or external assets.
-- **Blog reading tools**: My posts show publication dates, reading-time estimates and a linked contents list. A progress strip tracks the article, and readers can copy a section link or a code block. The article and contents remain readable without JavaScript in either skin.
-- **Searchable blog and portfolio**: I can search titles, descriptions and post bodies, sort the results, and filter projects with public GitHub source. Filters are shareable URLs and work in both skins without JavaScript.
+- **Star Pairs** at `/games/star-pairs`: My constellation memory game has three board sizes, keyboard and touch controls, automatic pausing when leaving the tab, and personal bests stored on the device. It works in all three skins and needs no account or external assets.
+- **Blog reading tools**: My posts show publication dates, reading-time estimates and a linked contents list. A progress strip tracks the article, and readers can copy a section link or a code block. The article and contents remain readable without JavaScript in every skin.
+- **Searchable blog and portfolio**: I can search titles, descriptions and post bodies, sort the results, and filter projects with public GitHub source. Filters are shareable URLs and work in all three skins without JavaScript.
+- **Live heart rate**: When Pulsoid is configured (`PULSOID_ACCESS_TOKEN` or `PULSOID_WIDGET_URL`), I show my live heart rate in every skin's footer, an `/about` box with a sweeping ECG trace, and a draggable floating monitor toggled from the ♥ dock button that remembers its open state and position across pages. `/api/heartrate` shares a 3-second cache across visitors, hides the widget when the strap is off, and falls back to the free Pulsoid widget iframe if the token is missing or lapses.
 - **Mandy mode**, my default skin:
   - It follows amandata.dev's layout: a pixel nav with dropdowns, page search and a "Change Theme" menu, a slanted pixel wordmark with a sleeping pixel bat on it, a typewriter tagline, ruled sections and left-bordered cards.
   - Its four themes are my fandoms, and each one draws its own self-playing pixel scene in place of her Othello board. Gotham (Batman) has a bat-signal over a rainy skyline, Basement (The Binding of Isaac) has a crying kid clearing a cellar, Kanto (Pokémon) has a trainer in tall grass, and Inkwell (comics) has halftone paper with POW! bursts.
+  - The 20×7 pixel bat in `src/page-components/PixelBat.tsx` is the site's single bat emblem, shared by the Mandy nav mark, the Gotham Bat-Signal, the modern Batman theme swatch, and the Mandy skin button.
   - The theme is a cookie rendered on the server, so the first paint is already right. Reduced motion gets a single still frame.
   - It works without JavaScript: the nav menus are native disclosures, and every section stays readable if scripts never run.
   - The interactive islands are the same components, wrapped in `MandyIslandShell.astro`; each theme is also a DaisyUI theme, so they recolour without being forked. All the art is drawn in code.
@@ -70,10 +72,10 @@ A production build **without** those env vars ships no admin routes at all.
   - A `kk-skin` cookie, resolved in `src/middleware.ts` before anything renders. `src/layouts/Layout.astro` is a dispatcher that picks `MandyLayout.astro`, `ModernLayout.astro` or `RetroLayout.astro`, and each route renders the matching `src/mandy-components/Mandy*`, `src/page-components/*` or `src/retro-components/Retro*` body.
   - Four sub-themes of its own — y2k (the default), kawaii, geocities, cyber — switched from the retro control panel and remembered in `localStorage`.
   - Every graphic is generated, not hotlinked: `npm run gen:retro` draws all 35 assets in `public/retro/` as animated SVG. The output is committed, so the build never runs the script.
-  - The three interactive islands (Tetris, Rock Paper Scissors, Tunes) are the same components, wrapped in `RetroIslandShell.astro` and restyled from outside — not forked.
+  - The interactive islands (Tetris, Rock Paper Scissors, Star Pairs, Tunes, Reactions) are the same components, wrapped in `RetroIslandShell.astro` and restyled from outside — not forked.
   - Reduced motion stops everything that blinks, scrolls, sparkles or rainbows, the chiptune never autoplays, and every sub-theme's colour pairs are checked against WCAG contrast ratios.
   - Because the skin lives in a request cookie, no route using `Layout.astro` can be prerendered — the blog and portfolio `[slug]` pages are SSR, and `astro.config.mjs` feeds their URLs to the sitemap via `customPages`.
-- **Guestbook** at `/guestbook`, in both skins — persistent (`data/guestbook.json`), with a public `GET /api/guestbook` and a same-origin, rate-limited, body-capped `POST`. The entry cap rejects rather than evicts, so a flood can never destroy signatures, and submitted URLs are allowlisted to `http:`/`https:` before being rendered as links. Per-post emoji reactions use the same guards.
+- **Guestbook** at `/guestbook`, in all three skins — persistent (`data/guestbook.json`), with a public `GET /api/guestbook` and a same-origin, rate-limited, body-capped `POST`. The entry cap rejects rather than evicts, so a flood can never destroy signatures, and submitted URLs are allowlisted to `http:`/`https:` before being rendered as links. Per-post emoji reactions use the same guards.
 - **Hit counter** on the retro skin, bumped once per visitor session (`data/hits.json`).
 - **React islands architecture**:
   - `.astro` pages are thin wrappers: they do the server-side data fetching (content collections, Last.fm, `cv.json`) and render a React component in `src/page-components/` with the result as props.
@@ -106,26 +108,33 @@ A production build **without** those env vars ships no admin routes at all.
 ├── keystatic.config.ts  # Keystatic CMS schemas (blog, projects, CV)
 ├── public/
 ├── src/
+│   ├── assets/og/       # Generated OG card artwork (starfields + site mark)
 │   ├── components/      # Reusable React components (design-sync surface)
-│   ├── page-components/ # Page-body React components (one per route)
+│   ├── page-components/ # Modern page bodies + shared interactive islands & widgets
 │   ├── retro-components/# Web 1.0 skin: a Retro* body per route + SkinToggle, RetroChrome
 │   ├── mandy-components/# Mandy mode: a Mandy* body per route + nav, effects, backdrop, island shell
 │   ├── config.ts        # Site configuration & navigation
-│   ├── data/            # Static data (CV) + data shared by both skins (uses, links, now)
+│   ├── data/            # Static data (CV) + data shared by all three skins (uses, links, now)
 │   ├── env.d.ts         # Type definitions
-│   ├── layouts/         # Layout.astro (dispatcher), ModernLayout, RetroLayout, MandyLayout
-│   ├── lib/             # Game engines, skin cookie, guestbook, hits, rate limiter, JSON store
-│   ├── middleware.ts    # Skin resolution, hit counter, Keystatic OAuth origin fix
+│   ├── fonts/           # Vendored Noto Sans TTFs (400 + 800) for OG cards
+│   ├── layouts/         # Layout.astro (dispatcher), ModernLayout, RetroLayout, MandyLayout, SeoHead
+│   ├── lib/             # Game engines, skin/theme cookies, Last.fm, Pulsoid, guestbook, hits, rate limiter, JSON store
+│   ├── middleware.ts    # Skin/theme resolution, hit counter, Keystatic OAuth origin fix
 │   ├── pages/           # .astro routes: SSR data fetch → render the right body component
 │   │   ├── api/         # Server-side API endpoints
+│   │   ├── games/       # Tetris, Rock Paper Scissors, Star Pairs
+│   │   ├── og/          # Prerendered OG image endpoint
 │   │   └── ...
 │   ├── styles/          # global.css (Tailwind), retro.css (rt-*), mandy.css (md-*)
 │   └── content/
 │       ├── blog/
 │       └── projects/
 ├── scripts/
-│   └── gen-retro-assets.mjs  # Draws public/retro/* — run with `npm run gen:retro`
-├── data/                # Runtime state: scores/, guestbook.json, hits.json (volume-mounted)
+│   ├── gen-retro-assets.mjs  # Draws public/retro/* — run with `npm run gen:retro`
+│   ├── gen-og-assets.mjs     # Draws src/assets/og/* — run with `npm run gen:og`
+│   └── new-post.js           # Scaffolds a new blog post — run with `npm run new-post`
+├── data/                # Runtime state: scores/, guestbook.json, hits.json, reactions.json (volume-mounted)
+├── tests/               # Unit tests + post-build SSR render tests
 ├── .design-sync/        # Config for syncing src/components/ to Claude Design
 └── ...
 ```
@@ -144,6 +153,8 @@ Run these from the project root:
 | `npm run test:render` | Check production HTML in all three skins (build first) |
 | `npm run preview`   | Preview the built site locally         |
 | `npm run gen:retro` | Redraw the retro graphics in `public/retro/` |
+| `npm run gen:og`    | Redraw the OG card artwork in `src/assets/og/` |
+| `npm run new-post`  | Scaffold a new blog post in `src/content/blog/` |
 | `npm run astro ...` | Run additional Astro CLI commands      |
 
 I run `npm run check`, `npm test`, `npm run build` and `npm run test:render`
