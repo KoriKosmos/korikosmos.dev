@@ -97,7 +97,7 @@ A production build **without** those env vars ships no admin routes at all.
 - Manage posts, projects, and CV via **Keystatic** at `/keystatic` (schemas in `keystatic.config.ts`).
 - Responsive Tailwind styling
 - Includes dedicated pages for my Final Year Project and Year 2 Java calculator
-- I built a Guideline-style Tetris for the Games page: SRS rotation with wall kicks, hold, a ghost piece, a three-piece queue, T-spins, back-to-back and combo scoring, pause (P/Esc, or automatically when I leave the tab), touch controls on phones and tablets, a controls legend under the board that matches the device I'm on, and a **global leaderboard**. It waits for me to press Start and only asks for a name when there's a score to save.
+- I built a Guideline-style Tetris for the Games page: SRS rotation with wall kicks, hold, a ghost piece, a three-piece queue, T-spins, back-to-back and combo scoring, pause (P/Esc, or automatically when I leave the tab), touch controls on phones and tablets, a controls legend under the board that matches the device I'm on, and a **global leaderboard**. It has juice too: hard-drop trails, line-clear bursts, a gold slam for a Tetris, purple for T-spins, a rainbow sweep for perfect clears, combo callouts that heat up as the combo grows, screen shake that scales with the moment, and a grey-out when I top out — all toned down to still fades under reduced motion. It waits for me to press Start and only asks for a name when there's a score to save.
 - I also added a simple Rock Paper Scissors game that keeps my running score in `localStorage` and submits it to the same server leaderboard.
 
 ## Project Structure

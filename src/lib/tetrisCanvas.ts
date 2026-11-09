@@ -10,7 +10,7 @@ export const PREVIEW_W = 4 * PREVIEW_CELL_PX;
 export const PREVIEW_SLOT_H = 3 * PREVIEW_CELL_PX;
 
 // Guideline colours, indexed by cell value (1..7 = I J L O S T Z).
-const COLORS = ['', '#00d8e8', '#2f5bea', '#f39c12', '#f1d500', '#2ecc40', '#a040e8', '#e8322e'];
+export const PIECE_COLORS = ['', '#00d8e8', '#2f5bea', '#f39c12', '#f1d500', '#2ecc40', '#a040e8', '#e8322e'];
 const BACKGROUND = '#0b0d14';
 const GRID = 'rgba(255, 255, 255, 0.06)';
 
@@ -74,7 +74,7 @@ export function drawBoard(ctx: CanvasRenderingContext2D, game: TetrisEngine): vo
   for (let r = HIDDEN_ROWS; r < game.board.length; r++) {
     for (let c = 0; c < COLS; c++) {
       const v = game.board[r][c];
-      if (v) drawBlock(ctx, c * CELL_PX, (r - HIDDEN_ROWS) * CELL_PX, CELL_PX, COLORS[v]);
+      if (v) drawBlock(ctx, c * CELL_PX, (r - HIDDEN_ROWS) * CELL_PX, CELL_PX, PIECE_COLORS[v]);
     }
   }
 
@@ -84,7 +84,7 @@ export function drawBoard(ctx: CanvasRenderingContext2D, game: TetrisEngine): vo
   const each = (y: number, draw: (px: number, py: number, color: string) => void) => {
     p.matrix.forEach((row, r) => row.forEach((v, c) => {
       const by = y + r - HIDDEN_ROWS;
-      if (v && by >= 0) draw((p.x + c) * CELL_PX, by * CELL_PX, COLORS[v]);
+      if (v && by >= 0) draw((p.x + c) * CELL_PX, by * CELL_PX, PIECE_COLORS[v]);
     }));
   };
   if (ghost !== p.y && game.status === 'playing') {
@@ -118,7 +118,7 @@ export function drawPreview(ctx: CanvasRenderingContext2D, types: (PieceType | n
     const oy = slot * PREVIEW_SLOT_H + (PREVIEW_SLOT_H - b.h * size) / 2;
     if (dimmed) ctx.globalAlpha = 0.35;
     mat.forEach((row, r) => row.forEach((v, c) => {
-      if (v) drawBlock(ctx, ox + (c - b.left) * size, oy + (r - b.top) * size, size, COLORS[v]);
+      if (v) drawBlock(ctx, ox + (c - b.left) * size, oy + (r - b.top) * size, size, PIECE_COLORS[v]);
     }));
     ctx.globalAlpha = 1;
   });

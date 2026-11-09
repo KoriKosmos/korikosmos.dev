@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent, type PointerEvent as ReactPointerEvent } from "react";
-import { NEXT_COUNT, TetrisEngine, describeClear, type GameStatus, type PieceType } from "../lib/tetris";
+import { NEXT_COUNT, TetrisEngine, clearTitle, describeClear, type ClearResult, type GameStatus, type PieceType } from "../lib/tetris";
 import {
   BOARD_H, BOARD_W, PREVIEW_SLOT_H, PREVIEW_W, drawBoard, drawPreview, setupCanvas,
 } from "../lib/tetrisCanvas";
+import { TOP_OUT_MS, TetrisEffects } from "../lib/tetrisEffects";
 
 const BEST_KEY = "tetris_highscore";
 const NAME_KEY = "tetris_username";
@@ -70,6 +71,29 @@ const TOUCH_LEGEND: [string, string][] = [
   ["Pause", "Pause / resume (button by the score)"],
 ];
 
+type CalloutKind = "clear" | "tetris" | "tspin" | "perfect" | "combo" | "level" | "points";
+interface Callout { id: number; text: string; kind: CalloutKind; color?: string }
+/** Callouts on screen at once; older ones are dropped rather than queued. */
+const MAX_CALLOUTS = 5;
+
+/** The floating text for one clear: its name, combo, perfect clear, points. */
+function calloutsFor(result: ClearResult, nextId: () => number): Callout[] {
+  const out: Callout[] = [];
+  const title = clearTitle(result);
+  if (title) {
+    const kind: CalloutKind = result.lines === 4 ? "tetris" : result.tSpin !== "none" ? "tspin" : "clear";
+    out.push({ id: nextId(), text: result.lines === 4 && !result.backToBack && result.tSpin === "none" ? "TETRIS!" : title, kind });
+  }
+  if (result.combo > 0) {
+    // The combo heats up from yellow towards red as it grows.
+    const hue = Math.max(0, 52 - Math.min(result.combo, 8) * 6.5);
+    out.push({ id: nextId(), text: `${result.combo} Combo!`, kind: "combo", color: `hsl(${hue} 100% 62%)` });
+  }
+  if (result.perfectClear) out.push({ id: nextId(), text: "Perfect Clear!", kind: "perfect" });
+  if (result.points > 0) out.push({ id: nextId(), text: `+${result.points.toLocaleString()}`, kind: "points" });
+  return out;
+}
+
 type PadAction = "left" | "right" | "soft" | "cw" | "ccw" | "hard" | "hold";
 
 export function Tetris() {
@@ -86,7 +110,10 @@ export function Tetris() {
   const [best, setBest] = useState(0);
   const [username, setUsername] = useState<string | null>(null);
   const [announcement, setAnnouncement] = useState("");
-  const [callout, setCallout] = useState<{ id: number; label: string } | null>(null);
+  const [callouts, setCallouts] = useState<Callout[]>([]);
+  const effectsRef = useRef<TetrisEffects | null>(null);
+  const boardWrapRef = useRef<HTMLDivElement>(null);
+  const overTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [final, setFinal] = useState<{ score: number; newBest: boolean } | null>(null);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
@@ -145,14 +172,20 @@ export function Tetris() {
       setBest(score);
       writeStorage(BEST_KEY, String(score));
     }
-    setFinal({ score, newBest });
     setSaveState("idle");
     setAnnouncement(`Game over. Final score ${score}.`);
     const name = usernameRef.current;
     // With a known name, save straight away; the server keeps each name's best.
     if (name && score > 0) submitScore(name, score);
-    const dialog = dialogRef.current;
-    if (dialog && !dialog.open) dialog.showModal();
+    // Let the stack grey out before the dialog covers it.
+    const delay = effectsRef.current?.reducedMotion ? 0 : TOP_OUT_MS;
+    if (overTimerRef.current) clearTimeout(overTimerRef.current);
+    overTimerRef.current = setTimeout(() => {
+      overTimerRef.current = null;
+      setFinal({ score, newBest });
+      const dialog = dialogRef.current;
+      if (dialog && !dialog.open) dialog.showModal();
+    }, delay);
   }, [submitScore]);
   const gameOverRef = useRef(handleGameOver);
   useEffect(() => { gameOverRef.current = handleGameOver; }, [handleGameOver]);
@@ -173,33 +206,50 @@ export function Tetris() {
 
     const game = new TetrisEngine();
     gameRef.current = game;
+    const effects = new TetrisEffects();
+    effectsRef.current = effects;
+    const motion = window.matchMedia?.("(prefers-reduced-motion: reduce)");
+    const syncMotion = () => { effects.reducedMotion = !!motion?.matches; };
+    syncMotion();
+    motion?.addEventListener?.("change", syncMotion);
 
     let frame = 0;
     let last: number | null = null;
     let prev = snapshot(game);
-    let lastClearId = 0;
+    let calloutId = 0;
+    const nextId = () => ++calloutId;
+    const wrap = boardWrapRef.current;
 
-    const render = () => {
+    const render = (time: number) => {
       drawBoard(boardCtx, game);
+      effects.draw(boardCtx, time);
       drawPreview(nextCtx, game.queue.slice(0, NEXT_COUNT));
       drawPreview(holdCtx, [game.hold], game.holdUsed);
+      if (wrap) {
+        const [sx, sy] = effects.shakeOffset(time);
+        wrap.style.transform = sx || sy ? `translate(${sx.toFixed(1)}px, ${sy.toFixed(1)}px)` : "";
+      }
     };
 
     const tick = (time: number) => {
       const dt = last === null ? 0 : Math.min(time - last, MAX_FRAME_MS);
       last = time;
       game.step(dt);
-      render();
 
-      const clear = game.lastClear;
-      if (clear && clear.id !== lastClearId) {
-        lastClearId = clear.id;
-        const label = describeClear(clear);
-        if (label) {
-          setCallout({ id: clear.id, label });
-          setAnnouncement(`${label}, plus ${clear.points}.`);
+      const fresh: Callout[] = [];
+      for (const event of game.takeEvents()) {
+        effects.push(event, time);
+        if (event.type === "clear") {
+          fresh.push(...calloutsFor(event.result, nextId));
+          const label = describeClear(event.result);
+          if (label) setAnnouncement(`${label}, plus ${event.result.points}.`);
+        } else if (event.type === "levelUp") {
+          fresh.push({ id: nextId(), text: `Level ${event.level}`, kind: "level" });
         }
       }
+      if (fresh.length) setCallouts(list => [...list, ...fresh].slice(-MAX_CALLOUTS));
+      render(time);
+
       const now = snapshot(game);
       if (!sameHud(prev, now)) {
         if (prev.status !== "over" && now.status === "over") gameOverRef.current(now.score);
@@ -208,7 +258,7 @@ export function Tetris() {
       }
       frame = requestAnimationFrame(tick);
     };
-    render();
+    render(performance.now());
     frame = requestAnimationFrame(tick);
 
     const onKeyDown = (e: KeyboardEvent) => {
@@ -259,7 +309,10 @@ export function Tetris() {
       window.removeEventListener("keyup", onKeyUp);
       window.removeEventListener("blur", onHide);
       document.removeEventListener("visibilitychange", onVisibility);
+      motion?.removeEventListener?.("change", syncMotion);
+      if (overTimerRef.current) clearTimeout(overTimerRef.current);
       gameRef.current = null;
+      effectsRef.current = null;
     };
   }, []);
 
@@ -269,8 +322,10 @@ export function Tetris() {
     const game = gameRef.current;
     if (!game) return;
     dialogRef.current?.close();
+    if (overTimerRef.current) { clearTimeout(overTimerRef.current); overTimerRef.current = null; }
     setFinal(null);
-    setCallout(null);
+    setCallouts([]);
+    effectsRef.current?.reset();
     game.start();
     setAnnouncement("New game started.");
   };
@@ -379,13 +434,13 @@ export function Tetris() {
       <h1 className="text-3xl font-bold my-6">Tetris</h1>
 
       <div className="flex gap-3 sm:gap-4 items-start">
-        <div className="relative flex-1 min-w-0 max-w-[300px]">
+        <div ref={boardWrapRef} className="relative flex-1 min-w-0 max-w-[300px] will-change-transform">
           <canvas
             id="board" ref={boardRef} width={BOARD_W} height={BOARD_H}
             role="img" aria-label="Tetris playfield"
             className="block w-full h-auto rounded touch-none"
           />
-          {status !== "playing" && (
+          {status !== "playing" && (status !== "over" || final) && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/60 text-white text-center p-4 rounded">
               {status === "paused" ? (
                 <>
@@ -405,12 +460,20 @@ export function Tetris() {
               )}
             </div>
           )}
-          {status === "playing" && callout && (
-            <p key={callout.id} aria-hidden="true"
-               className="kk-tetris-callout absolute inset-x-0 top-1/3 text-center text-lg font-extrabold text-white pointer-events-none">
-              {callout.label}
-            </p>
-          )}
+          <div aria-hidden="true" className="absolute inset-x-0 top-[28%] flex flex-col items-center gap-1 px-2 pointer-events-none">
+            {callouts.map((c) => (
+              <p
+                key={c.id}
+                className={`kk-tetris-callout kk-tetris-callout--${c.kind}`}
+                style={c.color ? { color: c.color } : undefined}
+                onAnimationEnd={(e) => {
+                  if (e.target === e.currentTarget) setCallouts(list => list.filter(item => item.id !== c.id));
+                }}
+              >
+                {c.text}
+              </p>
+            ))}
+          </div>
         </div>
 
         <div className="w-[76px] sm:w-24 shrink-0 space-y-3 text-sm">

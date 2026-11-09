@@ -2,9 +2,10 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   COLS, DAS_MS, ARR_MS, HIDDEN_ROWS, LOCK_DELAY_MS, MAX_LOCK_RESETS, PIECES, TOTAL_ROWS,
-  TetrisEngine, describeClear, gravityMs, isDifficult, kickOffsets, rotateMatrix, scoreClear, shapeOf,
-  type ActivePiece,
+  TetrisEngine, clearTitle, describeClear, gravityMs, isDifficult, kickOffsets, rotateMatrix, scoreClear, shapeOf,
+  type ActivePiece, type GameEvent,
 } from '../src/lib/tetris';
+import { TOP_OUT_MS, TetrisEffects } from '../src/lib/tetrisEffects';
 import { cleanName, mergeRps, mergeTetris, normaliseFile, parseTetris, LEADERBOARD_SIZE } from '../src/lib/scores';
 
 /** Deterministic PRNG so bag order is reproducible. */
@@ -227,4 +228,63 @@ test('score submissions are validated', () => {
   assert.ok(!parseTetris({ score: 100 }).ok);
   assert.deepEqual(normaliseFile({ scores: 'nope' }), { scores: [] });
   assert.deepEqual(normaliseFile(null), { scores: [] });
+});
+
+test('the engine reports hard drops, locks, clears, level-ups, and game over as events', () => {
+  const game = started();
+  game.takeEvents();
+  game.lines = 9;
+  game.board = game.board.map(() => Array(COLS).fill(0));
+  const bottom = TOTAL_ROWS - 1;
+  game.board[bottom] = Array.from({ length: COLS }, (_, c) => (c >= 3 && c <= 6 ? 0 : 2));
+  place(game, { type: 'I', x: 3, y: 5, rot: 0 });
+  game.hardDrop();
+  const events = game.takeEvents();
+  assert.deepEqual(events.map(e => e.type), ['hardDrop', 'lock', 'clear', 'levelUp']);
+  const drop = events[0] as Extract<GameEvent, { type: 'hardDrop' }>;
+  assert.equal(drop.distance, bottom - 6);
+  assert.deepEqual(drop.cells.map(([, y]) => y), [bottom, bottom, bottom, bottom]);
+  const clear = events[2] as Extract<GameEvent, { type: 'clear' }>;
+  assert.deepEqual(clear.rows, [bottom], 'rows are reported as they were before collapsing');
+  assert.equal(clear.colors[0][0], 2);
+  assert.equal(clear.colors[0][3], 1, 'the I piece cells are in the snapshot');
+  assert.deepEqual(game.takeEvents(), [], 'draining empties the queue');
+
+  for (let r = 1; r < TOTAL_ROWS; r++) game.board[r] = Array.from({ length: COLS }, (_, c) => (c === 9 ? 0 : 1));
+  game.holdPiece();
+  assert.deepEqual(game.takeEvents().map(e => e.type), ['gameOver']);
+});
+
+test('a plain lock with no clear emits no clear event', () => {
+  const game = started();
+  game.takeEvents();
+  game.hardDrop();
+  assert.deepEqual(game.takeEvents().map(e => e.type), ['hardDrop', 'lock']);
+});
+
+test('effects: shake decays to rest, reduced motion stays still, and top-out has an end', () => {
+  const fx = new TetrisEffects(seeded());
+  const tetris = { id: 1, lines: 4, tSpin: 'none' as const, backToBack: false, combo: 0, perfectClear: false, points: 800 };
+  fx.push({ type: 'clear', rows: [21, 20, 19, 18], colors: [[1], [1], [1], [1]], result: tetris }, 0);
+  const [x, y] = fx.shakeOffset(10);
+  assert.ok(Math.abs(x) + Math.abs(y) > 0, 'a Tetris shakes the board');
+  assert.deepEqual(fx.shakeOffset(5000), [0, 0]);
+
+  const still = new TetrisEffects(seeded());
+  still.reducedMotion = true;
+  still.push({ type: 'clear', rows: [21, 20, 19, 18], colors: [[1], [1], [1], [1]], result: tetris }, 0);
+  still.push({ type: 'hardDrop', cells: [[0, 21]], distance: 10, color: 1 }, 0);
+  assert.deepEqual(still.shakeOffset(10), [0, 0]);
+
+  fx.push({ type: 'gameOver' }, 100);
+  assert.ok(fx.toppingOut(100 + TOP_OUT_MS / 2));
+  assert.ok(!fx.toppingOut(100 + TOP_OUT_MS));
+  fx.reset();
+  assert.ok(!fx.toppingOut(150));
+});
+
+test('callout labels name the clear without the combo', () => {
+  assert.equal(clearTitle({ lines: 2, tSpin: 'full', backToBack: true }), 'Back-to-Back T-Spin Double');
+  assert.equal(clearTitle({ lines: 0, tSpin: 'mini', backToBack: false }), 'T-Spin Mini');
+  assert.equal(clearTitle({ lines: 0, tSpin: 'none', backToBack: false }), '');
 });

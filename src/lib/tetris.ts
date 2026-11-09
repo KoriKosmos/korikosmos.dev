@@ -137,8 +137,8 @@ export function isDifficult(lines: number, tSpin: TSpin): boolean {
   return lines === 4 || (lines > 0 && tSpin !== 'none');
 }
 
-/** A short label for the clear, e.g. "T-Spin Double", or '' for nothing. */
-export function describeClear(clear: ClearResult): string {
+/** The clear's name alone, e.g. "Back-to-Back T-Spin Double", or ''. */
+export function clearTitle(clear: Pick<ClearResult, 'lines' | 'tSpin' | 'backToBack'>): string {
   const parts: string[] = [];
   if (clear.backToBack) parts.push('Back-to-Back');
   if (clear.tSpin !== 'none') parts.push(clear.tSpin === 'mini' ? 'T-Spin Mini' : 'T-Spin');
@@ -146,8 +146,12 @@ export function describeClear(clear: ClearResult): string {
     const kind = LINE_KINDS[clear.lines];
     parts.push(kind[0].toUpperCase() + kind.slice(1));
   }
-  const label = parts.join(' ');
-  const extras = [label];
+  return parts.join(' ');
+}
+
+/** The full label with combo and perfect clear, e.g. "Tetris · 2 Combo", or ''. */
+export function describeClear(clear: ClearResult): string {
+  const extras = [clearTitle(clear)];
   if (clear.combo > 0) extras.push(`${clear.combo} Combo`);
   if (clear.perfectClear) extras.push('Perfect Clear!');
   return extras.filter(Boolean).join(' · ');
@@ -162,6 +166,21 @@ export interface ActivePiece {
 }
 
 export type GameStatus = 'ready' | 'playing' | 'paused' | 'over';
+
+/** [column, board row] — board rows include the hidden rows. */
+export type CellPos = readonly [number, number];
+
+/**
+ * Things that happened, for the UI's animations and announcements. The engine
+ * only appends; the island drains the queue once a frame with takeEvents().
+ */
+export type GameEvent =
+  | { type: 'hardDrop'; cells: CellPos[]; distance: number; color: Cell }
+  | { type: 'lock'; cells: CellPos[]; color: Cell }
+  /** `rows` are the board rows as they were *before* the clear collapsed them. */
+  | { type: 'clear'; rows: number[]; colors: Cell[][]; result: ClearResult }
+  | { type: 'levelUp'; level: number }
+  | { type: 'gameOver' };
 
 export interface TetrisOptions {
   /** Defaults to Math.random. Tests inject a seeded one. */
@@ -187,6 +206,7 @@ export class TetrisEngine {
   combo = -1;
   backToBack = false;
   lastClear: ClearResult | null = null;
+  private events: GameEvent[] = [];
 
   private random: () => number;
   private startLevel: number;
@@ -229,6 +249,7 @@ export class TetrisEngine {
     this.combo = -1;
     this.backToBack = false;
     this.lastClear = null;
+    this.events = [];
     this.lockCount = 0;
     this.releaseInputs();
     this.fillQueue();
@@ -327,7 +348,21 @@ export class TetrisEngine {
     this.lastKickIndex = 0;
   }
 
+  /** Everything that happened since the last call, oldest first. */
+  takeEvents(): GameEvent[] {
+    const events = this.events;
+    this.events = [];
+    return events;
+  }
+
+  private cellsOf(p: ActivePiece): CellPos[] {
+    const cells: CellPos[] = [];
+    p.matrix.forEach((row, r) => row.forEach((v, c) => { if (v) cells.push([p.x + c, p.y + r]); }));
+    return cells;
+  }
+
   private gameOver(): void {
+    this.events.push({ type: 'gameOver' });
     this.status = 'over';
     this.releaseInputs();
   }
@@ -416,6 +451,7 @@ export class TetrisEngine {
       this.score += distance * 2;
       this.lastActionRotate = false;
     }
+    this.events.push({ type: 'hardDrop', cells: this.cellsOf(p), distance, color: CELL[p.type] });
     this.lock();
   }
 
@@ -495,7 +531,9 @@ export class TetrisEngine {
       }
     }
 
-    const lines = this.clearLines();
+    this.events.push({ type: 'lock', cells: this.cellsOf(p), color: CELL[p.type] });
+
+    const { count: lines, rows, colors } = this.clearLines();
     const perfectClear = lines > 0 && this.board.every(row => row.every(cell => cell === 0));
     const difficult = isDifficult(lines, tSpin);
     const backToBack = difficult && this.backToBack;
@@ -513,10 +551,15 @@ export class TetrisEngine {
     const points = scoreClear(lines, tSpin, backToBack, combo, perfectClear, this.level);
     this.score += points;
     this.lastClear = { id: ++this.lockCount, lines, tSpin, backToBack, combo, perfectClear, points };
+    if (lines > 0 || tSpin !== 'none') {
+      this.events.push({ type: 'clear', rows, colors, result: this.lastClear });
+    }
 
     this.lines += lines;
     // Fixed goal: one level per 10 lines cleared.
-    this.level = Math.max(this.level, this.startLevel + Math.floor(this.lines / 10));
+    const level = Math.max(this.level, this.startLevel + Math.floor(this.lines / 10));
+    if (level > this.level) this.events.push({ type: 'levelUp', level });
+    this.level = level;
 
     this.holdUsed = false;
     this.piece = null;
@@ -529,13 +572,17 @@ export class TetrisEngine {
     this.spawn(this.takeNext());
   }
 
-  private clearLines(): number {
-    const kept = this.board.filter(row => row.some(cell => cell === 0));
-    const cleared = TOTAL_ROWS - kept.length;
-    if (cleared) {
-      this.board = [...Array.from({ length: cleared }, () => Array<Cell>(COLS).fill(0)), ...kept];
+  private clearLines(): { count: number; rows: number[]; colors: Cell[][] } {
+    const rows: number[] = [];
+    const colors: Cell[][] = [];
+    this.board.forEach((row, r) => {
+      if (row.every(cell => cell !== 0)) { rows.push(r); colors.push([...row]); }
+    });
+    if (rows.length) {
+      const kept = this.board.filter((_, r) => !rows.includes(r));
+      this.board = [...Array.from({ length: rows.length }, () => Array<Cell>(COLS).fill(0)), ...kept];
     }
-    return cleared;
+    return { count: rows.length, rows, colors };
   }
 
   // ---- Time ---------------------------------------------------------------
