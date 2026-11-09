@@ -263,10 +263,12 @@ html[data-theme="spider-man"] .from-primary.to-secondary {
   font-variant-numeric: tabular-nums;
   animation-name: kk-tetris-rise;
 }
+/* Reduced motion: no movement, but the callout still has to read and then go
+   away, so every kind gets the same still fade. The keyframes sit outside the
+   media query because retro.css and mandy.css reference them from their own
+   reduced-motion blocks (their blanket rules would otherwise kill it). */
+@keyframes kk-tetris-callout-still { 0%, 80% { opacity: 1; } 100% { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) {
-  /* No motion, but every callout still has to end (the island removes it on
-     animationend), so they all get the same still fade. */
-  @keyframes kk-tetris-callout-still { 0%, 80% { opacity: 1; } 100% { opacity: 0; } }
   .kk-tetris-callout,
   .kk-tetris-callout--tetris,
   .kk-tetris-callout--perfect {

@@ -75,6 +75,13 @@ type CalloutKind = "clear" | "tetris" | "tspin" | "perfect" | "combo" | "level" 
 interface Callout { id: number; text: string; kind: CalloutKind; color?: string }
 /** Callouts on screen at once; older ones are dropped rather than queued. */
 const MAX_CALLOUTS = 5;
+/**
+ * Hard ceiling on a callout's life, a little past the longest entrance in
+ * global.css (the 2.2s perfect-clear slam). animationend normally removes it
+ * sooner, but a stylesheet that overrides or kills the animation (a skin's
+ * reduced-motion rule, say) must never leave stale text over the board.
+ */
+export const CALLOUT_MAX_MS = 2600;
 
 /** The floating text for one clear: its name, combo, perfect clear, points. */
 function calloutsFor(result: ClearResult, nextId: () => number): Callout[] {
@@ -114,6 +121,7 @@ export function Tetris() {
   const effectsRef = useRef<TetrisEffects | null>(null);
   const boardWrapRef = useRef<HTMLDivElement>(null);
   const overTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const calloutTimersRef = useRef(new Set<ReturnType<typeof setTimeout>>());
   const [final, setFinal] = useState<{ score: number; newBest: boolean } | null>(null);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
@@ -247,7 +255,16 @@ export function Tetris() {
           fresh.push({ id: nextId(), text: `Level ${event.level}`, kind: "level" });
         }
       }
-      if (fresh.length) setCallouts(list => [...list, ...fresh].slice(-MAX_CALLOUTS));
+      if (fresh.length) {
+        setCallouts(list => [...list, ...fresh].slice(-MAX_CALLOUTS));
+        const ids = new Set(fresh.map(c => c.id));
+        const timers = calloutTimersRef.current;
+        const timer = setTimeout(() => {
+          timers.delete(timer);
+          setCallouts(list => list.filter(c => !ids.has(c.id)));
+        }, CALLOUT_MAX_MS);
+        timers.add(timer);
+      }
       render(time);
 
       const now = snapshot(game);
@@ -311,6 +328,8 @@ export function Tetris() {
       document.removeEventListener("visibilitychange", onVisibility);
       motion?.removeEventListener?.("change", syncMotion);
       if (overTimerRef.current) clearTimeout(overTimerRef.current);
+      calloutTimersRef.current.forEach(clearTimeout);
+      calloutTimersRef.current.clear();
       gameRef.current = null;
       effectsRef.current = null;
     };

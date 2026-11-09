@@ -1082,6 +1082,12 @@ a:hover > .rt-btn88 { border-color: var(--rt-accent); }
     animation: none !important;
     transition: none !important;
   }
+  /* The one exception: Tetris callouts keep a motionless fade (global.css).
+     Without an animation they would never fade, and stale "+800"s would sit
+     over the playfield. Higher specificity than the `*` rule above. */
+  [data-skin='retro'] .kk-tetris-callout {
+    animation: kk-tetris-callout-still 1.4s linear forwards !important;
+  }
   .rt-blink { opacity: 1 !important; }
   .rt-rainbow {
     background-position: 0 0;
