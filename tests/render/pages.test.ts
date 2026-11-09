@@ -70,6 +70,24 @@ for (const skin of ['modern', 'retro', 'mandy'] as const) {
     assert.ok(games.document.querySelector('main a[href="/games/star-pairs/"]'));
   });
 
+  test(`${skin}: Tetris renders its board, start screen, and controls without a blocking prompt`, async () => {
+    const game = await render('/games/tetris', skin);
+    assert.equal(game.response.status, 200);
+    const main = game.document.querySelector('main')!;
+    assert.equal(main.querySelector('h1')?.textContent, 'Tetris');
+    for (const id of ['board', 'next', 'hold', 'score', 'level', 'lines', 'highscore', 'leaderboard']) {
+      assert.ok(main.querySelector(`#${id}`), `#${id} is present for the island and the retro restyle`);
+    }
+    assert.match(main.textContent ?? '', /Start game/);
+    assert.equal(main.querySelector('dialog[open]'), null, 'No modal opens before the visitor asks to play');
+    assert.equal(main.querySelectorAll('.kk-tetris-pad button').length, 7);
+    const legend = main.querySelector('section[aria-labelledby="tetris-controls"]');
+    assert.ok(legend, 'a visible controls legend, not a collapsed one');
+    assert.equal(legend!.closest('details'), null);
+    assert.match(legend!.textContent ?? '', /Hard drop/);
+    assert.equal(legend!.querySelectorAll('.kk-tetris-keys kbd').length, 11);
+  });
+
   test(`${skin}: music pages survive an unavailable upstream`, async () => {
     assert.equal((await render('/tunes', skin)).response.status, 200);
     assert.equal((await render('/now', skin)).response.status, 200);
@@ -129,6 +147,18 @@ test('retro: newest-post decorations and site totals survive filtering and sorti
     assert.equal(document.querySelectorAll(badge).length, articles.some((article): boolean =>
       article.querySelector('h2 a')?.getAttribute('href') === newestHref) ? 1 : 0);
   }
+});
+
+test('score API refuses cross-site posts and unknown games', async () => {
+  const post = (path: string, headers: Record<string, string>) => app.render(new Request(`https://korikosmos.dev${path}`, {
+    method: 'POST', headers: { 'content-type': 'application/json', ...headers }, body: JSON.stringify({ name: 'x', score: 1 }),
+  }));
+  assert.equal((await post('/api/scores/tetris', { origin: 'https://evil.example', 'sec-fetch-site': 'cross-site' })).status, 403);
+  assert.equal((await post('/api/scores/tetris', {})).status, 403, 'No Origin means no browser');
+  assert.equal((await post('/api/scores/pong', { 'sec-fetch-site': 'same-origin' })).status, 404);
+  const list = await app.render(new Request('https://korikosmos.dev/api/scores/tetris'));
+  assert.equal(list.status, 200);
+  assert.ok(Array.isArray(await list.json()));
 });
 
 test('music API rejects malformed requests and does not cache upstream failures', async () => {

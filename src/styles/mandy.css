@@ -1037,6 +1037,11 @@ html[data-skin='mandy'] {
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
   }
+  /* Tetris callouts keep their motionless fade (global.css); at 0.001ms they
+     would vanish before anyone could read the score. */
+  [data-skin='mandy'] .kk-tetris-callout {
+    animation: kk-tetris-callout-still 1.4s linear forwards !important;
+  }
   [data-skin='mandy'].md-js .md-reveal { opacity: 1; transform: none; }
   [data-skin='mandy'] .md-mascot__z { display: none; }
 }
