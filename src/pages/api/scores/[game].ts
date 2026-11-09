@@ -1,196 +1,92 @@
 import type { APIRoute } from 'astro';
-import fs from 'node:fs/promises';
-import path from 'node:path';
-import { Mutex } from 'async-mutex';
+import { readJson, updateJson } from '../../../lib/jsonStore';
+import { checkRateLimit, getClientKey } from '../../../lib/rateLimit';
+import { isSameOrigin } from '../../../lib/sameOrigin';
+import { readBodyCapped } from '../../../lib/readBody';
+import {
+  isGame, mergeRps, mergeTetris, normaliseFile, parseRps, parseTetris,
+  type RpsEntry, type ScoreFile, type TetrisEntry,
+} from '../../../lib/scores';
 
-const DATA_DIR = path.resolve('./data/scores');
+/**
+ * Game leaderboards (Tetris, Rock Paper Scissors), stored in
+ * data/scores/<game>.json. Like the guestbook and reactions, the write path
+ * is unauthenticated, so it is same-origin only, body-capped, and throttled.
+ * None of that stops someone typing a fake score into devtools — a client-side
+ * game can't prove a score — but it stops drive-by posts from other sites and
+ * scripted floods.
+ */
 
-// Mutex map for per-game locking
-const locks = new Map<string, Mutex>();
+const MAX_BODY_BYTES = 1024;
+/**
+ * A burst of 6 per 10s. Tetris posts once per game; Rock Paper Scissors posts
+ * every time a winning streak beats the player's best, which can be a few
+ * rounds in a row, so this has to tolerate quick clicking.
+ */
+const WINDOW_MS = 10_000;
+const BURST = 6;
 
-function getLock(game: string) {
-  if (!locks.has(game)) {
-    locks.set(game, new Mutex());
-  }
-  return locks.get(game)!;
-}
-
-// Validation Helpers
-function isValidScore(n: any): boolean {
-  return typeof n === 'number' && Number.isInteger(n) && n >= 0;
-}
-
-function isValidGame(game: any): game is 'tetris' | 'rps' {
-  return typeof game === 'string' && ['tetris', 'rps'].includes(game);
-}
-
-// ... (existing getScoresData and saveScore functions) ...
-
-export const POST: APIRoute = async ({ request, params }) => {
-  const game = params.game;
-  if (!isValidGame(game)) {
-      return new Response(JSON.stringify({ error: 'Game not found' }), {
-        status: 404,
-        headers: { 'Content-Type': 'application/json' }
-      });
-  }
-
-  try {
-    let body;
-    try {
-      body = await request.json();
-    } catch (e) {
-      return new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
-
-    // Strict Input Validation
-    if (!body.name || typeof body.name !== 'string' || body.name.trim().length === 0) {
-        return new Response(JSON.stringify({ error: 'Invalid name' }), { 
-          status: 400,
-          headers: { 'Content-Type': 'application/json' }
-        });
-    }
-
-    const sanitizedName = body.name.trim().slice(0, 20);
-
-    let payload: any = { name: sanitizedName };
-
-    if (game === 'tetris') {
-        if (!isValidScore(body.score)) {
-            return new Response(JSON.stringify({ error: 'Invalid score: must be a non-negative integer' }), { 
-              status: 400,
-              headers: { 'Content-Type': 'application/json' } 
-            });
-        }
-        payload.score = body.score;
-    } else if (game === 'rps') {
-        if (!isValidScore(body.playerWins) || !isValidScore(body.cpuWins) || !isValidScore(body.ties)) {
-             return new Response(JSON.stringify({ error: 'Invalid RPS stats: must be non-negative integers' }), { 
-               status: 400,
-               headers: { 'Content-Type': 'application/json' }
-             });
-        }
-        payload.playerWins = body.playerWins;
-        payload.cpuWins = body.cpuWins;
-        payload.ties = body.ties;
-    }
-
-    const updatedScores = await saveScore(game, payload);
-    
-    return new Response(JSON.stringify(updatedScores), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
-  } catch (e) {
-    console.error(e);
-    return new Response(JSON.stringify({ error: 'Failed to save score' }), { 
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
-  }
-}
-
-// Ensure DB file and structure exists
-async function getScoresData(game: string) {
-  const dbPath = path.join(DATA_DIR, `${game}.json`);
-  try {
-    const data = await fs.readFile(dbPath, 'utf-8');
-    const parsed = JSON.parse(data);
-    if (!Array.isArray(parsed.scores)) {
-      return { scores: [] };
-    }
-    return parsed;
-  } catch (error) {
-    if ((error as any).code === 'ENOENT') {
-      await fs.mkdir(DATA_DIR, { recursive: true });
-      const initial = { scores: [] };
-      // No lock needed here as this is just initialization, but ideally wrapped too.
-      // For now, atomic write in saveScore covers the race mostly.
-      await fs.writeFile(dbPath, JSON.stringify(initial));
-      return initial;
-    }
-    throw error;
-  }
-}
-
-async function saveScore(game: string, newScore: any) {
-  const lock = getLock(game);
-  
-  return await lock.runExclusive(async () => {
-      const dbPath = path.join(DATA_DIR, `${game}.json`);
-      const db = await getScoresData(game);
-      const scores = db.scores;
-      
-      const existingIndex = scores.findIndex((s: any) => s.name === newScore.name);
-      
-      if (game === 'tetris') {
-          if (existingIndex !== -1) {
-            if (newScore.score > scores[existingIndex].score) {
-              scores[existingIndex].score = newScore.score;
-            }
-          } else {
-            scores.push(newScore);
-          }
-          scores.sort((a: any, b: any) => b.score - a.score);
-          
-      } else if (game === 'rps') {
-          const netScore = newScore.playerWins - newScore.cpuWins;
-          const entry = {
-              name: newScore.name,
-              netScore: netScore,
-              playerWins: newScore.playerWins,
-              cpuWins: newScore.cpuWins,
-              ties: newScore.ties
-          };
-
-          if (existingIndex !== -1) {
-            if (netScore > (scores[existingIndex].netScore || -Infinity)) {
-              scores[existingIndex] = entry;
-            }
-          } else {
-            scores.push(entry);
-          }
-          scores.sort((a: any, b: any) => b.netScore - a.netScore);
-      }
-
-      const topScores = scores.slice(0, 10);
-      db.scores = topScores;
-      
-      // Atomic Write: Write to temp file then rename
-      const tempPath = `${dbPath}.tmp`;
-      await fs.writeFile(tempPath, JSON.stringify(db, null, 2));
-      await fs.rename(tempPath, dbPath);
-      
-      return topScores;
+const json = (body: unknown, status = 200, headers: Record<string, string> = {}) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', ...headers },
   });
-}
+
+const fileFor = (game: string) => `scores/${game}.json`;
 
 export const GET: APIRoute = async ({ params }) => {
-  const game = params.game;
-  if (!isValidGame(game)) {
-      return new Response(JSON.stringify({ error: 'Game not found' }), {
-        status: 404,
-        headers: { 'Content-Type': 'application/json' }
-      });
+  const { game } = params;
+  if (!isGame(game)) return json({ error: 'Game not found' }, 404);
+  const file = normaliseFile(await readJson<unknown>(fileFor(game), null));
+  return json(file.scores);
+};
+
+export const POST: APIRoute = async (context) => {
+  const { request, params, site, url } = context;
+  const { game } = params;
+  if (!isGame(game)) return json({ error: 'Game not found' }, 404);
+
+  if (!isSameOrigin(request, site, url)) {
+    return json({ error: 'Scores can only be submitted from the game page.' }, 403);
+  }
+
+  const read = await readBodyCapped(request, MAX_BODY_BYTES);
+  if (!read.ok) return json({ error: 'Request body too large' }, 413);
+
+  let body: unknown;
+  try {
+    body = JSON.parse(read.text);
+  } catch {
+    return json({ error: 'Invalid JSON body' }, 400);
+  }
+  if (!body || typeof body !== 'object') return json({ error: 'Invalid JSON body' }, 400);
+
+  // Read lazily: Astro throws on clientAddress when the adapter can't supply
+  // one, and the forwarded headers usually make it unnecessary anyway.
+  let peer: string | undefined;
+  try { peer = context.clientAddress; } catch { peer = undefined; }
+  const key = getClientKey(request, peer);
+  if (!checkRateLimit(`scores:${game}`, key, WINDOW_MS, BURST)) {
+    return json({ error: 'Slow down! Try again in a moment.' }, 429, { 'Retry-After': String(WINDOW_MS / 1000) });
   }
 
   try {
-    // Read lock? strict consistency might require it, but for high scores dirty read is ok.
-    // However, concurrent write might corrupt a read. Let's use the lock for consistency.
-    const lock = getLock(game);
-    const db = await lock.runExclusive(() => getScoresData(game));
-    return new Response(JSON.stringify(db.scores), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
-  } catch (e) {
-    return new Response(JSON.stringify({ error: 'Failed to fetch scores' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    if (game === 'tetris') {
+      const parsed = parseTetris(body as Record<string, unknown>);
+      if (!parsed.ok) return json({ error: parsed.error }, 400);
+      const saved = await updateJson<ScoreFile<TetrisEntry>>(fileFor(game), { scores: [] }, current => ({
+        scores: mergeTetris(normaliseFile<TetrisEntry>(current).scores, parsed.entry),
+      }));
+      return json(saved.scores);
+    }
+    const parsed = parseRps(body as Record<string, unknown>);
+    if (!parsed.ok) return json({ error: parsed.error }, 400);
+    const saved = await updateJson<ScoreFile<RpsEntry>>(fileFor(game), { scores: [] }, current => ({
+      scores: mergeRps(normaliseFile<RpsEntry>(current).scores, parsed.entry),
+    }));
+    return json(saved.scores);
+  } catch (error) {
+    console.error('[scores] failed to save', error);
+    return json({ error: 'Failed to save score' }, 500);
   }
-}
-
+};

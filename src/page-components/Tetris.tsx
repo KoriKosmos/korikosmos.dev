@@ -1,260 +1,498 @@
-import { useEffect } from "react";
-import { TetrisGame } from "../lib/tetris.js";
+import { useCallback, useEffect, useRef, useState, type FormEvent, type PointerEvent as ReactPointerEvent } from "react";
+import { NEXT_COUNT, TetrisEngine, describeClear, type GameStatus, type PieceType } from "../lib/tetris";
+import {
+  BOARD_H, BOARD_W, PREVIEW_SLOT_H, PREVIEW_W, drawBoard, drawPreview, setupCanvas,
+} from "../lib/tetrisCanvas";
+
+const BEST_KEY = "tetris_highscore";
+const NAME_KEY = "tetris_username";
+const MAX_NAME = 20;
+/** Longest frame the engine will simulate; a stalled tab must not dump gravity. */
+const MAX_FRAME_MS = 100;
+const LEADERBOARD_REFRESH_MS = 60_000;
+
+interface LeaderboardEntry { name: string; score: number }
+
+interface Hud {
+  status: GameStatus;
+  score: number;
+  lines: number;
+  level: number;
+  hold: PieceType | null;
+  holdUsed: boolean;
+  queue: PieceType[];
+}
+
+function readStorage(key: string): string | null {
+  try { return localStorage.getItem(key); } catch { return null; }
+}
+function writeStorage(key: string, value: string | null) {
+  try {
+    if (value === null) localStorage.removeItem(key);
+    else localStorage.setItem(key, value);
+  } catch { /* private mode: the game still works, it just forgets */ }
+}
+
+function snapshot(game: TetrisEngine): Hud {
+  return {
+    status: game.status, score: game.score, lines: game.lines, level: game.level,
+    hold: game.hold, holdUsed: game.holdUsed, queue: [...game.queue],
+  };
+}
+function sameHud(a: Hud, b: Hud) {
+  return a.status === b.status && a.score === b.score && a.lines === b.lines && a.level === b.level
+    && a.hold === b.hold && a.holdUsed === b.holdUsed && a.queue.join() === b.queue.join();
+}
+
+function isEditable(target: EventTarget | null) {
+  const el = target as HTMLElement | null;
+  return !!el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName));
+}
+
+/** Keyboard legend; the keys must match onKeyDown below. */
+const KEY_LEGEND: [string[], string][] = [
+  [["←", "→"], "Move (hold to slide)"],
+  [["↓"], "Soft drop"],
+  [["Space"], "Hard drop"],
+  [["↑", "X"], "Rotate clockwise"],
+  [["Z"], "Rotate anticlockwise"],
+  [["C", "Shift"], "Hold piece"],
+  [["P", "Esc"], "Pause / resume"],
+];
+/** Touch legend; the icons must match the pad buttons below. */
+const TOUCH_LEGEND: [string, string][] = [
+  ["◀ ▶", "Move (hold to slide)"],
+  ["▼", "Soft drop (hold)"],
+  ["⤓", "Hard drop"],
+  ["⟳", "Rotate clockwise"],
+  ["⟲", "Rotate anticlockwise"],
+  ["Hold", "Hold piece"],
+  ["Pause", "Pause / resume (button by the score)"],
+];
+
+type PadAction = "left" | "right" | "soft" | "cw" | "ccw" | "hard" | "hold";
 
 export function Tetris() {
+  const gameRef = useRef<TetrisEngine | null>(null);
+  const boardRef = useRef<HTMLCanvasElement>(null);
+  const nextRef = useRef<HTMLCanvasElement>(null);
+  const holdRef = useRef<HTMLCanvasElement>(null);
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
+
+  const [hud, setHud] = useState<Hud>({
+    status: "ready", score: 0, lines: 0, level: 1, hold: null, holdUsed: false, queue: [],
+  });
+  const [best, setBest] = useState(0);
+  const [username, setUsername] = useState<string | null>(null);
+  const [announcement, setAnnouncement] = useState("");
+  const [callout, setCallout] = useState<{ id: number; label: string } | null>(null);
+  const [final, setFinal] = useState<{ score: number; newBest: boolean } | null>(null);
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [lbError, setLbError] = useState(false);
+
+  // Latest values for callbacks that live inside the animation loop.
+  const bestRef = useRef(0);
+  const usernameRef = useRef<string | null>(null);
+  useEffect(() => { bestRef.current = best; }, [best]);
+  useEffect(() => { usernameRef.current = username; }, [username]);
+
+  // ---- Leaderboard -------------------------------------------------------
+
+  const loadLeaderboard = useCallback(async (signal?: AbortSignal) => {
+    try {
+      const res = await fetch("/api/scores/tetris", { signal });
+      if (!res.ok) throw new Error(String(res.status));
+      setLeaderboard(await res.json());
+      setLbError(false);
+    } catch (error) {
+      if ((error as Error).name !== "AbortError") setLbError(true);
+    }
+  }, []);
+
+  const submitScore = useCallback(async (name: string, score: number) => {
+    setSaveState("saving");
+    try {
+      const res = await fetch("/api/scores/tetris", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, score }),
+      });
+      if (!res.ok) throw new Error(String(res.status));
+      setLeaderboard(await res.json());
+      setLbError(false);
+      setSaveState("saved");
+    } catch {
+      setSaveState("error");
+    }
+  }, []);
+
   useEffect(() => {
-    // UI Elements
-    const $score = document.getElementById('score')!;
-    const $lines = document.getElementById('lines')!;
-    const $level = document.getElementById('level')!;
-    const $high = document.getElementById('highscore')!;
-    const $leaderboard = document.getElementById('leaderboard')!;
-    const usernameDialog = document.getElementById('username-dialog') as HTMLDialogElement;
-    const gameoverDialog = document.getElementById('gameover-dialog') as HTMLDialogElement;
-    const gameoverMessage = document.getElementById('gameover-message')!;
-    const gameoverRestart = document.getElementById('gameover-restart')!;
+    const controller = new AbortController();
+    loadLeaderboard(controller.signal);
+    const id = setInterval(() => {
+      if (document.visibilityState === "visible") loadLeaderboard(controller.signal);
+    }, LEADERBOARD_REFRESH_MS);
+    return () => { controller.abort(); clearInterval(id); };
+  }, [loadLeaderboard]);
 
-    // Username via accessible dialog
-    let username = localStorage.getItem('tetris_username');
+  // ---- Game over ---------------------------------------------------------
 
-    async function getUsername(): Promise<string> {
-      if (username) return username;
-
-      usernameDialog.showModal();
-      return new Promise((resolve) => {
-        usernameDialog.addEventListener('close', () => {
-          const input = document.getElementById('username-input') as HTMLInputElement;
-          username = input.value.trim() || 'Player';
-          localStorage.setItem('tetris_username', username);
-          resolve(username);
-        }, { once: true });
-      });
+  const handleGameOver = useCallback((score: number) => {
+    const newBest = score > bestRef.current;
+    if (newBest) {
+      setBest(score);
+      writeStorage(BEST_KEY, String(score));
     }
+    setFinal({ score, newBest });
+    setSaveState("idle");
+    setAnnouncement(`Game over. Final score ${score}.`);
+    const name = usernameRef.current;
+    // With a known name, save straight away; the server keeps each name's best.
+    if (name && score > 0) submitScore(name, score);
+    const dialog = dialogRef.current;
+    if (dialog && !dialog.open) dialog.showModal();
+  }, [submitScore]);
+  const gameOverRef = useRef(handleGameOver);
+  useEffect(() => { gameOverRef.current = handleGameOver; }, [handleGameOver]);
 
-    let highScore = parseInt(localStorage.getItem('tetris_highscore') || '0', 10);
-    $high.textContent = highScore.toString();
+  // ---- Mount: engine, canvases, loop, input ------------------------------
 
-    let isSyncing = false;
-    async function syncAndLoadLeaderboard() {
-      if (isSyncing) return;
-      isSyncing = true;
-      let serverData: any[] = [];
-      try {
-        const res = await fetch('/api/scores/tetris');
-        if (res.ok) {
-            serverData = await res.json();
+  useEffect(() => {
+    const board = boardRef.current, next = nextRef.current, hold = holdRef.current;
+    if (!board || !next || !hold) return;
+    const boardCtx = setupCanvas(board, BOARD_W, BOARD_H);
+    const nextCtx = setupCanvas(next, PREVIEW_W, PREVIEW_SLOT_H * NEXT_COUNT);
+    const holdCtx = setupCanvas(hold, PREVIEW_W, PREVIEW_SLOT_H);
+    if (!boardCtx || !nextCtx || !holdCtx) return;
+
+    const storedBest = parseInt(readStorage(BEST_KEY) ?? "0", 10);
+    setBest(Number.isFinite(storedBest) && storedBest > 0 ? storedBest : 0);
+    setUsername(readStorage(NAME_KEY));
+
+    const game = new TetrisEngine();
+    gameRef.current = game;
+
+    let frame = 0;
+    let last: number | null = null;
+    let prev = snapshot(game);
+    let lastClearId = 0;
+
+    const render = () => {
+      drawBoard(boardCtx, game);
+      drawPreview(nextCtx, game.queue.slice(0, NEXT_COUNT));
+      drawPreview(holdCtx, [game.hold], game.holdUsed);
+    };
+
+    const tick = (time: number) => {
+      const dt = last === null ? 0 : Math.min(time - last, MAX_FRAME_MS);
+      last = time;
+      game.step(dt);
+      render();
+
+      const clear = game.lastClear;
+      if (clear && clear.id !== lastClearId) {
+        lastClearId = clear.id;
+        const label = describeClear(clear);
+        if (label) {
+          setCallout({ id: clear.id, label });
+          setAnnouncement(`${label}, plus ${clear.points}.`);
         }
-      } catch (e) {
-        console.error('Failed to load leaderboard', e);
-        const li = document.createElement('li');
-        li.textContent = 'Could not load leaderboard.';
-        $leaderboard.appendChild(li);
-      } finally {
-        isSyncing = false;
       }
+      const now = snapshot(game);
+      if (!sameHud(prev, now)) {
+        if (prev.status !== "over" && now.status === "over") gameOverRef.current(now.score);
+        prev = now;
+        setHud(now);
+      }
+      frame = requestAnimationFrame(tick);
+    };
+    render();
+    frame = requestAnimationFrame(tick);
 
-      if (username && highScore > 0) {
-        const serverEntry = serverData.find((e: any) => e.name === username);
-        if (!serverEntry || serverEntry.score < highScore) {
-           try {
-             const res = await fetch('/api/scores/tetris', {
-                 method: 'POST',
-                 headers: { 'Content-Type': 'application/json' },
-                 body: JSON.stringify({ name: username, score: highScore })
-             });
-             if (res.ok) {
-                 serverData = await res.json();
-             }
-           } catch (e) {
-               console.error('Failed to sync score', e);
-           }
+    const onKeyDown = (e: KeyboardEvent) => {
+      // Leave typing, shortcuts (⌘K palette) and open dialogs alone.
+      if (isEditable(e.target) || e.ctrlKey || e.metaKey || e.altKey) return;
+      if (document.querySelector("dialog[open]")) return;
+      const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+
+      if (key === "p" || key === "Escape") {
+        if (game.status === "playing" || game.status === "paused") {
+          game.togglePause();
+          e.preventDefault();
         }
+        return;
       }
+      if (game.status !== "playing") return;
 
-      renderLeaderboard(serverData);
-    }
-
-    function renderLeaderboard(data: any[]) {
-      while ($leaderboard.firstChild) {
-        $leaderboard.removeChild($leaderboard.firstChild);
+      let handled = true;
+      switch (key) {
+        case "ArrowLeft": game.setHoriz(-1); break;
+        case "ArrowRight": game.setHoriz(1); break;
+        case "ArrowDown": game.setSoftDrop(true); break;
+        case "ArrowUp": case "x": if (!e.repeat) game.rotate(1); break;
+        case "z": if (!e.repeat) game.rotate(-1); break;
+        case " ": if (!e.repeat) game.hardDrop(); break;
+        case "c": case "Shift": if (!e.repeat) game.holdPiece(); break;
+        default: handled = false;
       }
-      data.forEach((e) => {
-        const li = document.createElement('li');
-        li.textContent = `${e.name}: ${e.score}`;
-        $leaderboard.appendChild(li);
-      });
-    }
+      if (handled) e.preventDefault();
+    };
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft") game.releaseHoriz(-1);
+      else if (e.key === "ArrowRight") game.releaseHoriz(1);
+      else if (e.key === "ArrowDown") game.setSoftDrop(false);
+    };
+    // Leaving the tab or window pauses: keys released elsewhere never arrive,
+    // and nobody wants to come back to a topped-out board.
+    const onHide = () => { if (game.status === "playing") game.pause(); };
+    const onVisibility = () => { if (document.visibilityState === "hidden") onHide(); };
 
-    let game: any;
-    let cancelled = false;
-
-    function bindButton(el: HTMLElement | null, down: () => void, up?: () => void) {
-      if (!el) return;
-      el.addEventListener('pointerdown', (e) => { e.preventDefault(); down(); });
-      el.addEventListener('pointerup', (e) => { e.preventDefault(); if (up) up(); });
-      el.addEventListener('pointerleave', () => { if (up) up(); });
-    }
-
-    function onKeyDown(e: KeyboardEvent) {
-      if (e.key === 'ArrowLeft') {
-        game.setHoriz(-1); e.preventDefault();
-      } else if (e.key === 'ArrowRight') {
-        game.setHoriz(1); e.preventDefault();
-      } else if (e.key === 'ArrowDown') {
-        game.setDown(true); e.preventDefault();
-      } else if (e.key === 'x' || e.key === 'X') {
-        game.tryRotate(1); e.preventDefault();
-      } else if (e.key === 'z' || e.key === 'Z') {
-        game.tryRotate(-1); e.preventDefault();
-      } else if (e.code === 'Space') {
-        if (!e.repeat) game.hardDrop();
-        e.preventDefault();
-      } else if (e.key === 'c' || e.key === 'C' || e.key === 'Shift') {
-        game.holdPiece(); e.preventDefault();
-      }
-    }
-
-    function onKeyUp(e: KeyboardEvent) {
-      if (e.key === 'ArrowLeft') {
-        if (game.horiz === -1) game.setHoriz(0);
-      } else if (e.key === 'ArrowRight') {
-        if (game.horiz === 1) game.setHoriz(0);
-      } else if (e.key === 'ArrowDown') {
-        game.setDown(false);
-      }
-    }
-
-    // Initialize game after username is resolved
-    async function init() {
-      await getUsername();
-      if (cancelled) return;
-
-      syncAndLoadLeaderboard();
-      const intervalId = setInterval(syncAndLoadLeaderboard, 15000);
-
-      game = new TetrisGame(
-        document.getElementById('board'),
-        document.getElementById('next'),
-        document.getElementById('hold'),
-        {
-          onScore: (score: number, lines: number, level: number) => {
-            $score.textContent = String(score);
-            $lines.textContent = String(lines);
-            $level.textContent = String(level);
-            if (score > highScore) {
-              highScore = score;
-              localStorage.setItem('tetris_highscore', highScore.toString());
-              $high.textContent = highScore.toString();
-            }
-          },
-          onGameOver: async (finalScore: number) => {
-            await syncAndLoadLeaderboard();
-
-            gameoverMessage.textContent = `${username}, your score: ${finalScore}`;
-            gameoverDialog.showModal();
-
-            gameoverRestart.onclick = () => {
-              gameoverDialog.close();
-              game.reset();
-              game.start();
-            };
-          }
-        }
-      );
-
-      // Keyboard Controls
-      window.addEventListener('keydown', onKeyDown);
-      window.addEventListener('keyup', onKeyUp);
-
-      // Mobile Controls
-      bindButton(document.getElementById('btn-left'), () => game.setHoriz(-1), () => { if (game.horiz === -1) game.setHoriz(0); });
-      bindButton(document.getElementById('btn-right'), () => game.setHoriz(1), () => { if (game.horiz === 1) game.setHoriz(0); });
-
-      const btnRotate = document.getElementById('btn-rotate');
-      const btnRotateCCW = document.getElementById('btn-rotate-ccw');
-      const btnDrop = document.getElementById('btn-drop');
-      const btnHold = document.getElementById('btn-hold');
-
-      if (btnRotate) btnRotate.addEventListener('pointerdown', (e) => { e.preventDefault(); game.tryRotate(1); });
-      if (btnRotateCCW) btnRotateCCW.addEventListener('pointerdown', (e) => { e.preventDefault(); game.tryRotate(-1); });
-      if (btnDrop) btnDrop.addEventListener('pointerdown', (e) => { e.preventDefault(); game.hardDrop(); });
-      if (btnHold) btnHold.addEventListener('pointerdown', (e) => { e.preventDefault(); game.holdPiece(); });
-
-      game.start();
-
-      return () => clearInterval(intervalId);
-    }
-
-    let cleanupInterval: (() => void) | undefined;
-    init().then((cleanup) => { cleanupInterval = cleanup; });
-
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
+    window.addEventListener("blur", onHide);
+    document.addEventListener("visibilitychange", onVisibility);
     return () => {
-      cancelled = true;
-      if (game) game.running = false;
-      window.removeEventListener('keydown', onKeyDown);
-      window.removeEventListener('keyup', onKeyUp);
-      cleanupInterval?.();
+      cancelAnimationFrame(frame);
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+      window.removeEventListener("blur", onHide);
+      document.removeEventListener("visibilitychange", onVisibility);
+      gameRef.current = null;
     };
   }, []);
 
+  // ---- Controls -------------------------------------------------------------
+
+  const startGame = () => {
+    const game = gameRef.current;
+    if (!game) return;
+    dialogRef.current?.close();
+    setFinal(null);
+    setCallout(null);
+    game.start();
+    setAnnouncement("New game started.");
+  };
+
+  const togglePause = () => gameRef.current?.togglePause();
+
+  const padDown = (action: PadAction) => (e: ReactPointerEvent<HTMLButtonElement>) => {
+    const game = gameRef.current;
+    if (!game || !game.playing) return;
+    e.preventDefault();
+    // Capture so the release still arrives if the thumb slides off the button.
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+    switch (action) {
+      case "left": game.setHoriz(-1); break;
+      case "right": game.setHoriz(1); break;
+      case "soft": game.setSoftDrop(true); break;
+      case "cw": game.rotate(1); break;
+      case "ccw": game.rotate(-1); break;
+      case "hard": game.hardDrop(); break;
+      case "hold": game.holdPiece(); break;
+    }
+  };
+  const padUp = (action: PadAction) => () => {
+    const game = gameRef.current;
+    if (!game) return;
+    if (action === "left") game.releaseHoriz(-1);
+    else if (action === "right") game.releaseHoriz(1);
+    else if (action === "soft") game.setSoftDrop(false);
+  };
+  const padProps = (action: PadAction) => ({
+    onPointerDown: padDown(action),
+    onPointerUp: padUp(action),
+    onPointerCancel: padUp(action),
+    onLostPointerCapture: padUp(action),
+    onContextMenu: (e: { preventDefault: () => void }) => e.preventDefault(),
+  });
+
+  const saveName = (e: FormEvent) => {
+    e.preventDefault();
+    const name = nameInputRef.current?.value.trim().slice(0, MAX_NAME);
+    if (!name || !final) return;
+    setUsername(name);
+    writeStorage(NAME_KEY, name);
+    submitScore(name, final.score);
+  };
+
+  const forgetName = () => {
+    setUsername(null);
+    writeStorage(NAME_KEY, null);
+  };
+
+  const status = hud.status;
+  const padButton = "px-3 py-3 bg-neutral text-neutral-content rounded text-lg font-bold select-none";
+
   return (
     <>
-      {/* Username Dialog */}
-      <dialog id="username-dialog" className="rounded-xl bg-base-200 text-base-content shadow-xl backdrop:bg-black/50 p-0">
-        <form method="dialog" className="p-8 space-y-4">
-          <h2 className="text-xl font-bold">Enter your username</h2>
-          <input type="text" id="username-input" maxLength={20} required
-                 className="w-full px-4 py-2 rounded bg-base-100 text-base-content border border-base-content/20 focus:border-primary focus:outline-none"
-                 placeholder="Username" />
-          <button type="submit" className="w-full px-6 py-2 bg-primary text-primary-content rounded hover:opacity-90 transition">
-            Start Playing
-          </button>
-        </form>
-      </dialog>
+      <dialog
+        id="gameover-dialog"
+        ref={dialogRef}
+        aria-labelledby="gameover-title"
+        className="rounded-xl bg-base-200 text-base-content shadow-xl backdrop:bg-black/50 p-0 w-[min(24rem,calc(100vw-2rem))]"
+      >
+        <div className="p-6 sm:p-8 space-y-4 text-center">
+          <h2 id="gameover-title" className="text-2xl font-bold">Game over</h2>
+          <p className="text-lg">
+            Score: <strong>{final?.score ?? 0}</strong>
+            {final?.newBest && final.score > 0 && <span className="block text-primary font-bold">New personal best!</span>}
+          </p>
 
-      {/* Game Over Dialog */}
-      <dialog id="gameover-dialog" className="rounded-xl bg-base-200 text-base-content shadow-xl backdrop:bg-black/50 p-0">
-        <div className="p-8 space-y-4 text-center">
-          <h2 className="text-2xl font-bold">Game Over!</h2>
-          <p id="gameover-message" className="text-lg"></p>
-          <button id="gameover-restart" className="px-6 py-2 bg-primary text-primary-content rounded hover:opacity-90 transition">
-            Play Again
-          </button>
+          {final && final.score > 0 && (username ? (
+            <p className="text-sm text-base-content/70" aria-live="polite">
+              {saveState === "saving" && `Saving as ${username}…`}
+              {saveState === "saved" && `Saved to the leaderboard as ${username}.`}
+              {saveState === "error" && (
+                <>Couldn&apos;t reach the leaderboard.{" "}
+                  <button type="button" className="underline" onClick={() => submitScore(username, final.score)}>Try again</button>
+                </>
+              )}
+            </p>
+          ) : (
+            <form onSubmit={saveName} className="space-y-2 text-left">
+              <label htmlFor="tetris-name" className="block text-sm font-bold">Name for the leaderboard</label>
+              <div className="flex gap-2">
+                <input
+                  id="tetris-name" ref={nameInputRef} type="text" maxLength={MAX_NAME} required autoComplete="nickname"
+                  className="min-w-0 flex-1 px-3 py-2 rounded bg-base-100 text-base-content border border-base-content/20 focus:border-primary focus:outline-none"
+                  placeholder="Your name"
+                />
+                <button type="submit" className="px-4 py-2 bg-neutral text-neutral-content rounded">Save</button>
+              </div>
+              {saveState === "error" && <p className="text-sm text-error">Couldn&apos;t reach the leaderboard. Try again?</p>}
+            </form>
+          ))}
+
+          <div className="flex justify-center gap-2 pt-2">
+            <button type="button" onClick={startGame} className="px-6 py-2 bg-primary text-primary-content rounded hover:opacity-90 transition">
+              Play again
+            </button>
+            <button type="button" onClick={() => dialogRef.current?.close()} className="px-4 py-2 bg-neutral text-neutral-content rounded">
+              Close
+            </button>
+          </div>
         </div>
       </dialog>
 
       <h1 className="text-3xl font-bold my-6">Tetris</h1>
-      <div className="flex gap-4">
-        <canvas id="board" width={300} height={600} role="img" aria-label="Tetris game board"></canvas>
-        <div className="space-y-4">
+
+      <div className="flex gap-3 sm:gap-4 items-start">
+        <div className="relative flex-1 min-w-0 max-w-[300px]">
+          <canvas
+            id="board" ref={boardRef} width={BOARD_W} height={BOARD_H}
+            role="img" aria-label="Tetris playfield"
+            className="block w-full h-auto rounded touch-none"
+          />
+          {status !== "playing" && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/60 text-white text-center p-4 rounded">
+              {status === "paused" ? (
+                <>
+                  <p className="text-2xl font-bold">Paused</p>
+                  <button type="button" onClick={togglePause} className="px-6 py-2 bg-primary text-primary-content rounded hover:opacity-90 transition">
+                    Resume
+                  </button>
+                  <p className="text-xs opacity-80">P or Esc</p>
+                </>
+              ) : (
+                <>
+                  {status === "over" && <p className="text-2xl font-bold">Game over</p>}
+                  <button type="button" onClick={startGame} className="px-6 py-2 bg-primary text-primary-content rounded hover:opacity-90 transition">
+                    {status === "over" ? "Play again" : "Start game"}
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+          {status === "playing" && callout && (
+            <p key={callout.id} aria-hidden="true"
+               className="kk-tetris-callout absolute inset-x-0 top-1/3 text-center text-lg font-extrabold text-white pointer-events-none">
+              {callout.label}
+            </p>
+          )}
+        </div>
+
+        <div className="w-[76px] sm:w-24 shrink-0 space-y-3 text-sm">
           <div>
             <p className="font-bold">Next</p>
-            <canvas id="next" width={120} height={120} role="img" aria-label="Next piece preview"></canvas>
+            <canvas id="next" ref={nextRef} width={PREVIEW_W} height={PREVIEW_SLOT_H * NEXT_COUNT} role="img"
+                    aria-label={hud.queue.length ? `Next pieces: ${hud.queue.slice(0, NEXT_COUNT).join(", ")}` : "Next pieces"}
+                    className="block w-full h-auto rounded" />
           </div>
           <div>
             <p className="font-bold">Hold</p>
-            <canvas id="hold" width={120} height={120} role="img" aria-label="Held piece"></canvas>
+            <canvas id="hold" ref={holdRef} width={PREVIEW_W} height={PREVIEW_SLOT_H} role="img"
+                    aria-label={hud.hold ? `Held piece: ${hud.hold}` : "No piece held"} className="block w-full h-auto rounded" />
           </div>
-          <div className="space-y-2">
-            <p>Score: <span id="score">0</span></p>
-            <p>Lines: <span id="lines">0</span></p>
-            <p>Level: <span id="level">0</span></p>
-            <p>High Score: <span id="highscore">0</span></p>
-          </div>
+          <dl className="space-y-1 tabular-nums">
+            <div><dt className="text-base-content/70">Score</dt><dd id="score" className="font-bold">{hud.score}</dd></div>
+            <div><dt className="text-base-content/70">Level</dt><dd id="level" className="font-bold">{hud.level}</dd></div>
+            <div><dt className="text-base-content/70">Lines</dt><dd id="lines" className="font-bold">{hud.lines}</dd></div>
+            <div><dt className="text-base-content/70">Best</dt><dd id="highscore" className="font-bold">{best}</dd></div>
+          </dl>
+          {(status === "playing" || status === "paused") && (
+            <button type="button" onClick={togglePause} className="w-full px-2 py-1 bg-neutral text-neutral-content rounded">
+              {status === "paused" ? "Resume" : "Pause"}
+            </button>
+          )}
         </div>
       </div>
-      <div className="md:hidden mt-4 flex flex-wrap gap-2">
-        <button id="btn-left" aria-label="Move left" className="px-4 py-2 bg-neutral text-neutral-content rounded">&#9664;</button>
-        <button id="btn-rotate-ccw" aria-label="Rotate counter-clockwise" className="px-4 py-2 bg-neutral text-neutral-content rounded">&#10226;</button>
-        <button id="btn-rotate" aria-label="Rotate clockwise" className="px-4 py-2 bg-neutral text-neutral-content rounded">&#10227;</button>
-        <button id="btn-right" aria-label="Move right" className="px-4 py-2 bg-neutral text-neutral-content rounded">&#9654;</button>
-        <button id="btn-drop" aria-label="Drop piece" className="px-4 py-2 bg-neutral text-neutral-content rounded">&#11015;</button>
-        <button id="btn-hold" aria-label="Hold piece" className="px-4 py-2 bg-neutral text-neutral-content rounded">H</button>
+
+      <p className="sr-only" aria-live="polite">{announcement}</p>
+
+      <div className="kk-tetris-pad mt-4 max-w-[400px] grid-cols-4 gap-2 touch-none" aria-label="Touch controls" role="group">
+        <button type="button" aria-label="Hold piece" className={padButton} {...padProps("hold")}>Hold</button>
+        <button type="button" aria-label="Rotate anticlockwise" className={padButton} {...padProps("ccw")}>&#10226;</button>
+        <button type="button" aria-label="Rotate clockwise" className={padButton} {...padProps("cw")}>&#10227;</button>
+        <button type="button" aria-label="Hard drop" className={padButton} {...padProps("hard")}>&#10515;</button>
+        <button type="button" aria-label="Move left" className={padButton} {...padProps("left")}>&#9664;</button>
+        <button type="button" aria-label="Soft drop" className={`${padButton} col-span-2`} {...padProps("soft")}>&#9660;</button>
+        <button type="button" aria-label="Move right" className={padButton} {...padProps("right")}>&#9654;</button>
       </div>
+
+      <section aria-labelledby="tetris-controls" className="mt-4 max-w-[400px] text-sm">
+        <h2 id="tetris-controls" className="font-bold mb-2">Controls</h2>
+        <dl className="kk-tetris-keys grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 items-center">
+          {KEY_LEGEND.map(([keys, action]) => (
+            <div key={action} className="contents">
+              <dt className="flex flex-wrap gap-1">
+                {keys.map((k) => <kbd key={k} className="kbd kbd-sm">{k}</kbd>)}
+              </dt>
+              <dd>{action}</dd>
+            </div>
+          ))}
+        </dl>
+        <dl className="kk-tetris-touch grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 items-center">
+          {TOUCH_LEGEND.map(([icon, action]) => (
+            <div key={action} className="contents">
+              <dt className="min-w-[2.5rem] text-center font-bold">{icon}</dt>
+              <dd>{action}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+
       <div className="mt-6">
         <h2 className="font-bold">Leaderboard</h2>
-        <ol id="leaderboard" className="list-decimal ml-6"></ol>
+        {lbError && <p className="text-sm text-base-content/70">Couldn&apos;t load the leaderboard right now.</p>}
+        {!lbError && leaderboard.length === 0 && <p className="text-sm text-base-content/70">No scores yet. Be the first!</p>}
+        <ol id="leaderboard" className="list-decimal ml-6">
+          {leaderboard.map((entry) => (
+            <li key={entry.name} className={entry.name === username ? "font-bold text-primary" : undefined}>
+              {entry.name}: {entry.score}
+            </li>
+          ))}
+        </ol>
+        {username && (
+          <p className="mt-2 text-sm text-base-content/70">
+            Playing as {username}.{" "}
+            <button type="button" className="underline" onClick={forgetName}>Change name</button>
+          </p>
+        )}
       </div>
     </>
   );
 }
+
+export default Tetris;

@@ -81,9 +81,9 @@ A production build **without** those env vars ships no admin routes at all.
   - Presentational components render to static HTML with zero client JS; interactive ones (the games, Tunes, reactions, reading tools, heart-rate widgets, guestbook forms, theme and skin switchers, the oneko toggle, and each shell's own chrome such as the command palette or the Mandy nav and backdrop) hydrate with `client:load`.
   - Reusable components live in `src/components/` (also synced to a Claude Design project via `.design-sync/`); page-specific markup lives in `src/page-components/`.
   - **CV Page**: Fully data-driven using `src/data/cv.json` and reusable `CvSection` components.
-  - **Tetris**: Game logic decoupled into a dedicated `src/lib/tetris.js` engine, separating `update()`/`draw()` loops from the UI component; `Tetris.tsx` is a faithful island wrapper around it.
+  - **Tetris**: The rules live in a pure, unit-tested engine (`src/lib/tetris.ts`) with no DOM; `src/lib/tetrisCanvas.ts` draws it, and `Tetris.tsx` owns the animation loop, input, and leaderboard.
   - **Tunes Page**: Last.fm integration uses a server-side proxy (`src/pages/api/lastfm.ts`) to prevent API key exposure; React state is the source of truth, polling for now-playing updates.
-  - **High Scores**: Global leaderboard implemented via server-side API (`src/pages/api/scores/[game].ts`, accessed as `/api/scores/:game`) and persistent JSON storage.
+  - **High Scores**: Global leaderboard implemented via server-side API (`src/pages/api/scores/[game].ts`, accessed as `/api/scores/:game`) and persistent JSON storage. Like the guestbook, it only accepts same-origin, size-capped, rate-limited posts.
   - **Config**: Centralized navigation and site settings in `src/config.ts`.
 - Displays my most recently played tracks with album artwork
 - I recognise both Last.fm artist credit formats in `/now` and Tunes, including recent history and duplicate filtering.
@@ -97,7 +97,7 @@ A production build **without** those env vars ships no admin routes at all.
 - Manage posts, projects, and CV via **Keystatic** at `/keystatic` (schemas in `keystatic.config.ts`).
 - Responsive Tailwind styling
 - Includes dedicated pages for my Final Year Project and Year 2 Java calculator
-- I built a playable Tetris clone for the Games page with touch controls, SRS rotation, and a **global leaderboard** that persists scores across devices.
+- I built a Guideline-style Tetris for the Games page: SRS rotation with wall kicks, hold, a ghost piece, a three-piece queue, T-spins, back-to-back and combo scoring, pause (P/Esc, or automatically when I leave the tab), touch controls on phones and tablets, a controls legend under the board that matches the device I'm on, and a **global leaderboard**. It waits for me to press Start and only asks for a name when there's a score to save.
 - I also added a simple Rock Paper Scissors game that keeps my running score in `localStorage` and submits it to the same server leaderboard.
 
 ## Project Structure

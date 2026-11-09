@@ -163,3 +163,37 @@ html[data-theme="spider-man"] .from-primary.to-secondary {
 @media (prefers-reduced-motion: reduce) {
   .kk-heartbeat { animation: none; }
 }
+
+/* Tetris (Tetris.tsx). Shared by every skin, like the heart rate above.
+   The touch pad shows on phones and on any touch-first device (a tablet is
+   wider than md but still has no arrow keys). */
+/* The controls legend follows the same split: the touch legend shows where
+   the pad does, and the keyboard legend hides only on touch-first devices
+   (a narrow desktop window still has a keyboard). */
+.kk-tetris-pad,
+.kk-tetris-touch { display: none; }
+@media (max-width: 767px), (pointer: coarse) {
+  .kk-tetris-pad,
+  .kk-tetris-touch { display: grid; }
+}
+@media (pointer: coarse) {
+  .kk-tetris-keys { display: none; }
+}
+.kk-tetris-keys + .kk-tetris-touch { margin-top: 0.75rem; }
+.kk-tetris-pad button { touch-action: none; -webkit-user-select: none; user-select: none; }
+/* The line-clear callout ("T-Spin Double") floats up and fades. */
+@keyframes kk-tetris-callout {
+  0% { opacity: 0; transform: translateY(8px) scale(0.9); }
+  15% { opacity: 1; transform: translateY(0) scale(1); }
+  70% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-16px); }
+}
+.kk-tetris-callout {
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9);
+  animation: kk-tetris-callout 1.4s ease-out forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  /* No motion, but it still has to go away. */
+  @keyframes kk-tetris-callout-still { 0%, 80% { opacity: 1; } 100% { opacity: 0; } }
+  .kk-tetris-callout { animation-name: kk-tetris-callout-still; }
+}

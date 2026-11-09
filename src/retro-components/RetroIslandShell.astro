@@ -2,11 +2,11 @@
 // Retro chrome around an interactive island (Tetris, Rock Paper Scissors,
 // Tunes).
 //
-// These three are wrapped rather than rewritten. src/lib/tetris.js and
-// rockPaperScissors.ts drive their DOM through document.getElementById against
-// the exact markup in Tetris.tsx / RockPaperScissors.tsx, and Tunes.tsx holds
-// 359 lines of polling state — a retro fork of that markup would render fine
-// and silently stop working. So the island renders unchanged and retro.css
+// These three are wrapped rather than rewritten. rockPaperScissors.ts drives
+// its DOM through document.getElementById against the exact markup in
+// RockPaperScissors.tsx, Tetris.tsx owns a canvas game loop, and Tunes.tsx
+// holds 359 lines of polling state — a retro fork of any of them would render
+// fine and silently stop working (or drift from the real game). So the island renders unchanged and retro.css
 // restyles it in place (see the "interactive islands" section there).
 //
 // This is an .astro component, not React: Astro pre-renders content slotted

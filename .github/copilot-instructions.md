@@ -18,7 +18,7 @@ For full architectural details, always consult `AGENTS.md` and `CLAUDE.md` in th
   - Three parallel skins resolved via `kk-skin` cookie in `src/middleware.ts` (`mandy` default, `modern`, `retro`)
   - Last.fm integration (server-side proxy at `/api/lastfm` with bounded cache + request coalescing)
   - Live Pulsoid heart rate (`/api/heartrate`, footer pill, `/about` ECG card, draggable floating monitor)
-  - Interactive games (Tetris with SRS rotation, Rock Paper Scissors, Star Pairs constellation memory game) wrapped in `MandyIslandShell.astro` and `RetroIslandShell.astro` without forking
+  - Interactive games (Guideline Tetris with a pure, tested engine in `src/lib/tetris.ts`, Rock Paper Scissors, Star Pairs constellation memory game) wrapped in `MandyIslandShell.astro` and `RetroIslandShell.astro` without forking
   - Persistent guestbook (`/guestbook`), per-post emoji reactions, and retro hit counter with same-origin, body-cap, and rate-limit guards
   - URL-driven blog & portfolio search/filtering (`src/lib/contentDiscovery.ts`) and blog reading tools (`src/lib/reading.ts`, `ReadingTools.tsx`)
   - Prerendered Open Graph cards (`src/pages/og/[...route].ts`, `src/layouts/SeoHead.astro`)

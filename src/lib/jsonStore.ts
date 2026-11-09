@@ -1,6 +1,5 @@
 // Server-only JSON persistence for small, low-write datasets (guestbook,
-// post reactions). Generalises the read/lock/atomic-write pattern that
-// src/pages/api/scores/[game].ts hand-rolls per game.
+// post reactions, game leaderboards in data/scores/).
 //
 // Everything lives under ./data, which docker-compose mounts as a named
 // volume, so files written here survive container rebuilds. The directory is
@@ -63,7 +62,8 @@ export async function updateJson<T>(
 
     const target = resolveDataFile(file);
     const temp = `${target}.tmp`;
-    await fs.mkdir(DATA_DIR, { recursive: true });
+    // dirname, not DATA_DIR: scores live a level down, in data/scores/.
+    await fs.mkdir(path.dirname(target), { recursive: true });
     // Write-then-rename: a crash mid-write leaves the previous file intact
     // instead of a truncated one.
     await fs.writeFile(temp, JSON.stringify(next, null, 2));
