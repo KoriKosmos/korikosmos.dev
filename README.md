@@ -10,9 +10,8 @@ It ships in **three skins**, switched from the buttons in the bottom-left corner
    ```sh
    npm install
    ```
-2. Copy `.env.example` to `.env` and add my Last.fm credentials. I can
-   optionally set `GIT_REPO` and `GIT_BRANCH` here if the Docker container
-   should pull from a remote repo on startup.
+2. Copy `.env.example` to `.env` and add my Last.fm credentials, plus the
+   the optional Pulsoid (live heart rate) and Keystatic (CMS) values.
    ```sh
    cp .env.example .env
    ```
@@ -78,8 +77,8 @@ A production build **without** those env vars ships no admin routes at all.
 - **Guestbook** at `/guestbook`, in all three skins — persistent (`data/guestbook.json`), with a public `GET /api/guestbook` and a same-origin, rate-limited, body-capped `POST`. The entry cap rejects rather than evicts, so a flood can never destroy signatures, and submitted URLs are allowlisted to `http:`/`https:` before being rendered as links. Per-post emoji reactions use the same guards.
 - **Hit counter** on the retro skin, bumped once per visitor session (`data/hits.json`).
 - **React islands architecture**:
-  - `.astro` pages are thin wrappers: they do the server-side data fetching (content collections, Last.fm, `cv.json`) and render a React component in `src/page-components/` with the result as props.
-  - Presentational components render to static HTML with zero client JS; interactive ones (`ThemeBar`, `OnekoToggle`, `Tetris`, `RockPaperScissors`, `Tunes`, the homepage typing heading) hydrate with `client:load`.
+  - `.astro` pages are thin wrappers: they do the server-side data fetching (content collections, Last.fm, `cv.json`) and render the active skin's React body (`src/mandy-components/`, `src/page-components/` or `src/retro-components/`) with the result as props.
+  - Presentational components render to static HTML with zero client JS; interactive ones (the games, Tunes, reactions, reading tools, heart-rate widgets, guestbook forms, theme and skin switchers, the oneko toggle, and each shell's own chrome such as the command palette or the Mandy nav and backdrop) hydrate with `client:load`.
   - Reusable components live in `src/components/` (also synced to a Claude Design project via `.design-sync/`); page-specific markup lives in `src/page-components/`.
   - **CV Page**: Fully data-driven using `src/data/cv.json` and reusable `CvSection` components.
   - **Tetris**: Game logic decoupled into a dedicated `src/lib/tetris.js` engine, separating `update()`/`draw()` loops from the UI component; `Tetris.tsx` is a faithful island wrapper around it.
@@ -99,7 +98,7 @@ A production build **without** those env vars ships no admin routes at all.
 - Responsive Tailwind styling
 - Includes dedicated pages for my Final Year Project and Year 2 Java calculator
 - I built a playable Tetris clone for the Games page with touch controls, SRS rotation, and a **global leaderboard** that persists scores across devices.
-- I also added a simple Rock Paper Scissors game that saves scores in `localStorage`.
+- I also added a simple Rock Paper Scissors game that keeps my running score in `localStorage` and submits it to the same server leaderboard.
 
 ## Project Structure
 
@@ -172,7 +171,7 @@ docker compose up --build
 
 The site will be available at http://localhost:8484.
 
-The container does **not** copy `data/` into the image — the game leaderboards, guestbook, and hit counter all persist through the volume mount defined in `docker-compose.yml`. Without a writable `data/`, the guestbook refuses signatures and the counter falls back to an in-memory count rather than failing the page.
+The container does **not** copy `data/` into the image — the game leaderboards, guestbook, post reactions, and hit counter all persist through the volume mount defined in `docker-compose.yml`. Without a writable `data/`, the guestbook refuses signatures and the counter falls back to an in-memory count rather than failing the page.
 
 **Note**: This uses a multi-stage `Dockerfile` that builds the Astro project into a standalone Node.js app. The "pull-on-boot" feature has been removed for stability.
 

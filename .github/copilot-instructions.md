@@ -12,7 +12,7 @@ For full architectural details, always consult `AGENTS.md` and `CLAUDE.md` in th
 - **UI:** React 19 via `@astrojs/react` — `.astro` pages fetch data server-side and render a `.tsx` body component for the active skin (`mandy-components/Mandy*`, `page-components/*`, or `retro-components/Retro*`)
 - **Styling:** Tailwind CSS 3.3 + DaisyUI 4.12 (5 custom themes: `dark`, `light`, `forest`, `spider-man`, `batman` for the modern skin; `src/styles/retro.css` (`rt-*`) for the retro skin; `src/styles/mandy.css` (`md-*`) plus four `mandy-*` DaisyUI themes for Mandy mode)
 - **TypeScript:** Strict mode (`astro/tsconfigs/strict`)
-- **Deployment:** Docker (multi-stage build, Node 20 Alpine, port 4321)
+- **Deployment:** Docker (multi-stage build, Node 22 Alpine, port 4321)
 - **CMS:** Keystatic (admin at `/keystatic`, GitHub mode; schemas in `keystatic.config.ts`; `/admin` 301-redirects there)
 - **Key Features:**
   - Three parallel skins resolved via `kk-skin` cookie in `src/middleware.ts` (`mandy` default, `modern`, `retro`)
