@@ -93,26 +93,36 @@ function PixelIcon({ rows, palette, size = 30 }: { rows: string[]; palette: Pixe
 }
 
 /* The mascot: a bat, hanging upside down by its feet and asleep, wings folded.
-   Feet are the top row, ears the bottom. f fur / w wing / e closed eye / a ear. */
+   Feet are the top row, ears the bottom.
+
+   Coloured the way amandata.dev colours its sleeping cat: every pixel has a
+   role, every role is a CSS variable, and each sub-theme sets its own coat
+   (mandy.css §1, --md-mascot-*), chosen to stand out from that theme's
+   background — a moonlit coat on the dark themes, a dark one on the light.
+   Roles: f fur / w wing membrane / d shade (wing bones) / l light (chest
+   fluff) / p pink (nose, inner ears) / e closed eye. Rows are palindromes. */
 const BAT_ROWS = [
   '....f....f....',
   '....ff..ff....',
   '...wffffffw...',
-  '..wwffffffww..',
-  '.wwwffffffwww.',
-  '.wwwffffffwww.',
-  '.wwwffffffwww.',
-  '..wwffffffww..',
-  '..wwffffffww..',
-  '...wffffffw...',
+  '..wdffffffdw..',
+  '.wwdffllffdww.',
+  '.wdwffllffwdw.',
+  '.wdwffllffwdw.',
+  '..wdffllffdw..',
+  '..wdffffffdw..',
+  '...dffffffd...',
   '...ffffffff...',
   '...feeffeef...',
-  '...ffffffff...',
+  '...fffppfff...',
   '....ffffff....',
-  '...aa....aa...',
-  '...a......a...',
+  '...fp....pf...',
+  '...f......f...',
 ];
-const BAT_KEY: PixelKey = { f: { className: 'mf' }, w: { className: 'mw' }, e: { className: 'me' }, a: { className: 'ma' } };
+const BAT_KEY: PixelKey = {
+  f: { className: 'mf' }, w: { className: 'mw' }, d: { className: 'md' },
+  l: { className: 'ml' }, p: { className: 'mp' }, e: { className: 'me' },
+};
 
 /* The mascot hangs from .md-hero__perch rather than sitting on it, so it is
    anchored by `top` (mandy.css anchors by `bottom`), breathes from its feet,
