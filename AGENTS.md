@@ -98,6 +98,7 @@ src/
 public/                # Static assets (favicon.svg, robots.txt, oneko.js)
 └── retro/             # Generated retro graphics — `npm run gen:retro`, output is committed
 data/                  # Runtime state (volume-mounted): scores/, guestbook.json, hits.json, reactions.json
+drafts/                # Unpublished / model-specific blog drafts kept outside src/content/blog/
 tests/                 # Unit tests (tests/*.test.ts) + post-build SSR render tests (tests/render/pages.test.ts)
 keystatic.config.ts    # Keystatic CMS schemas (blog, projects collections + cv singleton)
 .design-sync/          # Config/notes/previews for syncing src/components/ to a Claude Design project
@@ -254,3 +255,4 @@ Mandy mode takes the general structure of [amandata.dev](https://amandata.dev), 
 - I added a live Pulsoid heart-rate readout across all three skins: a footer pill (`HeartRate.tsx`), an `/about` card with a sweeping ECG trace (`HeartRateCard.tsx`), and a draggable floating monitor (`HeartRateFloat.tsx`) toggled from a ♥ dock button whose open state and position persist across navigations. All heart islands share one 5s client poller (`src/lib/heartRateStore.ts`) backed by `/api/heartrate`, which caches Pulsoid's API for 3s across visitors, hides the readout when the strap is off (>60s old), and falls back to the free Pulsoid widget iframe (`PULSOID_WIDGET_URL`) if the BRO token is missing or lapses.
 - I unified the site's bat emblem into `src/page-components/PixelBat.tsx` (`BAT_ROWS`, a 20×7 palindromic pixel bat reduced from my braille-art bat) so the Mandy nav mark, the Gotham Bat-Signal backdrop, the modern Batman theme swatch, and the Mandy skin button all draw from one crisp pixel definition.
 - I keep `AGENTS.md`, `CLAUDE.md`, `README.md`, and `.github/copilot-instructions.md` in sync so every coding assistant has the same accurate map of the three-skin architecture, islands, and verification workflow.
+- I keep model-specific blog drafts intact in `drafts/` (outside `src/content/blog/` so they are not displayed on the site) and consolidated the four Mandy-mode drafts into `src/content/blog/mandy-mode.md` with affectionate, concrete credit to Mandy and amandata.dev, honest admiration and design envy, and the technical story behind adapting her structure into my own skin.

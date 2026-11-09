@@ -134,6 +134,7 @@ A production build **without** those env vars ships no admin routes at all.
 │   ├── gen-og-assets.mjs     # Draws src/assets/og/* — run with `npm run gen:og`
 │   └── new-post.js           # Scaffolds a new blog post — run with `npm run new-post`
 ├── data/                # Runtime state: scores/, guestbook.json, hits.json, reactions.json (volume-mounted)
+├── drafts/              # Unpublished / model-specific blog drafts kept outside src/content/blog/
 ├── tests/               # Unit tests + post-build SSR render tests
 ├── .design-sync/        # Config for syncing src/components/ to Claude Design
 └── ...
