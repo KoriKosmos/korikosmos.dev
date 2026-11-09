@@ -54,15 +54,17 @@
   --md-ribbon-a: rgba(245, 197, 24, 0.12);
   --md-ribbon-b: rgba(143, 163, 191, 0.12);
 
-  /* mascot (pixel bat) coat, per theme like amandata's cat: a moonlit coat
-     on dark backgrounds, a dark one on light. Fur clears 5.9:1 against
-     --md-bg and the wing 3:1 in every theme (WCAG 1.4.11 for graphics). */
-  --md-mascot-fur: #8B93A7;
-  --md-mascot-wing: #5D6478;
-  --md-mascot-shade: #3A4050;
-  --md-mascot-light: #C6CCD9;
-  --md-mascot-pink: #F0A6B8;
-  --md-mascot-eye: #14161C;
+  /* mascot (pixel bat) coat, per theme like amandata's cat: every pixel role
+     is a variable and each sub-theme dresses the bat in its own fandom.
+     Gotham keeps the original dark Batman bat on purpose: it is a shadow in
+     the night sky (fur 1.29:1 against --md-bg), found by its yellow eyes
+     (9.3:1). The other coats clear 3:1 against their backgrounds. */
+  --md-mascot-fur: #23262F;
+  --md-mascot-wing: #3A3F4D;
+  --md-mascot-shade: #16181E;
+  --md-mascot-light: #30343F;
+  --md-mascot-pink: #6B7385;
+  --md-mascot-eye: #F5C518;
 
   --md-display: 'Pixelify Sans', 'Press Start 2P', monospace;
   --md-micro: 'VT323', 'Silkscreen', monospace;
@@ -132,12 +134,13 @@
   --md-scene-opacity: 0.5;
   --md-ribbon-a: transparent;
   --md-ribbon-b: transparent;
-  --md-mascot-fur: #4A4466;
-  --md-mascot-wing: #6E6694;
-  --md-mascot-shade: #2B2740;
-  --md-mascot-light: #8E88AC;
-  --md-mascot-pink: #E07890;
-  --md-mascot-eye: #FFCB05;
+  /* Poké Ball red core: red body, black band for the wing bones, white chest */
+  --md-mascot-fur: #D42A1F;
+  --md-mascot-wing: #9C1C14;
+  --md-mascot-shade: #1E1E1E;
+  --md-mascot-light: #FFFFFF;
+  --md-mascot-pink: #FF9EAA;
+  --md-mascot-eye: #1E1E1E;
 }
 
 /* ---------- inkwell (comics) ---------- */
@@ -166,12 +169,13 @@
   --md-scene-opacity: 0.5;
   --md-ribbon-a: transparent;
   --md-ribbon-b: transparent;
-  --md-mascot-fur: #2A2A2A;
-  --md-mascot-wing: #4E4E4E;
-  --md-mascot-shade: #0E0E0E;
-  --md-mascot-light: #707070;
-  --md-mascot-pink: #D9707E;
-  --md-mascot-eye: #FFE14D;
+  /* the comic ages: a Golden Age body, Silver Age wings, black ink lines */
+  --md-mascot-fur: #9A7612;
+  --md-mascot-wing: #7A818C;
+  --md-mascot-shade: #161616;
+  --md-mascot-light: #E8C760;
+  --md-mascot-pink: #F5B8C4;
+  --md-mascot-eye: #161616;
   --md-display: 'Bangers', 'Pixelify Sans', 'Impact', sans-serif;
 }
 
