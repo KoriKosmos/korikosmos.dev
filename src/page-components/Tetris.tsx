@@ -1,10 +1,15 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent, type PointerEvent as ReactPointerEvent } from "react";
-import { NEXT_COUNT, TetrisEngine, clearTitle, describeClear, type ClearResult, type GameStatus, type PieceType } from "../lib/tetris";
+import {
+  NEXT_COUNT, TetrisEngine, clearTitle, describeClear,
+  type ClearResult, type GameEvent, type GameStatus, type PieceType,
+} from "../lib/tetris";
 import {
   BOARD_H, BOARD_W, PREVIEW_SLOT_H, PREVIEW_W, drawBoard, drawPreview, setupCanvas,
 } from "../lib/tetrisCanvas";
 import { TOP_OUT_MS, TetrisEffects } from "../lib/tetrisEffects";
 import { GamepadReader, otherDialogOpen, type PadButton, type PadFrame } from "../lib/gamepad";
+import { haptic, trackInputSource, type HapticKind } from "../lib/haptics";
+import { HapticsToggle } from "./HapticsToggle";
 
 const BEST_KEY = "tetris_highscore";
 const NAME_KEY = "tetris_username";
@@ -111,6 +116,23 @@ function calloutsFor(result: ClearResult, nextId: () => number): Callout[] {
   if (result.perfectClear) out.push({ id: nextId(), text: "Perfect Clear!", kind: "perfect" });
   if (result.points > 0) out.push({ id: nextId(), text: `+${result.points.toLocaleString()}`, kind: "points" });
   return out;
+}
+
+/** Strongest first: one buzz per frame, for the biggest thing that happened. */
+const HAPTIC_RANK: HapticKind[] = ["over", "big", "clear", "drop"];
+
+/** The rumble a frame's events earn, if any. Moves and rotations stay quiet. */
+export function hapticFor(events: readonly GameEvent[]): HapticKind | null {
+  const kinds = new Set<HapticKind>();
+  for (const event of events) {
+    if (event.type === "gameOver") kinds.add("over");
+    else if (event.type === "hardDrop") kinds.add("drop");
+    else if (event.type === "clear") {
+      const { lines, tSpin, perfectClear } = event.result;
+      kinds.add(lines === 4 || tSpin !== "none" || perfectClear ? "big" : "clear");
+    }
+  }
+  return HAPTIC_RANK.find(kind => kinds.has(kind)) ?? null;
 }
 
 type PadAction = "left" | "right" | "soft" | "cw" | "ccw" | "hard" | "hold";
@@ -261,7 +283,10 @@ export function Tetris() {
       game.step(dt);
 
       const fresh: Callout[] = [];
-      for (const event of game.takeEvents()) {
+      const events = game.takeEvents();
+      const buzz = hapticFor(events);
+      if (buzz) haptic(buzz);
+      for (const event of events) {
         effects.push(event, time);
         if (event.type === "clear") {
           fresh.push(...calloutsFor(event.result, nextId));
@@ -356,6 +381,7 @@ export function Tetris() {
       if (has("up")) game.hardDrop();
     };
     const onConnect = () => setPadConnected(true);
+    const stopTracking = trackInputSource();
 
     const onKeyUp = (e: KeyboardEvent) => {
       if (e.key === "ArrowLeft") game.releaseHoriz(-1);
@@ -374,6 +400,7 @@ export function Tetris() {
     document.addEventListener("visibilitychange", onVisibility);
     return () => {
       cancelAnimationFrame(frame);
+      stopTracking();
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
       window.removeEventListener("blur", onHide);
@@ -590,7 +617,10 @@ export function Tetris() {
       </div>
 
       <section aria-labelledby="tetris-controls" className="mt-4 max-w-[400px] text-sm">
-        <h2 id="tetris-controls" className="font-bold mb-2">Controls</h2>
+        <div className="flex items-center justify-between gap-3 mb-2">
+          <h2 id="tetris-controls" className="font-bold">Controls</h2>
+          <HapticsToggle padConnected={padConnected} />
+        </div>
         <dl className="kk-tetris-keys grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 items-center">
           {KEY_LEGEND.map(([keys, action]) => (
             <div key={action} className="contents">

@@ -4,6 +4,8 @@ import {
   isBetterScore, parsePersonalBests, type Difficulty, type PairGame, type PersonalBests,
 } from '../lib/starPairs';
 import { DirectionRepeater, otherDialogOpen, watchGamepads, type PadDirection } from '../lib/gamepad';
+import { haptic, trackInputSource } from '../lib/haptics';
+import { HapticsToggle } from './HapticsToggle';
 
 const COLUMNS = 4;
 const OFFSETS: Record<PadDirection, number> = { left: -1, right: 1, up: -COLUMNS, down: COLUMNS };
@@ -70,10 +72,19 @@ export function StarPairs() {
     if (next === game) return;
     const name = SIGNS[next.cards[id].sign].name;
     setGame(next);
-    if (next.won) setMessage(`Sky complete! All ${DIFFICULTIES[difficulty].pairs} pairs found in ${next.moves} moves.`);
-    else if (next.matched.length > game.matched.length) setMessage(`${name} matched! ${next.matched.length / 2} pairs found.`);
-    else if (next.flipped.length === 2) setMessage(`${SIGNS[next.cards[next.flipped[0]].sign].name} and ${name}. Try another pair.`);
-    else setMessage(`${name} revealed. Choose another card.`);
+    if (next.won) {
+      setMessage(`Sky complete! All ${DIFFICULTIES[difficulty].pairs} pairs found in ${next.moves} moves.`);
+      haptic('win');
+    } else if (next.matched.length > game.matched.length) {
+      setMessage(`${name} matched! ${next.matched.length / 2} pairs found.`);
+      haptic('match');
+    } else if (next.flipped.length === 2) {
+      setMessage(`${SIGNS[next.cards[next.flipped[0]].sign].name} and ${name}. Try another pair.`);
+      haptic('miss');
+    } else {
+      setMessage(`${name} revealed. Choose another card.`);
+      haptic('tap');
+    }
   }
 
   function focusCard(id: number) {
@@ -98,6 +109,8 @@ export function StarPairs() {
   // through a ref instead of closing over a stale render.
   const padActions = useRef({ game, focused, paused, start, flip, focusCard, setPaused });
   padActions.current = { game, focused, paused, start, flip, focusCard, setPaused };
+  useEffect(() => trackInputSource(), []);
+
   useEffect(() => {
     const repeater = new DirectionRepeater();
     return watchGamepads((frame, dt) => {
@@ -152,6 +165,7 @@ export function StarPairs() {
         </label>
         <button type="button" className="btn btn-primary" onClick={start}>{game ? 'New game' : 'Start game'}</button>
         {game && !game.won && <button type="button" className="btn btn-outline" onClick={() => setPaused(value => !value)}>{paused ? 'Resume' : 'Pause'}</button>}
+        <HapticsToggle padConnected={padConnected} />
       </div>
 
       <dl className="grid grid-cols-3 gap-3 text-center">

@@ -9,9 +9,11 @@
  * left stick doubles as the d-pad. Every connected pad feeds the same state,
  * so it doesn't matter which controller picks up.
  *
- * Pure apart from `watchGamepads`, which owns a rAF loop; the reader takes
- * the pad source as a parameter so tests can feed it fake snapshots.
+ * Pure apart from `watchGamepads`, which owns a rAF loop, and a press telling
+ * haptics.ts that feedback should now go to the pad. The reader takes the pad
+ * source as a parameter so tests can feed it fake snapshots.
  */
+import { noteInput } from './haptics';
 
 export type PadButton =
   | 'a' | 'b' | 'x' | 'y'
@@ -98,6 +100,8 @@ export class GamepadReader {
     for (const button of now) if (!this.held.has(button)) pressed.add(button);
     for (const button of this.held) if (!now.has(button)) released.add(button);
     this.held = now;
+    // A press means the player is holding a pad, so feedback goes there.
+    if (pressed.size) noteInput('pad');
     return { held: now, pressed, released, connected };
   }
 }

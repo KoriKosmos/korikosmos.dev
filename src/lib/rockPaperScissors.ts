@@ -16,7 +16,14 @@ interface LeaderboardEntry {
   ties: number;
 }
 
-export function initRockPaperScissors() {
+export type RoundOutcome = 'win' | 'lose' | 'tie';
+
+export interface RockPaperScissorsOptions {
+  /** Called after every throw, e.g. for haptic feedback. */
+  onResult?: (outcome: RoundOutcome) => void;
+}
+
+export function initRockPaperScissors({ onResult }: RockPaperScissorsOptions = {}) {
   let username = localStorage.getItem(USER_KEY);
   while (!username) {
     username = prompt('Enter a username for the leaderboard:')?.trim() ?? null;
@@ -184,17 +191,22 @@ export function initRockPaperScissors() {
     const t2 = normalizeThrow(cpuThrow);
     if (!t1) return;
 
+    let outcome: RoundOutcome;
     if (t1 === t2) {
       scores.ties += 1;
+      outcome = 'tie';
     } else if (
       (t1 === 'rock' && t2 === 'scissors') ||
       (t1 === 'paper' && t2 === 'rock') ||
       (t1 === 'scissors' && t2 === 'paper')
     ) {
       scores.playerWins += 1;
+      outcome = 'win';
     } else {
       scores.cpuWins += 1;
+      outcome = 'lose';
     }
+    onResult?.(outcome);
 
     updateScoreDisplay();
     saveScores(scores);

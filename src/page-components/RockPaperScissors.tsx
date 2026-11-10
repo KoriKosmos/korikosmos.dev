@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
-import { initRockPaperScissors } from "../lib/rockPaperScissors";
+import { initRockPaperScissors, type RoundOutcome } from "../lib/rockPaperScissors";
 import { otherDialogOpen, watchGamepads, type PadButton } from "../lib/gamepad";
+import { haptic, trackInputSource, type HapticKind } from "../lib/haptics";
+import { HapticsToggle } from "./HapticsToggle";
+
+const OUTCOME_HAPTIC: Record<RoundOutcome, HapticKind> = { win: "match", lose: "miss", tie: "tap" };
 
 /**
  * Controller throws, laid out the way the buttons sit on screen: the left,
@@ -16,7 +20,9 @@ export function RockPaperScissors() {
   const [padConnected, setPadConnected] = useState(false);
 
   useEffect(() => {
-    initRockPaperScissors();
+    const stopTracking = trackInputSource();
+    initRockPaperScissors({ onResult: (outcome) => haptic(OUTCOME_HAPTIC[outcome]) });
+    return stopTracking;
   }, []);
 
   // A press clicks the matching on-screen button, so the game logic in
@@ -66,9 +72,12 @@ export function RockPaperScissors() {
             High Score (Net): <span id="highscore">0</span>
           </p>
         </div>
-        <button id="resetScores" className="px-4 py-2 bg-neutral text-neutral-content rounded">
-          Reset Scores
-        </button>
+        <div className="flex flex-wrap items-center gap-4">
+          <button id="resetScores" className="px-4 py-2 bg-neutral text-neutral-content rounded">
+            Reset Scores
+          </button>
+          <HapticsToggle padConnected={padConnected} />
+        </div>
       </div>
 
       <div className="mt-8">
