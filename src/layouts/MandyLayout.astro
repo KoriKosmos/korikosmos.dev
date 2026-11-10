@@ -147,7 +147,7 @@ const searchIndex: MandySearchItem[] = [
 <footer class="md-footer">
 	<p>&copy; {new Date().getFullYear()} Maan &middot; korikosmos.dev &middot; <a href="/rss.xml">RSS</a></p>
 	<p>Mandy mode &mdash; built after <a href="https://amandata.dev" target="_blank" rel="noopener">amandata.dev</a>, with love</p>
-	{heartRateEnabled && <HeartRate client:visible skin="mandy" initial={initialHeartRate()} />}
+	{heartRateEnabled && <HeartRate client:idle skin="mandy" initial={initialHeartRate()} />}
 </footer>
 
 <MandyEffects client:load />

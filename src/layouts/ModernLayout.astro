@@ -243,7 +243,7 @@ const paletteLinks: PaletteLink[] = [
 
 <footer class="text-center text-sm text-base-content/60 p-6 shrink-0" transition:name="site-footer">
 	&copy; {new Date().getFullYear()} Maan &ndash; KoriKosmos
-	{heartRateEnabled && <HeartRate client:visible skin="modern" initial={initialHeartRate()} transition:persist="heart-rate" />}
+	{heartRateEnabled && <HeartRate client:idle skin="modern" initial={initialHeartRate()} transition:persist="heart-rate" />}
 </footer>
 <OnekoToggle client:idle transition:persist="oneko-toggle" />
 {heartRateEnabled && <HeartRateFloat client:idle skin="modern" initial={initialHeartRate()} transition:persist="heart-float" />}

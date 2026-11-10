@@ -44,18 +44,22 @@ export async function getHits(): Promise<number> {
 export async function bumpHits(): Promise<number> {
   if (persistenceBroken) return ++memoryCount;
 
+  // The count the update read from disk, kept so a failed write falls back
+  // from the historical total instead of restarting the counter at 1.
+  let read: number | undefined;
   try {
     // Count from the file read under the lock, not from cachedCount: two bumps
     // can both be queued before the first one's continuation updates the cache.
-    const saved = await updateJson<unknown>(FILE, null, current => ({
-      count: countOf(current) + 1,
-    }) satisfies HitsFile);
+    const saved = await updateJson<unknown>(FILE, null, current => {
+      read = countOf(current);
+      return { count: read + 1 } satisfies HitsFile;
+    });
     cachedCount = memoryCount = countOf(saved);
     return cachedCount;
   } catch (error) {
     console.error('[hits] persistence unavailable, falling back to memory', error);
     persistenceBroken = true;
-    memoryCount = (cachedCount ?? memoryCount) + 1;
+    memoryCount = (read ?? cachedCount ?? memoryCount) + 1;
     return memoryCount;
   }
 }
