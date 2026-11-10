@@ -1,19 +1,19 @@
 /**
- * Guestbook storage for the retro skin.
+ * Guestbook storage, shared by all three skins' guestbook pages.
  *
  * Uses the pre-existing data/guestbook.json shape
  * (`{ entries: [{ id, date, name, message, url }] }`) so any entries already on
- * disk survive. Same mutex + atomic-rename persistence as lib/hits.ts, and the
- * same dependency on the data/ volume mount.
+ * disk survive. Persistence goes through lib/jsonStore.ts (per-file mutex +
+ * atomic rename) and depends on the data/ volume mount like the rest of it.
  */
-import fs from 'node:fs/promises';
-import path from 'node:path';
-import { Mutex } from 'async-mutex';
+import { readJson, updateJson } from './jsonStore';
 import { MESSAGE_MAX, NAME_MAX, URL_MAX, type GuestbookEntry } from './constants';
 
-const DATA_DIR = path.resolve('./data');
-const GUESTBOOK_PATH = path.join(DATA_DIR, 'guestbook.json');
-const lock = new Mutex();
+const FILE = 'guestbook.json';
+
+interface GuestbookFile {
+  entries: GuestbookEntry[];
+}
 
 // The entry shape and the field limits live in lib/constants.ts, which is
 // safe to import from a client bundle; this module is server-only (node:fs).
@@ -57,20 +57,25 @@ function isEntry(value: unknown): value is GuestbookEntry {
   return Boolean(e && typeof e.id === 'string' && typeof e.name === 'string' && typeof e.message === 'string');
 }
 
-async function readEntries(): Promise<GuestbookEntry[]> {
-  try {
-    const raw = await fs.readFile(GUESTBOOK_PATH, 'utf-8');
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed?.entries) ? parsed.entries.filter(isEntry) : [];
-  } catch {
-    return [];
-  }
+/** Valid entries from whatever is on disk; anything malformed reads as empty. */
+function entriesOf(file: unknown): GuestbookEntry[] {
+  const entries = (file as Partial<GuestbookFile> | null)?.entries;
+  return Array.isArray(entries) ? entries.filter(isEntry) : [];
 }
+
+const newestFirst = (entries: GuestbookEntry[]) =>
+  [...entries].sort((a, b) => (a.date < b.date ? 1 : -1));
+
+/**
+ * Thrown from inside the update to abandon it: `updateJson` only writes once
+ * its mutate callback returns, so a full book is refused without rewriting
+ * the file.
+ */
+class GuestbookFull extends Error {}
 
 /** Newest first. */
 export async function getGuestbook(): Promise<GuestbookEntry[]> {
-  const entries = await lock.runExclusive(readEntries);
-  return [...entries].sort((a, b) => (a.date < b.date ? 1 : -1));
+  return newestFirst(entriesOf(await readJson<unknown>(FILE, null)));
 }
 
 export type SignResult =
@@ -97,27 +102,18 @@ export async function signGuestbook(input: {
   const url = sanitizeUrl(input.url);
   if (url) entry.url = url;
 
-  return lock.runExclusive(async () => {
-    const entries = await readEntries();
-    if (entries.length >= MAX_ENTRIES) {
-      return {
-        ok: false as const,
-        error: 'The guestbook is full! Email me and I will make room.',
-      };
+  try {
+    const saved = await updateJson<unknown>(FILE, null, current => {
+      const entries = entriesOf(current);
+      if (entries.length >= MAX_ENTRIES) throw new GuestbookFull();
+      return { entries: [...entries, entry] } satisfies GuestbookFile;
+    });
+    return { ok: true, entries: newestFirst(entriesOf(saved)) };
+  } catch (error) {
+    if (error instanceof GuestbookFull) {
+      return { ok: false, error: 'The guestbook is full! Email me and I will make room.' };
     }
-    entries.push(entry);
-    try {
-      await fs.mkdir(DATA_DIR, { recursive: true });
-      const temp = `${GUESTBOOK_PATH}.tmp`;
-      await fs.writeFile(temp, JSON.stringify({ entries }, null, 2));
-      await fs.rename(temp, GUESTBOOK_PATH);
-    } catch (error) {
-      console.error('[guestbook] write failed', error);
-      return { ok: false as const, error: 'The guestbook is not accepting signatures right now.' };
-    }
-    return {
-      ok: true as const,
-      entries: [...entries].sort((a, b) => (a.date < b.date ? 1 : -1)),
-    };
-  });
+    console.error('[guestbook] write failed', error);
+    return { ok: false, error: 'The guestbook is not accepting signatures right now.' };
+  }
 }

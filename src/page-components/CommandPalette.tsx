@@ -2,10 +2,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { navigate } from "astro:transitions/client";
 import { persistTheme } from "../lib/theme";
 import type { Theme } from "../lib/theme";
+import { loadContentIndex } from "../lib/contentIndex";
 
-// Site-wide ⌘K / Ctrl-K launcher. Mounted once in Layout.astro with
-// transition:persist; link items (pages, blog posts, projects) are built
-// server-side in Layout frontmatter and passed as props. Theme actions are
+// Site-wide ⌘K / Ctrl-K launcher. Mounted once in ModernLayout.astro with
+// transition:persist; page links are built server-side in its frontmatter and
+// passed as props, and blog posts and projects are fetched from
+// /content-index.json the first time the palette opens. Theme actions are
 // defined here. Opens via the shortcut or any element with a
 // [data-palette-trigger] attribute (event delegation, so the header button
 // keeps working after ClientRouter swaps).
@@ -84,10 +86,12 @@ export function CommandPalette({ links }: { links: PaletteLink[] }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState(0);
+  const [content, setContent] = useState<PaletteLink[]>([]);
 
   const actions = useMemo<PaletteAction[]>(
     () => [
       ...links,
+      ...content,
       ...THEMES.map(theme => ({
         label: `Theme: ${theme.label}`,
         section: "Themes",
@@ -95,7 +99,7 @@ export function CommandPalette({ links }: { links: PaletteLink[] }) {
         perform: () => applyTheme(theme.name),
       })),
     ],
-    [links],
+    [links, content],
   );
 
   const results = useMemo(() => {
@@ -110,6 +114,11 @@ export function CommandPalette({ links }: { links: PaletteLink[] }) {
   }, [actions, query]);
 
   function show() {
+    void loadContentIndex().then(items => {
+      if (items.length) {
+        setContent(items.map(item => ({ label: item.title, href: item.url, section: item.section, keywords: item.desc })));
+      }
+    });
     setQuery("");
     setSelected(0);
     setOpen(true);

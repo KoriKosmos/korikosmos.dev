@@ -7,6 +7,14 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 
+# 1b. Runtime-only dependencies. The build needs Tailwind, TypeScript, jsdom
+# and friends; the server it produces does not, so the final image copies
+# node_modules from here instead of from `deps`.
+FROM base AS prod-deps
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
+
 # 2. Rebuild the source code only when needed
 FROM base AS builder
 WORKDIR /app
@@ -21,7 +29,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build
 
-# 3. Production image, copy all the files and run next
+# 3. Production image: the built server plus runtime dependencies only
 FROM base AS runner
 WORKDIR /app
 
@@ -30,7 +38,7 @@ ENV HOST=0.0.0.0
 ENV PORT=4321
 
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
+COPY --from=prod-deps /app/node_modules ./node_modules
 
 EXPOSE 4321
 

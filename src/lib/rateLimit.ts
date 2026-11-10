@@ -7,13 +7,21 @@
  *
  * `Astro.clientAddress` is the socket peer, which in production is the
  * reverse proxy in front of the container — so it collapses to the same
- * loopback address for *every* visitor. `x-forwarded-for`'s first entry is
- * the original client where the proxy sets it. Neither is spoof-proof, so
+ * loopback address for *every* visitor.
+ *
+ * `cf-connecting-ip` comes first: Cloudflare sets it to the address that
+ * actually connected and overwrites any value the client sent. The first entry
+ * of `x-forwarded-for`, the fallback, is whatever the client claimed, because
+ * Cloudflare appends to that header rather than replacing it, so keying on it
+ * alone would let one visitor rotate fake IPs past every limit. None of these
+ * are spoof-proof against someone who reaches the container directly, so
  * limits built on this are a speed bump against casual flooding, not a
  * security control; keep them lenient enough that the degenerate
  * everyone-shares-one-bucket case stays usable.
  */
 export function getClientKey(request: Request, clientAddress?: string): string {
+  const cloudflare = request.headers.get('cf-connecting-ip')?.trim();
+  if (cloudflare) return cloudflare;
   const forwarded = request.headers.get('x-forwarded-for');
   if (forwarded) {
     const first = forwarded.split(',')[0]?.trim();

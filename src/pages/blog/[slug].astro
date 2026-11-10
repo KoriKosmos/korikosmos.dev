@@ -58,7 +58,7 @@ const skin = getSkin(Astro);
         blinkieAlt="Leave a reaction"
         notes={["Click a face to react. Click it again to take it back."]}
       >
-        <PostReactions client:load slug={slug!} />
+        <PostReactions client:visible slug={slug!} />
       </RetroIslandShell>
     </>
   ) : skin === 'mandy' ? (
@@ -74,7 +74,7 @@ const skin = getSkin(Astro);
         <Content />
       </MandyBlogPostPage>
       <MandyIslandShell title="Reactions" tag="// one click, no account" level={2} first={false}>
-        <PostReactions client:load slug={slug!} />
+        <PostReactions client:visible slug={slug!} />
       </MandyIslandShell>
     </>
   ) : (
@@ -89,7 +89,7 @@ const skin = getSkin(Astro);
       >
         <Content />
       </BlogPostPage>
-      <PostReactions client:load slug={slug!} />
+      <PostReactions client:visible slug={slug!} />
     </>
   )}
 </Layout>
