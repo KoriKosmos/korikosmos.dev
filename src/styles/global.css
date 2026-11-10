@@ -179,7 +179,9 @@ html[data-theme="spider-man"] .from-primary.to-secondary {
 @media (pointer: coarse) {
   .kk-tetris-keys { display: none; }
 }
-.kk-tetris-keys + .kk-tetris-touch { margin-top: 0.75rem; }
+.kk-tetris-keys + .kk-tetris-touch,
+.kk-tetris-keys + .kk-tetris-gamepad,
+.kk-tetris-gamepad + .kk-tetris-touch { margin-top: 0.75rem; }
 .kk-tetris-pad button { touch-action: none; -webkit-user-select: none; user-select: none; }
 /* Line-clear callouts ("TETRIS!", "T-Spin Double", "3 Combo!", "+1,200").
    Each kind has its own entrance; all of them float up and fade, and the

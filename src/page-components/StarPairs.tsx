@@ -3,6 +3,11 @@ import {
   BEST_KEY, DIFFICULTIES, SIGNS, concealPairCards, createPairGame, flipPairCard,
   isBetterScore, parsePersonalBests, type Difficulty, type PairGame, type PersonalBests,
 } from '../lib/starPairs';
+import { DirectionRepeater, otherDialogOpen, watchGamepads, type PadDirection } from '../lib/gamepad';
+
+const COLUMNS = 4;
+const OFFSETS: Record<PadDirection, number> = { left: -1, right: 1, up: -COLUMNS, down: COLUMNS };
+const KEY_DIRECTIONS: Record<string, PadDirection> = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down' };
 
 const clock = (seconds: number) => `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
 
@@ -15,6 +20,7 @@ export function StarPairs() {
   const [focused, setFocused] = useState(0);
   const [message, setMessage] = useState('Find the matching constellations. Take your time.');
   const [bests, setBests] = useState<PersonalBests>({});
+  const [padConnected, setPadConnected] = useState(false);
   const buttons = useRef(new Map<number, HTMLButtonElement>());
 
   useEffect(() => {
@@ -70,18 +76,53 @@ export function StarPairs() {
     else setMessage(`${name} revealed. Choose another card.`);
   }
 
+  function focusCard(id: number) {
+    setFocused(id);
+    buttons.current.get(id)?.focus();
+  }
+
   function moveFocus(event: KeyboardEvent<HTMLButtonElement>, id: number) {
     if (!game) return;
-    const offsets: Record<string, number> = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -4, ArrowDown: 4 };
     let next: number;
     if (event.key === 'Home') next = 0;
     else if (event.key === 'End') next = game.cards.length - 1;
-    else if (event.key in offsets) next = (id + offsets[event.key] + game.cards.length) % game.cards.length;
+    else if (event.key in KEY_DIRECTIONS) next = (id + OFFSETS[KEY_DIRECTIONS[event.key]] + game.cards.length) % game.cards.length;
     else return;
     event.preventDefault();
-    setFocused(next);
-    buttons.current.get(next)?.focus();
+    focusCard(next);
   }
+
+  // Controller: the d-pad or stick walks the board like the arrow keys (held
+  // to repeat), A flips the card in focus, Start starts or pauses, Select deals
+  // a fresh sky. The pad loop is mounted once, so it reads the latest state
+  // through a ref instead of closing over a stale render.
+  const padActions = useRef({ game, focused, paused, start, flip, focusCard, setPaused });
+  padActions.current = { game, focused, paused, start, flip, focusCard, setPaused };
+  useEffect(() => {
+    const repeater = new DirectionRepeater();
+    return watchGamepads((frame, dt) => {
+      const step = repeater.update(frame, dt);
+      if (otherDialogOpen()) return;
+      const { game, focused, paused, start, flip, focusCard, setPaused } = padActions.current;
+      if (frame.pressed.has('start')) {
+        if (!game || game.won) start();
+        else setPaused(value => !value);
+        return;
+      }
+      if (frame.pressed.has('select')) { start(); return; }
+      if (!game || paused) return;
+      const onBoard = [...buttons.current.values()].includes(document.activeElement as HTMLButtonElement);
+      if (step) {
+        // The first press only brings focus to the board; after that it moves.
+        const count = game.cards.length;
+        focusCard(onBoard ? (focused + OFFSETS[step] + count) % count : Math.min(focused, count - 1));
+      }
+      if (frame.pressed.has('a')) {
+        if (onBoard) flip(focused);
+        else focusCard(Math.min(focused, game.cards.length - 1));
+      }
+    }, setPadConnected);
+  }, []);
 
   const best = bests[difficulty];
   return (
@@ -168,7 +209,7 @@ export function StarPairs() {
 
       {game?.won && <div className="rounded-xl bg-primary/10 border border-primary/30 p-5 text-center"><p className="text-xl font-bold">Constellation complete ✨</p><p className="mt-2">{game.moves} moves in {clock(seconds)}. Fancy another sky?</p></div>}
       <footer className="text-sm text-base-content/70 space-y-2">
-        <p id="star-pairs-controls">Tap a card, or use the arrow keys and Enter or Space. Leaving this tab pauses the game.</p>
+        <p id="star-pairs-controls">Tap a card, or use the arrow keys and Enter or Space.{padConnected ? ' On a controller, the d-pad or stick moves, A flips, Start pauses, and Select deals a new sky.' : ''} Leaving this tab pauses the game.</p>
         <p>{best ? `Your best ${DIFFICULTIES[difficulty].label}: ${best.moves} moves in ${clock(best.seconds)}.` : `Complete ${DIFFICULTIES[difficulty].label} to set your first personal best.`} Bests stay on this device, with fewer moves ranked first.</p>
       </footer>
     </section>

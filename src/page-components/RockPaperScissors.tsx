@@ -1,10 +1,31 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { initRockPaperScissors } from "../lib/rockPaperScissors";
+import { otherDialogOpen, watchGamepads, type PadButton } from "../lib/gamepad";
+
+/**
+ * Controller throws, laid out the way the buttons sit on screen: the left,
+ * top, and right of either the face buttons or the d-pad/stick.
+ */
+const PAD_THROWS: [PadButton[], string][] = [
+  [["x", "left"], "rock"],
+  [["y", "up"], "paper"],
+  [["b", "right"], "scissors"],
+];
 
 export function RockPaperScissors() {
+  const [padConnected, setPadConnected] = useState(false);
+
   useEffect(() => {
     initRockPaperScissors();
   }, []);
+
+  // A press clicks the matching on-screen button, so the game logic in
+  // rockPaperScissors.ts stays the single path for every throw.
+  useEffect(() => watchGamepads((frame) => {
+    if (!frame.pressed.size || otherDialogOpen()) return;
+    const hit = PAD_THROWS.find(([buttons]) => buttons.some((b) => frame.pressed.has(b)));
+    if (hit) document.querySelector<HTMLButtonElement>(`.throw[data-throw="${hit[1]}"]`)?.click();
+  }, setPadConnected), []);
 
   return (
     <>
@@ -21,6 +42,11 @@ export function RockPaperScissors() {
             Scissors
           </button>
         </div>
+        {padConnected && (
+          <p className="text-sm opacity-70">
+            Controller: X or ◀ for rock, Y or ▲ for paper, B or ▶ for scissors.
+          </p>
+        )}
         <p id="computerChoice"></p>
         <p id="result"></p>
         <div className="space-y-1">

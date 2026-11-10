@@ -4,6 +4,7 @@ import {
   BOARD_H, BOARD_W, PREVIEW_SLOT_H, PREVIEW_W, drawBoard, drawPreview, setupCanvas,
 } from "../lib/tetrisCanvas";
 import { TOP_OUT_MS, TetrisEffects } from "../lib/tetrisEffects";
+import { GamepadReader, otherDialogOpen, type PadButton, type PadFrame } from "../lib/gamepad";
 
 const BEST_KEY = "tetris_highscore";
 const NAME_KEY = "tetris_username";
@@ -71,6 +72,17 @@ const TOUCH_LEGEND: [string, string][] = [
   ["Pause", "Pause / resume (button by the score)"],
 ];
 
+/** Gamepad legend; the buttons must match onPad below. Standard (Xbox) names. */
+const PAD_LEGEND: [string[], string][] = [
+  [["D-pad ◀ ▶", "Stick"], "Move (hold to slide)"],
+  [["▼"], "Soft drop"],
+  [["▲"], "Hard drop"],
+  [["A"], "Rotate clockwise"],
+  [["B"], "Rotate anticlockwise"],
+  [["LB", "RB"], "Hold piece"],
+  [["Start"], "Start / pause / resume"],
+];
+
 type CalloutKind = "clear" | "tetris" | "tspin" | "perfect" | "combo" | "level" | "points";
 interface Callout { id: number; text: string; kind: CalloutKind; color?: string }
 /** Callouts on screen at once; older ones are dropped rather than queued. */
@@ -125,6 +137,7 @@ export function Tetris() {
   const [final, setFinal] = useState<{ score: number; newBest: boolean } | null>(null);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [padConnected, setPadConnected] = useState(false);
   const [lbError, setLbError] = useState(false);
 
   // Latest values for callbacks that live inside the animation loop.
@@ -224,6 +237,8 @@ export function Tetris() {
     let frame = 0;
     let last: number | null = null;
     let prev = snapshot(game);
+    const pads = new GamepadReader();
+    let padWasConnected = false;
     let calloutId = 0;
     const nextId = () => ++calloutId;
     const wrap = boardWrapRef.current;
@@ -242,6 +257,7 @@ export function Tetris() {
     const tick = (time: number) => {
       const dt = last === null ? 0 : Math.min(time - last, MAX_FRAME_MS);
       last = time;
+      onPad(pads.poll());
       game.step(dt);
 
       const fresh: Callout[] = [];
@@ -306,6 +322,41 @@ export function Tetris() {
       }
       if (handled) e.preventDefault();
     };
+    // Gamepads have no events, so the loop polls them each frame and acts on
+    // the edges. Directions mirror the arrow keys: press to start, release to stop.
+    const onPad = (frame: PadFrame) => {
+      if (frame.connected !== padWasConnected) {
+        padWasConnected = frame.connected;
+        setPadConnected(frame.connected);
+        // A controller that drops out mid-game can't let go of anything.
+        if (!frame.connected && game.status === "playing") game.pause();
+      }
+      const { pressed, released } = frame;
+      if (released.has("left")) game.releaseHoriz(-1);
+      if (released.has("right")) game.releaseHoriz(1);
+      if (released.has("down")) game.setSoftDrop(false);
+      if (!pressed.size || otherDialogOpen(dialogRef.current)) return;
+
+      const gameOverOpen = !!dialogRef.current?.open;
+      const has = (b: PadButton) => pressed.has(b);
+      if (game.status === "ready" || game.status === "over") {
+        // Start restarts from the game-over dialog too; A only from the overlay.
+        if (has("start") || (has("a") && !gameOverOpen)) startRef.current();
+        return;
+      }
+      if (gameOverOpen) return;
+      if (has("start")) { game.togglePause(); return; }
+      if (game.status !== "playing") return;
+      if (has("left")) game.setHoriz(-1);
+      if (has("right")) game.setHoriz(1);
+      if (has("down")) game.setSoftDrop(true);
+      if (has("a")) game.rotate(1);
+      if (has("b")) game.rotate(-1);
+      if (has("lb") || has("rb")) game.holdPiece();
+      if (has("up")) game.hardDrop();
+    };
+    const onConnect = () => setPadConnected(true);
+
     const onKeyUp = (e: KeyboardEvent) => {
       if (e.key === "ArrowLeft") game.releaseHoriz(-1);
       else if (e.key === "ArrowRight") game.releaseHoriz(1);
@@ -319,12 +370,14 @@ export function Tetris() {
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("keyup", onKeyUp);
     window.addEventListener("blur", onHide);
+    window.addEventListener("gamepadconnected", onConnect);
     document.addEventListener("visibilitychange", onVisibility);
     return () => {
       cancelAnimationFrame(frame);
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
       window.removeEventListener("blur", onHide);
+      window.removeEventListener("gamepadconnected", onConnect);
       document.removeEventListener("visibilitychange", onVisibility);
       motion?.removeEventListener?.("change", syncMotion);
       if (overTimerRef.current) clearTimeout(overTimerRef.current);
@@ -348,6 +401,9 @@ export function Tetris() {
     game.start();
     setAnnouncement("New game started.");
   };
+
+  const startRef = useRef(startGame);
+  startRef.current = startGame;
 
   const togglePause = () => gameRef.current?.togglePause();
 
@@ -467,7 +523,7 @@ export function Tetris() {
                   <button type="button" onClick={togglePause} className="px-6 py-2 bg-primary text-primary-content rounded hover:opacity-90 transition">
                     Resume
                   </button>
-                  <p className="text-xs opacity-80">P or Esc</p>
+                  <p className="text-xs opacity-80">{padConnected ? "P, Esc, or Start" : "P or Esc"}</p>
                 </>
               ) : (
                 <>
@@ -545,6 +601,18 @@ export function Tetris() {
             </div>
           ))}
         </dl>
+        {padConnected && (
+          <dl className="kk-tetris-gamepad grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 items-center" aria-label="Controller">
+            {PAD_LEGEND.map(([buttons, action]) => (
+              <div key={action} className="contents">
+                <dt className="flex flex-wrap gap-1">
+                  {buttons.map((b) => <kbd key={b} className="kbd kbd-sm">{b}</kbd>)}
+                </dt>
+                <dd>{action}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
         <dl className="kk-tetris-touch grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 items-center">
           {TOUCH_LEGEND.map(([icon, action]) => (
             <div key={action} className="contents">
