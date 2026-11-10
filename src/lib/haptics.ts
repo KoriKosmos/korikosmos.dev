@@ -13,6 +13,8 @@
  * iOS Safari none of them. A missing API is silently a no-op.
  */
 
+import { lovensePulse } from './lovense';
+
 export type HapticKind =
   | 'tap'    // a small confirmation: a card flips
   | 'drop'   // a piece slams down
@@ -23,7 +25,7 @@ export type HapticKind =
   | 'win'    // the game is won
   | 'over';  // the game is lost
 
-interface Effect {
+export interface HapticEffect {
   /** Rumble length in ms. */
   duration: number;
   /** Low-frequency (heavy) motor, 0–1. */
@@ -34,7 +36,7 @@ interface Effect {
   pattern: number[];
 }
 
-export const HAPTIC_EFFECTS: Record<HapticKind, Effect> = {
+export const HAPTIC_EFFECTS: Record<HapticKind, HapticEffect> = {
   tap:   { duration: 30,  strong: 0,    weak: 0.35, pattern: [10] },
   drop:  { duration: 60,  strong: 0.45, weak: 0.2,  pattern: [15] },
   clear: { duration: 140, strong: 0.35, weak: 0.6,  pattern: [30] },
@@ -106,7 +108,7 @@ function connectedPads(): RumblePad[] {
   }
 }
 
-function rumble(pad: RumblePad, effect: Effect): boolean {
+function rumble(pad: RumblePad, effect: HapticEffect): boolean {
   const ignore = () => { /* A pad unplugged mid-effect rejects; nothing to do. */ };
   if (typeof pad.vibrationActuator?.playEffect === 'function') {
     pad.vibrationActuator.playEffect('dual-rumble', {
@@ -132,6 +134,9 @@ function rumble(pad: RumblePad, effect: Effect): boolean {
 export function haptic(kind: HapticKind): InputSource | null {
   if (!hapticsEnabled()) return null;
   const effect = HAPTIC_EFFECTS[kind];
+  // A configured Lovense toy (see lovense.ts) follows every effect, whatever
+  // the player is holding; it's opt-in per device and does nothing otherwise.
+  lovensePulse(effect);
   if (source === 'pad') {
     let played = false;
     for (const pad of connectedPads()) played = rumble(pad, effect) || played;
