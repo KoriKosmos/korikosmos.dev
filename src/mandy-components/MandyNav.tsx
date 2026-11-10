@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type RefObject } from 'react';
 import { PixelBat } from '../page-components/PixelBat';
 import { MANDY_THEME_COOKIE, MANDY_THEMES, type MandyTheme } from '../lib/skin';
+import { loadContentIndex } from '../lib/contentIndex';
 
 /**
  * Mandy mode's top bar, after amandata.dev's: home mark, a page-search box with
  * suggestions, dropdown menus, a quick "play" link, and a "Change Theme" menu.
  *
- * Server-rendered by Astro and hydrated with client:load, so every link is in
- * the HTML before any JS runs. Dropdowns are native <details> disclosures, so
+ * Server-rendered by Astro and hydrated with client:idle, so every link is in
+ * the HTML before any JS runs, and nothing here needs JS to be usable first:
+ * menus are native, and search submits to /blog?q= until it hydrates. Dropdowns are native <details> disclosures, so
  * they still open with JS off (this is the default skin, so that matters). Once
  * hydrated: Enter/Space/ArrowDown opens and focuses the first item, arrows move,
  * Escape closes and returns focus, Tab out closes, one menu open at a time.
@@ -39,6 +41,7 @@ export interface MandySearchItem {
 
 interface Props {
   groups: MandyNavGroup[];
+  /** The site's pages. Posts and projects are fetched on first focus. */
   search: MandySearchItem[];
   isHome: boolean;
   theme: MandyTheme;
@@ -159,12 +162,19 @@ function Dropdown({
   );
 }
 
-function Search({ items }: { items: MandySearchItem[] }) {
+function Search({ items: pages }: { items: MandySearchItem[] }) {
   const [q, setQ] = useState('');
   const [open, setOpen] = useState(false);
   const [sel, setSel] = useState(-1);
+  const [content, setContent] = useState<MandySearchItem[]>([]);
   const wrap = useRef<HTMLFormElement>(null);
   useOutsideClose(wrap, open, () => setOpen(false));
+
+  const loadContent = () => {
+    if (content.length) return;
+    void loadContentIndex().then(list => setContent(list.map(({ title, desc, url }) => ({ title, desc, url }))));
+  };
+  const items = content.length ? [...pages, ...content] : pages;
 
   const words = q.trim().toLowerCase().split(/\s+/).filter(Boolean);
   const hits = words.length
@@ -202,8 +212,8 @@ function Search({ items }: { items: MandySearchItem[] }) {
         aria-autocomplete="list"
         aria-controls="md-suggest"
         aria-expanded={open && hits.length > 0}
-        onChange={e => { setQ(e.target.value); setOpen(true); setSel(-1); }}
-        onFocus={() => setOpen(true)}
+        onChange={e => { setQ(e.target.value); setOpen(true); setSel(-1); loadContent(); }}
+        onFocus={() => { setOpen(true); loadContent(); }}
         onKeyDown={onKey}
       />
       {open && hits.length > 0 && (

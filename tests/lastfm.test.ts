@@ -18,6 +18,41 @@ test('concurrent cache readers share work, expire from completion, and retry fai
   assert.equal(await cache.get('failure', async () => 42, 15), 42);
 });
 
+test('stale entries answer fresh when the refresh is fast, stale when it is slow or fails', async () => {
+  let now = 0;
+  const stale = { staleMs: 100, waitMs: 20 };
+  const cache = createAsyncCache<string>({ now: () => now });
+  assert.equal(await cache.get('k', async () => 'v1', 10, stale), 'v1');
+
+  // Expired, inside the stale window, upstream fast: the fresh value wins.
+  now = 20;
+  assert.equal(await cache.get('k', async () => 'v2', 10, stale), 'v2');
+
+  // Upstream slower than waitMs: the stale value answers, and the refresh
+  // still lands in the cache for the next reader.
+  now = 40;
+  let finish!: (value: string) => void;
+  const slow = () => new Promise<string>(resolve => { finish = resolve; });
+  assert.equal(await cache.get('k', slow, 10, stale), 'v2');
+  finish('v3');
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(await cache.get('k', async () => 'unused', 10, stale), 'v3');
+
+  // Upstream failing: the stale value answers instead of a rejection.
+  now = 60;
+  assert.equal(await cache.get('k', async () => { throw new Error('offline'); }, 10, stale), 'v3');
+
+  // Past the stale window the read waits for (and surfaces) the refresh again.
+  now = 200;
+  await assert.rejects(cache.get('k', async () => { throw new Error('offline'); }, 10, stale), /offline/);
+
+  // Without stale options an expired entry is never served.
+  const plain = createAsyncCache<string>({ now: () => now });
+  await plain.get('k', async () => 'old', 10);
+  now = 215;
+  await assert.rejects(plain.get('k', async () => { throw new Error('offline'); }, 10), /offline/);
+});
+
 test('cache evicts least recently used values and bounds pending requests', async () => {
   const cache = createAsyncCache<number>({ maxEntries: 2 });
   await cache.get('a', async () => 1, 1000);

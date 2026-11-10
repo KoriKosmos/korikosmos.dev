@@ -55,7 +55,7 @@ A production build **without** those env vars ships no admin routes at all.
 
 - **Saved themes on first paint**: I keep my modern theme in a cookie as well as local storage, so the server sends the selected theme in the HTML. Legacy choices migrate automatically. The picker follows the displayed theme, and cookie restoration still works during client navigation when local storage is blocked. Retro keeps its own independent scheme.
 - **Live Tunes updates**: The playing badge and recent history update together, including when the same song stops. Period changes cancel obsolete requests, charts load when selected, and live polling pauses in background tabs. Missing artwork has a local fallback.
-- **Resilient music loading**: I fetch independent Last.fm sections together and share cached requests between visitors. Recent tracks refresh quickly, charts are cached for 15 minutes, and a slow or unavailable Last.fm service cannot hold the page open indefinitely. API failures return an uncached retry response.
+- **Resilient music loading**: I fetch independent Last.fm sections together and share cached requests between visitors. Recent tracks refresh quickly, charts are cached for 15 minutes, and a slow or unavailable Last.fm service cannot hold the page open indefinitely: once I have a good answer, a refresh that takes longer than 750ms (or fails) is answered from that last good copy instead. API failures with nothing cached return an uncached retry response.
 - **Star Pairs** at `/games/star-pairs`: My constellation memory game has three board sizes, keyboard and touch controls, automatic pausing when leaving the tab, and personal bests stored on the device. It works in all three skins and needs no account or external assets.
 - **Blog reading tools**: My posts show publication dates, reading-time estimates and a linked contents list. A progress strip tracks the article, and readers can copy a section link or a code block. The article and contents remain readable without JavaScript in every skin.
 - **Searchable blog and portfolio**: I can search titles, descriptions and post bodies, sort the results, and filter projects with public GitHub source. Filters are shareable URLs and work in all three skins without JavaScript.
@@ -78,7 +78,8 @@ A production build **without** those env vars ships no admin routes at all.
 - **Hit counter** on the retro skin, bumped once per visitor session (`data/hits.json`).
 - **React islands architecture**:
   - `.astro` pages are thin wrappers: they do the server-side data fetching (content collections, Last.fm, `cv.json`) and render the active skin's React body (`src/mandy-components/`, `src/page-components/` or `src/retro-components/`) with the result as props.
-  - Presentational components render to static HTML with zero client JS; interactive ones (the games, Tunes, reactions, reading tools, heart-rate widgets, guestbook forms, theme and skin switchers, the oneko toggle, and each shell's own chrome such as the command palette or the Mandy nav and backdrop) hydrate with `client:load`.
+  - Presentational components render to static HTML with zero client JS; interactive ones (the games, Tunes, reactions, reading tools, heart-rate widgets, guestbook forms, theme and skin switchers, the oneko toggle, and each shell's own chrome such as the command palette or the Mandy nav and backdrop) hydrate on a schedule: `client:load` for the games and what each page is about, `client:idle` for shell chrome (which works without JS until then), and `client:visible` for below-the-fold widgets like reactions and the `/about` heart card.
+  - Mandy mode's fonts are self-hosted (Fontsource, Latin subset) rather than loaded from Google Fonts, and the nav search and ⌘K palette fetch posts and projects from a prerendered `/content-index.json` on first use instead of carrying them in every page.
   - Reusable components live in `src/components/` (also synced to a Claude Design project via `.design-sync/`); page-specific markup lives in `src/page-components/`.
   - **CV Page**: Fully data-driven using `src/data/cv.json` and reusable `CvSection` components.
   - **Tetris**: The rules live in a pure, unit-tested engine (`src/lib/tetris.ts`) with no DOM; `src/lib/tetrisCanvas.ts` draws it, and `Tetris.tsx` owns the animation loop, input, and leaderboard.
@@ -123,6 +124,7 @@ A production build **without** those env vars ships no admin routes at all.
 │   │   ├── api/         # Server-side API endpoints
 │   │   ├── games/       # Tetris, Rock Paper Scissors, Star Pairs
 │   │   ├── og/          # Prerendered OG image endpoint
+│   │   ├── content-index.json.ts # Prerendered posts+projects index for search
 │   │   └── ...
 │   ├── styles/          # global.css (Tailwind), retro.css (rt-*), mandy.css (md-*)
 │   └── content/
@@ -173,7 +175,7 @@ The site will be available at http://localhost:8484.
 
 The container does **not** copy `data/` into the image — the game leaderboards, guestbook, post reactions, and hit counter all persist through the volume mount defined in `docker-compose.yml`. Without a writable `data/`, the guestbook refuses signatures and the counter falls back to an in-memory count rather than failing the page.
 
-**Note**: This uses a multi-stage `Dockerfile` that builds the Astro project into a standalone Node.js app. The "pull-on-boot" feature has been removed for stability.
+**Note**: This uses a multi-stage `Dockerfile` that builds the Astro project into a standalone Node.js app. The final image only installs runtime `dependencies`, so build-only packages belong in `devDependencies`. The "pull-on-boot" feature has been removed for stability.
 
 ### Updating the site
 

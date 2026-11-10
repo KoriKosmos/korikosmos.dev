@@ -1,4 +1,4 @@
-import { createAsyncCache } from './asyncCache';
+import { createAsyncCache, type StaleOptions } from './asyncCache';
 import { BLOCKED_ITEMS } from './constants';
 import { trackArtistName } from './lastfmTrack';
 import type { LastfmAlbum, LastfmArtist, LastfmTrack } from './lastfmTypes';
@@ -7,6 +7,15 @@ export const LASTFM_API_BASE = 'https://ws.audioscrobbler.com/2.0/';
 export const LASTFM_PERIODS = ['overall', '7day', '1month', '3month', '6month', '12month'] as const;
 const RECENT_TTL = 15_000;
 const CHART_TTL = 15 * 60_000;
+/**
+ * Past its TTL a cached response is still served if Last.fm takes longer than
+ * STALE_WAIT_MS to answer the refresh, or fails it. That keeps /tunes and /now
+ * from stalling on the 5s upstream timeout, while a healthy Last.fm still
+ * answers fresh. Recent tracks go stale quickly, so their window is short.
+ */
+const STALE_WAIT_MS = 750;
+const RECENT_STALE: StaleOptions = { staleMs: 10 * 60_000, waitMs: STALE_WAIT_MS };
+const CHART_STALE: StaleOptions = { staleMs: 24 * 60 * 60_000, waitMs: STALE_WAIT_MS };
 
 export function readLastfmQuery(params: URLSearchParams) {
   const method = params.get('method') ?? 'recent';
@@ -28,6 +37,7 @@ export function createLastfmClient({ user, apiKey, fetcher = fetch, now = Date.n
 
   async function request(method: string, params: Record<string, string | number> = {}) {
     if (!user || !apiKey) throw new Error('Last.fm is not configured.');
+    const recent = method === 'user.getrecenttracks';
     const key = JSON.stringify([method, Object.entries(params).sort(([a], [b]) => a.localeCompare(b))]);
     return requests.get(key, async () => {
       const query = new URLSearchParams({ method, user, api_key: apiKey, format: 'json' });
@@ -44,7 +54,7 @@ export function createLastfmClient({ user, apiKey, fetcher = fetch, now = Date.n
       };
       if (method.startsWith('user.') && !Array.isArray(lists[method])) throw new Error('Last.fm returned an invalid collection.');
       return data;
-    }, method === 'user.getrecenttracks' ? RECENT_TTL : CHART_TTL);
+    }, recent ? RECENT_TTL : CHART_TTL, recent ? RECENT_STALE : CHART_STALE);
   }
 
   async function getRecentTracks(limit = 10): Promise<LastfmTrack[]> {
@@ -70,7 +80,7 @@ export function createLastfmClient({ user, apiKey, fetcher = fetch, now = Date.n
           return artist;
         }
       }));
-    }, CHART_TTL);
+    }, CHART_TTL, CHART_STALE);
   }
 
   async function getTopAlbums(period = '7day', limit = 5): Promise<LastfmAlbum[]> {

@@ -18,19 +18,19 @@ const interests = cvData.sections.find(s => s.title === 'Interests')?.content ??
   {skin === 'retro' ? (
     <div class="rt-stack">
       <RetroAboutIntro />
-      {heartRateEnabled && <HeartRateCard client:load skin="retro" initial={initialHeartRate()} />}
+      {heartRateEnabled && <HeartRateCard client:visible skin="retro" initial={initialHeartRate()} />}
       <RetroAboutRest />
     </div>
   ) : skin === 'mandy' ? (
     <>
       <MandyAboutIntro />
-      {heartRateEnabled && <HeartRateCard client:load skin="mandy" initial={initialHeartRate()} />}
+      {heartRateEnabled && <HeartRateCard client:visible skin="mandy" initial={initialHeartRate()} />}
       <MandyAboutRest interests={interests} />
     </>
   ) : (
     <>
       <AboutPage />
-      {heartRateEnabled && <HeartRateCard client:load skin="modern" initial={initialHeartRate()} />}
+      {heartRateEnabled && <HeartRateCard client:visible skin="modern" initial={initialHeartRate()} />}
     </>
   )}
 </Layout>

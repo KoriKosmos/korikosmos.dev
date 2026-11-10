@@ -14,7 +14,31 @@
 // skin wraps unchanged (Tetris, Tunes, the guestbook) pick up the palette. No
 // pre-paint script: the attribute is already right in the HTML.
 import "../styles/mandy.css";
-import { getCollection } from "astro:content";
+// Self-hosted fonts (Fontsource), the same families and weights the Google
+// Fonts stylesheet used to serve, from this origin with no third-party request
+// in front of first paint. Latin subset only: the per-weight files that cover
+// every script add ~25 KB gzipped of @font-face rules to the stylesheet every
+// skin loads (Layout.astro bundles all three shells' CSS), for scripts this
+// site doesn't use. Latin covers Western European accents; anything rarer
+// falls back per glyph to the next font in the stack. A browser downloads a
+// face only when the page renders text in it, so unused weights cost nothing.
+import "@fontsource/nunito/latin-400.css";
+import "@fontsource/nunito/latin-500.css";
+import "@fontsource/nunito/latin-600.css";
+import "@fontsource/nunito/latin-700.css";
+import "@fontsource/nunito/latin-800.css";
+import "@fontsource/pixelify-sans/latin-400.css";
+import "@fontsource/pixelify-sans/latin-500.css";
+import "@fontsource/pixelify-sans/latin-600.css";
+import "@fontsource/pixelify-sans/latin-700.css";
+import "@fontsource/silkscreen/latin-400.css";
+import "@fontsource/silkscreen/latin-700.css";
+import "@fontsource/vt323/latin-400.css";
+import "@fontsource/bangers/latin-400.css";
+// Preloaded: body text (Nunito) and the micro labels (VT323) appear on every
+// page in every sub-theme. The display face differs by sub-theme, so it isn't.
+import nunitoLatin from "@fontsource/nunito/files/nunito-latin-400-normal.woff2?url";
+import vt323Latin from "@fontsource/vt323/files/vt323-latin-400-normal.woff2?url";
 import OnekoToggle from "../components/OnekoToggle.tsx";
 import SkinToggle from "../retro-components/SkinToggle.tsx";
 import HeartRate from "../page-components/HeartRate.tsx";
@@ -68,15 +92,14 @@ const navGroups: MandyNavGroup[] = NAV_ITEMS.map((item, i) => {
 });
 
 // The nav search box suggests across pages, posts and projects — the same set
-// the modern skin's command palette searches.
-const [posts, projects] = await Promise.all([getCollection("blog"), getCollection("projects")]);
+// the modern skin's command palette searches. Only the pages are inlined here;
+// posts and projects come from /content-index.json on first search (see
+// src/lib/contentIndex.ts), so the HTML doesn't grow with every post.
 const searchIndex: MandySearchItem[] = [
 	{ title: "Home", desc: "The front page", url: "/" },
 	...NAV_ITEMS.flatMap(item => ("items" in item ? item.items : [item]))
 		.filter(link => !isExternal(link.href))
 		.map(link => ({ title: link.label, desc: `Page · ${link.href}`, url: link.href })),
-	...posts.map(post => ({ title: post.data.title, desc: post.data.description, url: `/blog/${post.slug}` })),
-	...projects.map(project => ({ title: project.data.title, desc: project.data.summary, url: `/portfolio/${project.slug}` })),
 ];
 ---
 
@@ -96,12 +119,8 @@ const searchIndex: MandySearchItem[] = [
 		modifiedTime={modifiedTime}
 	/>
 
-	<link rel="preconnect" href="https://fonts.googleapis.com" />
-	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-	<link
-		rel="stylesheet"
-		href="https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:wght@400;500;600;700;800&family=Pixelify+Sans:wght@400;500;600;700&family=Silkscreen:wght@400;700&family=VT323&display=swap"
-	/>
+	<link rel="preload" href={nunitoLatin} as="font" type="font/woff2" crossorigin />
+	<link rel="preload" href={vt323Latin} as="font" type="font/woff2" crossorigin />
 
 	<!-- Critical background per sub-theme, so the first paint isn't the modern
 	     skin's grey before mandy.css arrives. The bare rule is the default
@@ -116,10 +135,10 @@ const searchIndex: MandySearchItem[] = [
 <body>
 <a href="#main-content" class="md-skip">Skip to content</a>
 
-<MandyBackdrop client:load />
+<MandyBackdrop client:idle />
 <div class="md-vignette" aria-hidden="true"></div>
 
-<MandyNav client:load groups={navGroups} search={searchIndex} isHome={isHome} theme={theme} />
+<MandyNav client:idle groups={navGroups} search={searchIndex} isHome={isHome} theme={theme} />
 
 <main id="main-content" class="md-main">
 	<slot />
@@ -128,12 +147,12 @@ const searchIndex: MandySearchItem[] = [
 <footer class="md-footer">
 	<p>&copy; {new Date().getFullYear()} Maan &middot; korikosmos.dev &middot; <a href="/rss.xml">RSS</a></p>
 	<p>Mandy mode &mdash; built after <a href="https://amandata.dev" target="_blank" rel="noopener">amandata.dev</a>, with love</p>
-	{heartRateEnabled && <HeartRate client:load skin="mandy" initial={initialHeartRate()} />}
+	{heartRateEnabled && <HeartRate client:idle skin="mandy" initial={initialHeartRate()} />}
 </footer>
 
 <MandyEffects client:load />
-<OnekoToggle client:load />
-{heartRateEnabled && <HeartRateFloat client:load skin="mandy" initial={initialHeartRate()} />}
-<SkinToggle client:load skin="mandy" />
+<OnekoToggle client:idle />
+{heartRateEnabled && <HeartRateFloat client:idle skin="mandy" initial={initialHeartRate()} />}
+<SkinToggle client:idle skin="mandy" />
 </body>
 </html>
