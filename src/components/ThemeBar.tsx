@@ -1,13 +1,9 @@
 import { useEffect, useState } from "react";
 import type { MouseEvent, ReactNode } from "react";
-import { parseTheme, persistTheme } from "../lib/theme";
+import { parseTheme } from "../lib/theme";
 import type { Theme } from "../lib/theme";
+import { switchTheme } from "../lib/themeSwitch";
 import { PixelBat } from "../page-components/PixelBat";
-
-type ViewTransitionLike = { ready: Promise<void>; finished: Promise<void> };
-type DocumentWithViewTransition = Document & {
-  startViewTransition?: (update: () => void) => ViewTransitionLike;
-};
 
 const THEMES: { name: Theme; label: string; swatch: string; icon?: ReactNode }[] = [
   { name: "dark", label: "Dark theme", swatch: "bg-blue-600 border" },
@@ -62,18 +58,14 @@ const THEMES: { name: Theme; label: string; swatch: string; icon?: ReactNode }[]
   },
 ];
 
-function commitTheme(theme: Theme) {
-  document.documentElement.setAttribute("data-theme", theme);
-  // Writes the cookie as well as localStorage — the cookie is what lets the
-  // *next* page load render this theme server-side instead of flashing.
-  persistTheme(theme);
-}
-
 export function ThemeBar() {
   const [current, setCurrent] = useState<Theme | null>(null);
 
   useEffect(() => {
-    // Follow the displayed theme, including cookie restores and palette changes.
+    // The highlight follows the displayed theme rather than the click, so it
+    // moves with the colours: the old snapshot keeps the old ring and the live
+    // new view picks up the new one. Palette changes and the navigation
+    // reconciler arrive the same way.
     const root = document.documentElement;
     const sync = () => setCurrent(parseTheme(root.getAttribute("data-theme")));
     sync();
@@ -82,54 +74,11 @@ export function ThemeBar() {
     return () => observer.disconnect();
   }, []);
 
-  function applyTheme(theme: Theme, event: MouseEvent<HTMLButtonElement>) {
-    setCurrent(theme);
-    const root = document.documentElement;
-    if (root.getAttribute("data-theme") === theme) return;
-
-    const doc = document as DocumentWithViewTransition;
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-    if (reduceMotion) {
-      commitTheme(theme);
-      return;
-    }
-
-    if (!doc.startViewTransition) {
-      root.setAttribute("data-theme-fade", "");
-      commitTheme(theme);
-      window.setTimeout(() => root.removeAttribute("data-theme-fade"), 400);
-      return;
-    }
-
-    // Circular reveal expanding from the clicked swatch (works for keyboard
-    // activation too, since it uses the button's position rather than the cursor)
+  function onSwatch(theme: Theme, event: MouseEvent<HTMLButtonElement>) {
+    // Grow the reveal from the swatch itself rather than the pointer, so
+    // keyboard activation gets the same animation.
     const rect = event.currentTarget.getBoundingClientRect();
-    const x = rect.left + rect.width / 2;
-    const y = rect.top + rect.height / 2;
-    const radius = Math.hypot(
-      Math.max(x, window.innerWidth - x),
-      Math.max(y, window.innerHeight - y),
-    );
-
-    root.setAttribute("data-theme-switching", "");
-    const transition = doc.startViewTransition(() => commitTheme(theme));
-    transition.ready.then(() => {
-      root.animate(
-        {
-          clipPath: [
-            `circle(0px at ${x}px ${y}px)`,
-            `circle(${radius}px at ${x}px ${y}px)`,
-          ],
-        },
-        {
-          duration: 500,
-          easing: "cubic-bezier(0.4, 0, 0.2, 1)",
-          pseudoElement: "::view-transition-new(root)",
-        },
-      );
-    });
-    transition.finished.finally(() => root.removeAttribute("data-theme-switching"));
+    switchTheme(theme, { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
   }
 
   return (
@@ -160,7 +109,7 @@ export function ThemeBar() {
           }`}
           aria-label={label}
           aria-pressed={current === name}
-          onClick={(event) => applyTheme(name, event)}
+          onClick={(event) => onSwatch(name, event)}
         >
           {icon}
         </button>

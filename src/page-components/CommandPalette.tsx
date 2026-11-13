@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { navigate } from "astro:transitions/client";
-import { persistTheme } from "../lib/theme";
+import { switchTheme } from "../lib/themeSwitch";
 import type { Theme } from "../lib/theme";
 import { loadContentIndex } from "../lib/contentIndex";
 
@@ -41,17 +41,6 @@ const THEMES: { name: Theme; label: string }[] = [
   { name: "spider-man", label: "Spider-Man" },
   { name: "batman", label: "Batman" },
 ];
-
-function applyTheme(name: Theme) {
-  const root = document.documentElement;
-  if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-    root.setAttribute("data-theme-fade", "");
-    window.setTimeout(() => root.removeAttribute("data-theme-fade"), 400);
-  }
-  root.setAttribute("data-theme", name);
-  // Cookie as well as localStorage, so the next server render is already themed.
-  persistTheme(name);
-}
 
 /**
  * Subsequence fuzzy match. Returns a relevance score, or null if `query`
@@ -96,7 +85,7 @@ export function CommandPalette({ links }: { links: PaletteLink[] }) {
         label: `Theme: ${theme.label}`,
         section: "Themes",
         keywords: `theme ${theme.name} switch appearance`,
-        perform: () => applyTheme(theme.name),
+        perform: () => switchTheme(theme.name),
       })),
     ],
     [links, content],
