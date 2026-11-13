@@ -955,7 +955,8 @@ a:hover > .rt-btn88 { border-color: var(--rt-accent); }
   box-shadow: 5px 5px 0 var(--rt-shadow) !important;
 }
 .rt-island dialog::backdrop { background: rgba(0, 0, 0, 0.55); }
-.rt-island input[type='text'] {
+.rt-island input[type='text'],
+.rt-island textarea {
   background: #ffffff !important;
   color: #111111 !important;
   border: 2px inset var(--rt-bevel-dark) !important;

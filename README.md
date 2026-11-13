@@ -78,10 +78,11 @@ A production build **without** those env vars ships no admin routes at all.
   - Reduced motion stops everything that blinks, scrolls, sparkles or rainbows, the chiptune never autoplays, and every sub-theme's colour pairs are checked against WCAG contrast ratios.
   - Because the skin lives in a request cookie, no route using `Layout.astro` can be prerendered — the blog and portfolio `[slug]` pages are SSR, and `astro.config.mjs` feeds their URLs to the sitemap via `customPages`.
 - **Guestbook** at `/guestbook`, in all three skins — persistent (`data/guestbook.json`), with a public `GET /api/guestbook` and a same-origin, rate-limited, body-capped `POST`. The entry cap rejects rather than evicts, so a flood can never destroy signatures, and submitted URLs are allowlisted to `http:`/`https:` before being rendered as links. Per-post emoji reactions use the same guards.
+- **Blog comments** under every post, in all three skins, borrowed from amandata.dev: no account, just a display name (remembered in the browser). Stored in `data/comments.json` behind `GET`/`POST /api/comments/:slug`, with the guestbook's same-origin, body-cap and rate-limit guards. Each post's thread rejects new comments when full rather than evicting old ones.
 - **Hit counter** on the retro skin, bumped once per visitor session (`data/hits.json`).
 - **React islands architecture**:
   - `.astro` pages are thin wrappers: they do the server-side data fetching (content collections, Last.fm, `cv.json`) and render the active skin's React body (`src/mandy-components/`, `src/page-components/` or `src/retro-components/`) with the result as props.
-  - Presentational components render to static HTML with zero client JS; interactive ones (the games, Tunes, reactions, reading tools, heart-rate widgets, guestbook forms, theme and skin switchers, the oneko toggle, and each shell's own chrome such as the command palette or the Mandy nav and backdrop) hydrate on a schedule: `client:load` for the games and what each page is about, `client:idle` for shell chrome (which works without JS until then), and `client:visible` for below-the-fold widgets like reactions and the `/about` heart card.
+  - Presentational components render to static HTML with zero client JS; interactive ones (the games, Tunes, reactions, reading tools, heart-rate widgets, guestbook forms, theme and skin switchers, the oneko toggle, and each shell's own chrome such as the command palette or the Mandy nav and backdrop) hydrate on a schedule: `client:load` for the games and what each page is about, `client:idle` for shell chrome (which works without JS until then), and `client:visible` for below-the-fold widgets like reactions, comments and the `/about` heart card.
   - Mandy mode's fonts are self-hosted (Fontsource, Latin subset) rather than loaded from Google Fonts, and the nav search and ⌘K palette fetch posts and projects from a prerendered `/content-index.json` on first use instead of carrying them in every page.
   - Reusable components live in `src/components/` (also synced to a Claude Design project via `.design-sync/`); page-specific markup lives in `src/page-components/`.
   - **CV Page**: Fully data-driven using `src/data/cv.json` and reusable `CvSection` components.
@@ -137,7 +138,7 @@ A production build **without** those env vars ships no admin routes at all.
 │   ├── gen-retro-assets.mjs  # Draws public/retro/* — run with `npm run gen:retro`
 │   ├── gen-og-assets.mjs     # Draws src/assets/og/* — run with `npm run gen:og`
 │   └── new-post.js           # Scaffolds a new blog post — run with `npm run new-post`
-├── data/                # Runtime state: scores/, guestbook.json, hits.json, reactions.json (volume-mounted)
+├── data/                # Runtime state: scores/, guestbook.json, hits.json, reactions.json, comments.json (volume-mounted)
 ├── drafts/              # Unpublished / model-specific blog drafts kept outside src/content/blog/
 ├── tests/               # Unit tests + post-build SSR render tests
 ├── .design-sync/        # Config for syncing src/components/ to Claude Design
@@ -176,7 +177,7 @@ docker compose up --build
 
 The site will be available at http://localhost:8484.
 
-The container does **not** copy `data/` into the image — the game leaderboards, guestbook, post reactions, and hit counter all persist through the volume mount defined in `docker-compose.yml`. Without a writable `data/`, the guestbook refuses signatures and the counter falls back to an in-memory count rather than failing the page.
+The container does **not** copy `data/` into the image — the game leaderboards, guestbook, post reactions, comments, and hit counter all persist through the volume mount defined in `docker-compose.yml`. Without a writable `data/`, the guestbook refuses signatures and the counter falls back to an in-memory count rather than failing the page.
 
 **Note**: This uses a multi-stage `Dockerfile` that builds the Astro project into a standalone Node.js app. The final image only installs runtime `dependencies`, so build-only packages belong in `devDependencies`. The "pull-on-boot" feature has been removed for stability.
 

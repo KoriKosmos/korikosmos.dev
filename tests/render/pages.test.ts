@@ -57,6 +57,7 @@ for (const skin of ['modern', 'retro', 'mandy'] as const) {
       assert.ok(document.getElementById(link.getAttribute('href')!.slice(1)), 'Every contents link has a real destination');
     }
     assert.ok(document.querySelector('[data-reader-content]'));
+    assert.ok(document.querySelector('form textarea[id^="comment-body-"]'), 'Every skin renders the comment form');
     assert.equal((await render('/blog/does-not-exist', skin)).response.status, 404);
   });
 

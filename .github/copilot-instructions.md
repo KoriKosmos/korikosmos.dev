@@ -19,7 +19,7 @@ For full architectural details, always consult `AGENTS.md` and `CLAUDE.md` in th
   - Last.fm integration (server-side proxy at `/api/lastfm` with bounded cache + request coalescing, and a stale fallback after a 750ms deadline so a slow Last.fm never stalls `/tunes` or `/now`)
   - Live Pulsoid heart rate (`/api/heartrate`, footer pill, `/about` ECG card, draggable floating monitor)
   - Interactive games (Guideline Tetris with a pure, tested engine in `src/lib/tetris.ts`, Rock Paper Scissors, Star Pairs constellation memory game) wrapped in `MandyIslandShell.astro` and `RetroIslandShell.astro` without forking
-  - Persistent guestbook (`/guestbook`), per-post emoji reactions, and retro hit counter with same-origin, body-cap, and rate-limit guards
+  - Persistent guestbook (`/guestbook`), per-post emoji reactions, per-post comments (display name only, no account), and retro hit counter with same-origin, body-cap, and rate-limit guards
   - URL-driven blog & portfolio search/filtering (`src/lib/contentDiscovery.ts`) and blog reading tools (`src/lib/reading.ts`, `ReadingTools.tsx`)
   - Prerendered Open Graph cards (`src/pages/og/[...route].ts`, `src/layouts/SeoHead.astro`)
   - Prerendered `/content-index.json` (posts + projects) that Mandy's nav search and the modern ⌘K palette fetch on first use, instead of embedding it in every page

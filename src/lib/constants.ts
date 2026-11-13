@@ -55,3 +55,22 @@ export const REACTIONS: Reaction[] = [
 export const REACTION_EMOJI = REACTIONS.map(r => r.emoji);
 
 export type ReactionCounts = Record<string, number>;
+
+/* ── Post comments ───────────────────────────────────────────────────────── */
+
+/**
+ * Field limits for blog comments, shared by `src/lib/comments.ts` (which
+ * truncates to them) and the PostComments island (which sets `maxLength`).
+ * Same numbers amandata.dev uses for its comments.
+ */
+export const COMMENT_NAME_MAX = 50;
+export const COMMENT_MAX = 2000;
+
+export interface PostComment {
+  id: string;
+  /** ISO-8601 timestamp. */
+  date: string;
+  /** Any display name; there is no sign-in. */
+  name: string;
+  body: string;
+}
