@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { navigate } from "astro:transitions/client";
-import { requestTheme } from "../lib/themeTransition";
+import { switchTheme } from "../lib/themeSwitch";
 import type { Theme } from "../lib/theme";
 import { loadContentIndex } from "../lib/contentIndex";
 
@@ -85,7 +85,7 @@ export function CommandPalette({ links }: { links: PaletteLink[] }) {
         label: `Theme: ${theme.label}`,
         section: "Themes",
         keywords: `theme ${theme.name} switch appearance`,
-        perform: () => requestTheme(theme.name),
+        perform: () => switchTheme(theme.name),
       })),
     ],
     [links, content],

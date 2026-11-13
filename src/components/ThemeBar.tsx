@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
 import type { MouseEvent, ReactNode } from "react";
-import { flushSync } from "react-dom";
 import { parseTheme } from "../lib/theme";
 import type { Theme } from "../lib/theme";
+import { switchTheme } from "../lib/themeSwitch";
 import { PixelBat } from "../page-components/PixelBat";
-import { requestTheme, THEME_CHANGE_EVENT } from "../lib/themeTransition";
 
 const THEMES: { name: Theme; label: string; swatch: string; icon?: ReactNode }[] = [
   { name: "dark", label: "Dark theme", swatch: "bg-blue-600 border" },
@@ -63,30 +62,23 @@ export function ThemeBar() {
   const [current, setCurrent] = useState<Theme | null>(null);
 
   useEffect(() => {
-    // Follow the displayed theme, including cookie restores and palette changes.
+    // The highlight follows the displayed theme rather than the click, so it
+    // moves with the colours: the old snapshot keeps the old ring and the live
+    // new view picks up the new one. Palette changes and the navigation
+    // reconciler arrive the same way.
     const root = document.documentElement;
     const sync = () => setCurrent(parseTheme(root.getAttribute("data-theme")));
-    // The shared coordinator commits both colours and the selected swatch
-    // before the browser takes its new snapshot, including palette requests.
-    const onThemeChange = () => flushSync(sync);
     sync();
-    root.addEventListener(THEME_CHANGE_EVENT, onThemeChange);
     const observer = new window.MutationObserver(sync);
     observer.observe(root, { attributes: true, attributeFilter: ["data-theme"] });
-    return () => {
-      observer.disconnect();
-      root.removeEventListener(THEME_CHANGE_EVENT, onThemeChange);
-    };
+    return () => observer.disconnect();
   }, []);
 
-  function applyTheme(theme: Theme, event: MouseEvent<HTMLButtonElement>) {
-    // Circular reveal expanding from the clicked swatch (works for keyboard
-    // activation too, since it uses the button's position rather than the cursor)
+  function onSwatch(theme: Theme, event: MouseEvent<HTMLButtonElement>) {
+    // Grow the reveal from the swatch itself rather than the pointer, so
+    // keyboard activation gets the same animation.
     const rect = event.currentTarget.getBoundingClientRect();
-    requestTheme(theme, {
-      x: rect.left + rect.width / 2,
-      y: rect.top + rect.height / 2,
-    });
+    switchTheme(theme, { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
   }
 
   return (
@@ -117,7 +109,7 @@ export function ThemeBar() {
           }`}
           aria-label={label}
           aria-pressed={current === name}
-          onClick={(event) => applyTheme(name, event)}
+          onClick={(event) => onSwatch(name, event)}
         >
           {icon}
         </button>

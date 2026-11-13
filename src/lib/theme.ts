@@ -56,8 +56,7 @@ export function getTheme(ctx: {
 }
 
 /**
- * Persist an applied theme. Browser-only. UI actions must call requestTheme()
- * in themeTransition.ts so queued choices cannot overtake an active reveal.
+ * Persist a theme chosen in the UI. Browser-only.
  *
  * Writes both stores: localStorage for this tab's own reads, and the cookie so
  * the *next* server render already knows the answer. Skipping the cookie here
