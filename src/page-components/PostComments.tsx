@@ -4,7 +4,7 @@
 //
 // Limits and types come from ../lib/constants, never ../lib/comments: that
 // module imports node:fs, which must stay out of this client bundle.
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { COMMENT_MAX, COMMENT_NAME_MAX, type PostComment } from '../lib/constants';
 
 interface Props {
@@ -37,9 +37,13 @@ export function PostComments({ slug }: Props) {
   const [body, setBody] = useState('');
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<Status>(null);
+  // Set once a POST succeeds. Its response is the newer thread, so a slow
+  // initial GET that lands afterwards must not overwrite it.
+  const posted = useRef(false);
 
   useEffect(() => {
     let active = true;
+    posted.current = false;
     try {
       setName(localStorage.getItem(NAME_KEY) ?? '');
     } catch {
@@ -48,10 +52,10 @@ export function PostComments({ slug }: Props) {
     fetch(`/api/comments/${encodeURIComponent(slug)}`)
       .then(response => (response.ok ? response.json() : Promise.reject()))
       .then((data: CommentsResponse) => {
-        if (active) setComments(data.comments ?? []);
+        if (active && !posted.current) setComments(data.comments ?? []);
       })
       .catch(() => {
-        if (active) setLoadFailed(true);
+        if (active && !posted.current) setLoadFailed(true);
       });
     return () => {
       active = false;
@@ -74,6 +78,7 @@ export function PostComments({ slug }: Props) {
         setStatus({ kind: 'error', text: `Error: ${data.error ?? 'Comments are not accepting posts right now.'}` });
         return;
       }
+      posted.current = true;
       setComments(data.comments);
       setLoadFailed(false);
       setBody('');
