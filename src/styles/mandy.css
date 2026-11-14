@@ -325,6 +325,21 @@ html[data-skin='mandy'] {
 [data-skin='mandy'] .md-heart__age { text-transform: none; opacity: 0.8; }
 [data-skin='mandy'] .md-heartmon--recent .md-heartmon__trace { opacity: 0.5; }
 [data-skin='mandy'] .md-heartmon--recent .md-heartmon__bpm { color: var(--md-dim); }
+/* This week: a sparkline per stat under today's tiles (HeartWeek). */
+[data-skin='mandy'] .md-week {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 0.5rem 1.5rem; margin: 0;
+}
+[data-skin='mandy'] .md-week__row {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+  padding: 0.35rem 0; border-bottom: 1px dashed var(--md-line);
+}
+[data-skin='mandy'] .md-week__row dt { font-family: var(--md-micro); font-size: 1.15rem; color: var(--md-dim); }
+[data-skin='mandy'] .md-week__row dd { margin: 0; display: flex; align-items: center; gap: 0.75rem; }
+[data-skin='mandy'] .md-week__spark { color: var(--md-accent); flex: none; }
+[data-skin='mandy'] .md-week__latest {
+  min-width: 4.5rem; text-align: right;
+  font-family: var(--md-display); color: var(--md-data); font-variant-numeric: tabular-nums;
+}
 /* Today's stats under the /about monitor: md-stat-style tiles, one per group. */
 [data-skin='mandy'] .md-today {
   display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 1rem;
