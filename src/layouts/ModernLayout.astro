@@ -14,6 +14,7 @@ import HeartRate from "../page-components/HeartRate.tsx";
 import HeartRateFloat from "../page-components/HeartRateFloat.tsx";
 import { heartRateEnabled, initialHeartRate } from "../lib/heartRate";
 import SeoHead from "./SeoHead.astro";
+import { ogImageFor } from "../data/pageMeta";
 import type { PaletteLink } from "../page-components/CommandPalette.tsx";
 import { NAV_ITEMS, SITE_TITLE, SITE_DESCRIPTION, isExternal } from "../config";
 import {
@@ -46,7 +47,7 @@ const theme = getTheme(Astro);
 
 const formattedTitle = title === SITE_TITLE ? SITE_TITLE : `${title} | ${SITE_TITLE}`;
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
-const socialImage = new URL(image ?? '/og/site.png', Astro.site);
+const socialImage = new URL(image ?? ogImageFor(Astro.url.pathname), Astro.site);
 
 const isActive = (href: string) =>
 	Astro.url.pathname === href || Astro.url.pathname.startsWith(`${href}/`);

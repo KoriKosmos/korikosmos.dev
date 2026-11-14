@@ -1,4 +1,5 @@
 ---
+import { PAGE_META } from '../../data/pageMeta';
 import Layout from '../../layouts/Layout.astro';
 import { getSkin } from '../../lib/skin';
 import { RockPaperScissors } from '../../page-components/RockPaperScissors.tsx';
@@ -8,7 +9,7 @@ import MandyIslandShell from '../../mandy-components/MandyIslandShell.astro';
 const skin = getSkin(Astro);
 ---
 
-<Layout title="Rock Paper Scissors" description="Challenge the CPU in Rock Paper Scissors with a global leaderboard.">
+<Layout {...PAGE_META['/games/rock-paper-scissors']}>
   {skin === 'retro' ? (
     <RetroIslandShell
       title="ROSHAMBO.EXE"

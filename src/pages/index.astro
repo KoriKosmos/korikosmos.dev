@@ -1,4 +1,5 @@
 ---
+import { PAGE_META } from '../data/pageMeta';
 import Layout from "../layouts/Layout.astro";
 import { getCollection } from "astro:content";
 import cvData from "../data/cv.json";
@@ -19,7 +20,7 @@ const [posts, projects] = skin !== "modern"
 const skills = cvData.sections.find(s => s.title === "Technical Skills")?.items ?? [];
 ---
 
-<Layout description="Personal portfolio, blog, and games hub by Maan.">
+<Layout {...PAGE_META['/']}>
 	{retro ? (
 		<RetroHomePage
 			posts={posts.map(p => ({

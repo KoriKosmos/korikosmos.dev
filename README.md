@@ -61,6 +61,7 @@ A production build **without** those env vars ships no admin routes at all.
 - **Controller support**: All three games play with a gamepad as well as a keyboard or touch. Tetris maps the d-pad or stick, A/B to rotate, LB/RB to hold, ▲ to hard drop and Start to start or pause; Star Pairs walks the board with the d-pad and flips with A; Rock Paper Scissors throws with X, Y and B (or ◀ ▲ ▶). The on-screen controller hints only appear once a controller is connected, and the shared poller lives in `src/lib/gamepad.ts`.
 - **Vibration feedback**: The games buzz the controller or phone I'm actually playing on: a thud for a hard drop, a stronger rumble for a Tetris, T-spin or perfect clear, a long one when I top out, and little taps, matches and misses in Star Pairs and Rock Paper Scissors. Keyboard and mouse play stays silent, and a Vibration switch (shown only where something can buzz) turns it off on that device.
 - **Blog reading tools**: My posts show publication dates, reading-time estimates and a linked contents list. A progress strip tracks the article, and readers can copy a section link or a code block. The article and contents remain readable without JavaScript in every skin.
+- **Link previews that look like the site**: Every page, post and project gets its own 1200×630 social card, drawn at build time as Mandy mode's gotham scene (Bat-Signal, rain, a lit pixel skyline) in the skin's own pixel fonts. Page titles and descriptions live in `src/data/pageMeta.ts`, so a card always says what its page says.
 - **Searchable blog and portfolio**: I can search titles, descriptions and post bodies, sort the results, and filter projects with public GitHub source. Filters are shareable URLs and work in all three skins without JavaScript.
 - **Live heart rate**: When my [Health Display](https://github.com/KoriKosmos/health-display) server (`HEALTH_STATUS_URL` + `HEALTH_STATUS_TOKEN`) or Pulsoid (`PULSOID_ACCESS_TOKEN` or `PULSOID_WIDGET_URL`) is configured, I show my heart rate in every skin's footer, an `/about` box with a sweeping ECG trace and today's heart, day and night stats, and a draggable floating Vitals window (the monitor plus all of today's stats) toggled from the ♥ Vitals dock button that remembers its open state and position across pages. Health Display merges my phone, watch and rings; a watch or ring reading up to 15 minutes old shows as `~68 bpm · 5 min ago` instead of live. `/api/heartrate` shares a 3-second cache across visitors, passes on only a whitelist of stats (never weight, glucose or ECG), treats a snapshot older than 60 seconds as offline, falls back to Pulsoid when Health Display is unset or unreachable, and to the free Pulsoid widget iframe if the Pulsoid token is missing or lapses.
 - **Mandy mode**, my default skin:
@@ -112,7 +113,6 @@ A production build **without** those env vars ships no admin routes at all.
 ├── keystatic.config.ts  # Keystatic CMS schemas (blog, projects, CV)
 ├── public/
 ├── src/
-│   ├── assets/og/       # Generated OG card artwork (starfields + site mark)
 │   ├── components/      # Reusable React components (design-sync surface)
 │   ├── page-components/ # Modern page bodies + shared interactive islands & widgets
 │   ├── retro-components/# Web 1.0 skin: a Retro* body per route + SkinToggle, RetroChrome
@@ -120,14 +120,13 @@ A production build **without** those env vars ships no admin routes at all.
 │   ├── config.ts        # Site configuration & navigation
 │   ├── data/            # Static data (CV) + data shared by all three skins (uses, links, now)
 │   ├── env.d.ts         # Type definitions
-│   ├── fonts/           # Vendored Noto Sans TTFs (400 + 800) for OG cards
 │   ├── layouts/         # Layout.astro (dispatcher), ModernLayout, RetroLayout, MandyLayout, SeoHead
 │   ├── lib/             # Game engines, skin/theme cookies, Last.fm, Health Display + Pulsoid, guestbook, hits, rate limiter, JSON store
 │   ├── middleware.ts    # Skin/theme resolution, hit counter, Keystatic OAuth origin fix
 │   ├── pages/           # .astro routes: SSR data fetch → render the right body component
 │   │   ├── api/         # Server-side API endpoints
 │   │   ├── games/       # Tetris, Rock Paper Scissors, Star Pairs
-│   │   ├── og/          # Prerendered OG image endpoint
+│   │   ├── og/          # Prerendered social cards (drawn by src/lib/ogCard.ts)
 │   │   ├── content-index.json.ts # Prerendered posts+projects index for search
 │   │   └── ...
 │   ├── styles/          # global.css (Tailwind), retro.css (rt-*), mandy.css (md-*)
@@ -136,7 +135,6 @@ A production build **without** those env vars ships no admin routes at all.
 │       └── projects/
 ├── scripts/
 │   ├── gen-retro-assets.mjs  # Draws public/retro/* — run with `npm run gen:retro`
-│   ├── gen-og-assets.mjs     # Draws src/assets/og/* — run with `npm run gen:og`
 │   └── new-post.js           # Scaffolds a new blog post — run with `npm run new-post`
 ├── data/                # Runtime state: scores/, guestbook.json, hits.json, reactions.json, comments.json (volume-mounted)
 ├── drafts/              # Unpublished / model-specific blog drafts kept outside src/content/blog/
@@ -159,7 +157,6 @@ Run these from the project root:
 | `npm run test:render` | Check production HTML in all three skins (build first) |
 | `npm run preview`   | Preview the built site locally         |
 | `npm run gen:retro` | Redraw the retro graphics in `public/retro/` |
-| `npm run gen:og`    | Redraw the OG card artwork in `src/assets/og/` |
 | `npm run new-post`  | Scaffold a new blog post in `src/content/blog/` |
 | `npm run astro ...` | Run additional Astro CLI commands      |
 

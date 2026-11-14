@@ -12,7 +12,7 @@ For full architectural details, always consult `AGENTS.md` and `CLAUDE.md` in th
 - **UI:** React 19 via `@astrojs/react` — `.astro` pages fetch data server-side and render a `.tsx` body component for the active skin (`mandy-components/Mandy*`, `page-components/*`, or `retro-components/Retro*`)
 - **Styling:** Tailwind CSS 3.3 + DaisyUI 4.12 (5 custom themes: `dark`, `light`, `forest`, `spider-man`, `batman` for the modern skin; `src/styles/retro.css` (`rt-*`) for the retro skin; `src/styles/mandy.css` (`md-*`) plus four `mandy-*` DaisyUI themes for Mandy mode)
 - **TypeScript:** Strict mode (`astro/tsconfigs/strict`)
-- **Deployment:** Docker (multi-stage build, Node 22 Alpine, port 4321); the final image installs only `dependencies`, so build-only packages (Tailwind, Fontsource, `astro-og-canvas`, test tooling) go in `devDependencies`
+- **Deployment:** Docker (multi-stage build, Node 22 Alpine, port 4321); the final image installs only `dependencies`, so build-only packages (Tailwind, Fontsource, `canvaskit-wasm`, test tooling) go in `devDependencies`
 - **CMS:** Keystatic (admin at `/keystatic`, GitHub mode; schemas in `keystatic.config.ts`; `/admin` 301-redirects there)
 - **Key Features:**
   - Three parallel skins resolved via `kk-skin` cookie in `src/middleware.ts` (`mandy` default, `modern`, `retro`)
@@ -21,7 +21,7 @@ For full architectural details, always consult `AGENTS.md` and `CLAUDE.md` in th
   - Interactive games (Guideline Tetris with a pure, tested engine in `src/lib/tetris.ts`, Rock Paper Scissors, Star Pairs constellation memory game) wrapped in `MandyIslandShell.astro` and `RetroIslandShell.astro` without forking
   - Persistent guestbook (`/guestbook`), per-post emoji reactions, per-post comments (display name only, no account), and retro hit counter with same-origin, body-cap, and rate-limit guards
   - URL-driven blog & portfolio search/filtering (`src/lib/contentDiscovery.ts`) and blog reading tools (`src/lib/reading.ts`, `ReadingTools.tsx`)
-  - Prerendered Open Graph cards (`src/pages/og/[...route].ts`, `src/layouts/SeoHead.astro`)
+  - Prerendered Open Graph cards in Mandy mode's gotham style, one per page (`src/pages/og/[...route].ts`, `src/lib/ogCard.ts`, `src/data/pageMeta.ts`, `src/layouts/SeoHead.astro`)
   - Prerendered `/content-index.json` (posts + projects) that Mandy's nav search and the modern ⌘K palette fetch on first use, instead of embedding it in every page
 
 ## Code Style Guidelines
