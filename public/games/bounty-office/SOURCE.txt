@@ -1,0 +1,3 @@
+Bounty Office, copied from https://github.com/KoriKosmos/BountyIdle
+commit 3d6edcc8f97884e8e54a514e1b67ca6a39df706e
+Regenerate with `npm run sync:bounty`; do not edit these files by hand.

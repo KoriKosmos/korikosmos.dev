@@ -51,6 +51,8 @@ export const NAV_ITEMS: NavItem[] = [
       { href: '/games/tetris', label: 'Tetris' },
       { href: '/games/star-pairs', label: 'Star Pairs' },
       { href: '/games/rock-paper-scissors', label: 'Rock Paper Scissors' },
+      // A standalone document (public/games/bounty-office/), not a Layout page.
+      { href: '/games/bounty-office/', label: 'Bounty Office', reload: true },
     ],
   },
   { href: 'https://amandata.dev', label: 'My Wife' },

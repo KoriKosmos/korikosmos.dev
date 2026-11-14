@@ -11,7 +11,8 @@
     "preview": "astro preview",
     "astro": "astro",
     "new-post": "node scripts/new-post.js",
-    "gen:retro": "node scripts/gen-retro-assets.mjs"
+    "gen:retro": "node scripts/gen-retro-assets.mjs",
+    "sync:bounty": "node scripts/sync-bounty-office.mjs"
   },
   "dependencies": {
     "@astrojs/node": "^9.5.2",

@@ -58,8 +58,9 @@ A production build **without** those env vars ships no admin routes at all.
 - **Live Tunes updates**: The playing badge and recent history update together, including when the same song stops. Period changes cancel obsolete requests, charts load when selected, and live polling pauses in background tabs. Missing artwork has a local fallback.
 - **Resilient music loading**: I fetch independent Last.fm sections together and share cached requests between visitors. Recent tracks refresh quickly, charts are cached for 15 minutes, and a slow or unavailable Last.fm service cannot hold the page open indefinitely: once I have a good answer, a refresh that takes longer than 750ms (or fails) is answered from that last good copy instead. API failures with nothing cached return an uncached retry response.
 - **Star Pairs** at `/games/star-pairs`: My constellation memory game has three board sizes, keyboard and touch controls, automatic pausing when leaving the tab, and personal bests stored on the device. It works in all three skins and needs no account or external assets.
+- **Bounty Office** at `/games/bounty-office/`: My idle game about running a bounty office on a frontier station: hunt by hand, hire crew who earn while I'm away, and take guild contracts for reputation. It lives in its own repo ([BountyIdle](https://github.com/KoriKosmos/BountyIdle)) and is copied in as a standalone page by `npm run sync:bounty`, so it keeps its own look in every skin. Saves stay in the browser, with export and import in its settings.
 - **Daily challenges**: Every game has one, the same for everyone until midnight UTC. Tetris's daily deals everyone the same pieces and has its own leaderboard for the day, Star Pairs deals a daily sky for each board size, and Rock Paper Scissors has a ten-round daily duel against an opponent with a habit to spot (one go per day). The seed is just the game and the date (`src/lib/daily.ts`).
-- **Controller support**: All three games play with a gamepad as well as a keyboard or touch. Tetris maps the d-pad or stick, A/B to rotate, LB/RB to hold, ▲ to hard drop and Start to start or pause; Star Pairs walks the board with the d-pad and flips with A; Rock Paper Scissors throws with X, Y and B (or ◀ ▲ ▶). The on-screen controller hints only appear once a controller is connected, and the shared poller lives in `src/lib/gamepad.ts`.
+- **Controller support**: Tetris, Star Pairs and Rock Paper Scissors play with a gamepad as well as a keyboard or touch. Tetris maps the d-pad or stick, A/B to rotate, LB/RB to hold, ▲ to hard drop and Start to start or pause; Star Pairs walks the board with the d-pad and flips with A; Rock Paper Scissors throws with X, Y and B (or ◀ ▲ ▶). The on-screen controller hints only appear once a controller is connected, and the shared poller lives in `src/lib/gamepad.ts`.
 - **Vibration feedback**: The games buzz the controller or phone I'm actually playing on: a thud for a hard drop, a stronger rumble for a Tetris, T-spin or perfect clear, a long one when I top out, and little taps, matches and misses in Star Pairs and Rock Paper Scissors. Keyboard and mouse play stays silent, and a Vibration switch (shown only where something can buzz) turns it off on that device.
 - **Blog reading tools**: My posts show publication dates, reading-time estimates and a linked contents list. A progress strip tracks the article, and readers can copy a section link or a code block. The article and contents remain readable without JavaScript in every skin.
 - **Link previews that look like the site**: Every page, post and project gets its own 1200×630 social card, drawn at build time as Mandy mode's gotham scene (Bat-Signal, rain, a lit pixel skyline) in the skin's own pixel fonts. Page titles and descriptions live in `src/data/pageMeta.ts`, so a card always says what its page says.
@@ -128,7 +129,7 @@ A production build **without** those env vars ships no admin routes at all.
 │   ├── middleware.ts    # Skin/theme resolution, hit counter, Keystatic OAuth origin fix
 │   ├── pages/           # .astro routes: SSR data fetch → render the right body component
 │   │   ├── api/         # Server-side API endpoints
-│   │   ├── games/       # Tetris, Rock Paper Scissors, Star Pairs
+│   │   ├── games/       # Tetris, Rock Paper Scissors, Star Pairs (Bounty Office is in public/games/)
 │   │   ├── og/          # Prerendered social cards (drawn by src/lib/ogCard.ts)
 │   │   ├── content-index.json.ts # Prerendered posts+projects index for search
 │   │   └── ...
@@ -138,6 +139,7 @@ A production build **without** those env vars ships no admin routes at all.
 │       └── projects/
 ├── scripts/
 │   ├── gen-retro-assets.mjs  # Draws public/retro/* — run with `npm run gen:retro`
+│   ├── sync-bounty-office.mjs # Copies Bounty Office into public/games/bounty-office/ — `npm run sync:bounty`
 │   └── new-post.js           # Scaffolds a new blog post — run with `npm run new-post`
 ├── data/                # Runtime state: scores/, guestbook.json, hits.json, reactions.json, comments.json (volume-mounted)
 ├── drafts/              # Unpublished / model-specific blog drafts kept outside src/content/blog/
@@ -160,6 +162,7 @@ Run these from the project root:
 | `npm run test:render` | Check production HTML in all three skins (build first) |
 | `npm run preview`   | Preview the built site locally         |
 | `npm run gen:retro` | Redraw the retro graphics in `public/retro/` |
+| `npm run sync:bounty` | Copy Bounty Office from its repo into `public/games/bounty-office/` |
 | `npm run new-post`  | Scaffold a new blog post in `src/content/blog/` |
 | `npm run astro ...` | Run additional Astro CLI commands      |
 

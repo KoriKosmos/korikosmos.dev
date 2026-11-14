@@ -71,6 +71,17 @@ for (const skin of ['modern', 'retro', 'mandy'] as const) {
     assert.ok(games.document.querySelector('main a[href="/games/star-pairs/"]'));
   });
 
+  test(`${skin}: Bounty Office is linked from the games index and the Play menu`, async () => {
+    const { document } = await render('/games', skin);
+    assert.ok(document.querySelector('main a[href="/games/bounty-office/"]'), 'listed on /games');
+    // A standalone document: the modern skin must not ClientRouter-swap into it.
+    const links = [...document.querySelectorAll('a[href="/games/bounty-office/"]')];
+    assert.ok(links.length >= 2, 'linked from the nav too');
+    if (skin === 'modern') {
+      assert.ok(links.every(link => link.hasAttribute('data-astro-reload')), 'every modern link forces a full load');
+    }
+  });
+
   test(`${skin}: Tetris renders its board, start screen, and controls without a blocking prompt`, async () => {
     const game = await render('/games/tetris', skin);
     assert.equal(game.response.status, 200);

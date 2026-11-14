@@ -206,7 +206,12 @@ const paletteLinks: PaletteLink[] = [
 						<ul tabindex="0" class="dropdown-content menu bg-base-200 rounded-box z-50 mt-1 w-40 p-2 shadow-lg">
 							{item.items.map(link => (
 								<li>
-									<a href={link.href} class={isActive(link.href) ? "active" : ""} aria-current={isActive(link.href) ? "page" : undefined}>
+									<a
+										href={link.href}
+										class={isActive(link.href) ? "active" : ""}
+										aria-current={isActive(link.href) ? "page" : undefined}
+										data-astro-reload={link.reload ? true : undefined}
+									>
 										{link.label}
 									</a>
 								</li>
