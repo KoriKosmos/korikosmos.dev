@@ -3,6 +3,7 @@ import { initRockPaperScissors, type RoundOutcome } from "../lib/rockPaperScisso
 import { otherDialogOpen, watchGamepads, type PadButton } from "../lib/gamepad";
 import { haptic, trackInputSource, type HapticKind } from "../lib/haptics";
 import { HapticsToggle } from "./HapticsToggle";
+import { RpsDailyDuel } from "./RpsDailyDuel";
 
 const OUTCOME_HAPTIC: Record<RoundOutcome, HapticKind> = { win: "match", lose: "miss", tie: "tap" };
 
@@ -79,6 +80,8 @@ export function RockPaperScissors() {
           <HapticsToggle padConnected={padConnected} />
         </div>
       </div>
+
+      <RpsDailyDuel />
 
       <div className="mt-8">
         <h2 className="text-xl font-bold mb-2">Global Leaderboard</h2>

@@ -184,4 +184,6 @@ data/hits.json
 data/guestbook.json
 data/reactions.json
 data/comments.json
+data/vitals.json
+data/scores/tetris-daily.json
 .playwright-mcp/

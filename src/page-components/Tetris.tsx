@@ -10,6 +10,7 @@ import { TOP_OUT_MS, TetrisEffects } from "../lib/tetrisEffects";
 import { GamepadReader, otherDialogOpen, type PadButton, type PadFrame } from "../lib/gamepad";
 import { haptic, trackInputSource, type HapticKind } from "../lib/haptics";
 import { HapticsToggle } from "./HapticsToggle";
+import { dailyKey, dailyRandom } from "../lib/daily";
 
 const BEST_KEY = "tetris_highscore";
 const NAME_KEY = "tetris_username";
@@ -19,6 +20,7 @@ const MAX_FRAME_MS = 100;
 const LEADERBOARD_REFRESH_MS = 60_000;
 
 interface LeaderboardEntry { name: string; score: number }
+interface DailyBoard { day: string; scores: LeaderboardEntry[] }
 
 interface Hud {
   status: GameStatus;
@@ -161,6 +163,10 @@ export function Tetris() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [padConnected, setPadConnected] = useState(false);
   const [lbError, setLbError] = useState(false);
+  const [daily, setDaily] = useState<DailyBoard | null>(null);
+  // The day the current game's pieces were dealt for, or null for a free game.
+  const [dailyDay, setDailyDay] = useState<string | null>(null);
+  const dailyDayRef = useRef<string | null>(null);
 
   // Latest values for callbacks that live inside the animation loop.
   const bestRef = useRef(0);
@@ -172,25 +178,37 @@ export function Tetris() {
 
   const loadLeaderboard = useCallback(async (signal?: AbortSignal) => {
     try {
-      const res = await fetch("/api/scores/tetris", { signal });
+      const [res, dailyRes] = await Promise.all([
+        fetch("/api/scores/tetris", { signal }),
+        fetch("/api/scores/tetris-daily", { signal }).catch(() => null),
+      ]);
       if (!res.ok) throw new Error(String(res.status));
       setLeaderboard(await res.json());
+      if (dailyRes?.ok) setDaily(await dailyRes.json());
       setLbError(false);
     } catch (error) {
       if ((error as Error).name !== "AbortError") setLbError(true);
     }
   }, []);
 
-  const submitScore = useCallback(async (name: string, score: number) => {
+  /** Saves to the all-time board, and to the daily one if `day` is set. */
+  const submitScore = useCallback(async (name: string, score: number, day: string | null = null) => {
+    const post = (path: string, body: unknown) => fetch(path, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
     setSaveState("saving");
     try {
-      const res = await fetch("/api/scores/tetris", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, score }),
-      });
+      const [res, dailyRes] = await Promise.all([
+        post("/api/scores/tetris", { name, score }),
+        day ? post("/api/scores/tetris-daily", { name, score, day }) : null,
+      ]);
       if (!res.ok) throw new Error(String(res.status));
       setLeaderboard(await res.json());
+      // A 409 means midnight passed mid-game: the all-time score still counts.
+      if (dailyRes?.ok) setDaily(await dailyRes.json());
+      else if (dailyRes && dailyRes.status !== 409) throw new Error(String(dailyRes.status));
       setLbError(false);
       setSaveState("saved");
     } catch {
@@ -219,7 +237,7 @@ export function Tetris() {
     setAnnouncement(`Game over. Final score ${score}.`);
     const name = usernameRef.current;
     // With a known name, save straight away; the server keeps each name's best.
-    if (name && score > 0) submitScore(name, score);
+    if (name && score > 0) submitScore(name, score, dailyDayRef.current);
     // Let the stack grey out before the dialog covers it.
     const delay = effectsRef.current?.reducedMotion ? 0 : TOP_OUT_MS;
     if (overTimerRef.current) clearTimeout(overTimerRef.current);
@@ -366,7 +384,7 @@ export function Tetris() {
       const has = (b: PadButton) => pressed.has(b);
       if (game.status === "ready" || game.status === "over") {
         // Start restarts from the game-over dialog too; A only from the overlay.
-        if (has("start") || (has("a") && !gameOverOpen)) startRef.current();
+        if (has("start") || (has("a") && !gameOverOpen)) startRef.current(game.status === "over" && dailyDayRef.current !== null);
         return;
       }
       if (gameOverOpen) return;
@@ -417,16 +435,19 @@ export function Tetris() {
 
   // ---- Controls -------------------------------------------------------------
 
-  const startGame = () => {
+  const startGame = (asDaily = false) => {
     const game = gameRef.current;
     if (!game) return;
+    const day = asDaily ? dailyKey() : null;
+    dailyDayRef.current = day;
+    setDailyDay(day);
     dialogRef.current?.close();
     if (overTimerRef.current) { clearTimeout(overTimerRef.current); overTimerRef.current = null; }
     setFinal(null);
     setCallouts([]);
     effectsRef.current?.reset();
-    game.start();
-    setAnnouncement("New game started.");
+    game.start(day ? dailyRandom("tetris", day) : undefined);
+    setAnnouncement(day ? "Daily challenge started. Everyone gets these pieces today." : "New game started.");
   };
 
   const startRef = useRef(startGame);
@@ -471,7 +492,7 @@ export function Tetris() {
     if (!name || !final) return;
     setUsername(name);
     writeStorage(NAME_KEY, name);
-    submitScore(name, final.score);
+    submitScore(name, final.score, dailyDay);
   };
 
   const forgetName = () => {
@@ -503,7 +524,7 @@ export function Tetris() {
               {saveState === "saved" && `Saved to the leaderboard as ${username}.`}
               {saveState === "error" && (
                 <>Couldn&apos;t reach the leaderboard.{" "}
-                  <button type="button" className="underline" onClick={() => submitScore(username, final.score)}>Try again</button>
+                  <button type="button" className="underline" onClick={() => submitScore(username, final.score, dailyDay)}>Try again</button>
                 </>
               )}
             </p>
@@ -522,9 +543,10 @@ export function Tetris() {
             </form>
           ))}
 
+          {dailyDay && <p className="text-sm text-base-content/70">That was the daily challenge for {dailyDay}. Same pieces for everyone until midnight UTC.</p>}
           <div className="flex justify-center gap-2 pt-2">
-            <button type="button" onClick={startGame} className="px-6 py-2 bg-primary text-primary-content rounded hover:opacity-90 transition">
-              Play again
+            <button type="button" onClick={() => startGame(!!dailyDay)} className="px-6 py-2 bg-primary text-primary-content rounded hover:opacity-90 transition">
+              {dailyDay ? "Retry daily" : "Play again"}
             </button>
             <button type="button" onClick={() => dialogRef.current?.close()} className="px-4 py-2 bg-neutral text-neutral-content rounded">
               Close
@@ -555,8 +577,11 @@ export function Tetris() {
               ) : (
                 <>
                   {status === "over" && <p className="text-2xl font-bold">Game over</p>}
-                  <button type="button" onClick={startGame} className="px-6 py-2 bg-primary text-primary-content rounded hover:opacity-90 transition">
+                  <button type="button" onClick={() => startGame()} className="px-6 py-2 bg-primary text-primary-content rounded hover:opacity-90 transition">
                     {status === "over" ? "Play again" : "Start game"}
+                  </button>
+                  <button type="button" onClick={() => startGame(true)} className="px-4 py-1.5 bg-neutral text-neutral-content rounded text-sm">
+                    Daily challenge
                   </button>
                 </>
               )}
@@ -664,6 +689,17 @@ export function Tetris() {
             </li>
           ))}
         </ol>
+        <h2 className="font-bold mt-4">Today&apos;s daily</h2>
+        <p className="text-sm text-base-content/70">The same pieces for everyone, reset at midnight UTC.</p>
+        {daily && daily.day === dailyKey() && daily.scores.length > 0 ? (
+          <ol id="daily-leaderboard" className="list-decimal ml-6">
+            {daily.scores.map((entry) => (
+              <li key={entry.name} className={entry.name === username ? "font-bold text-primary" : undefined}>
+                {entry.name}: {entry.score}
+              </li>
+            ))}
+          </ol>
+        ) : <p className="text-sm text-base-content/70">Nobody has played today&apos;s yet.</p>}
         {username && (
           <p className="mt-2 text-sm text-base-content/70">
             Playing as {username}.{" "}

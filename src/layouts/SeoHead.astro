@@ -61,6 +61,9 @@ const imageAlt = `${cardSubject} social card: a pixel-art Gotham skyline under t
 <meta name="description" content={description} />
 <link rel="canonical" href={canonicalURL} />
 <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+{/* Feed discovery for readers, in every skin. */}
+<link rel="alternate" type="application/rss+xml" title={`${SITE_TITLE} blog`} href="/rss.xml" />
+<link rel="me" href="https://github.com/KoriKosmos" />
 <meta name="generator" content={Astro.generator} />
 
 {/* Discord tints the embed's left stripe with this, and mobile browsers use it

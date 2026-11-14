@@ -44,12 +44,9 @@ export function NowPage({ currentTrack, isPlaying }: NowPageProps) {
       <div className="bg-base-200 rounded-xl p-6 shadow space-y-3">
         <h2 className="text-2xl font-bold">Working on</h2>
         <ul className="list-disc list-inside space-y-1 text-lg">
-          <li>
-            This site — rebuilt it on Astro + React islands, now polishing the details (you're looking at one of
-            them).
-          </li>
-          <li>Tinkering with my home server and self-hosted services.</li>
-          <li>Slowly growing the little <a href="/games" className="link link-primary">games hub</a> here.</li>
+          <li>This site — <a href="/blog/mandy-mode" className="link link-primary">Mandy mode</a>, the skin inspired by amandata.dev, is now the default, and I&rsquo;m still polishing the details (you&rsquo;re looking at one of them).</li>
+          <li>My home server, and the Health Display service on it that merges my phone, watch and rings into one feed. It&rsquo;s where the heart rate in the footer comes from.</li>
+          <li>Growing the little <a href="/games" className="link link-primary">games hub</a>: controller support, vibration, and now a daily challenge for each game.</li>
         </ul>
       </div>
 
