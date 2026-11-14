@@ -233,6 +233,7 @@ const HUBS = [
 
 /* Hand-written from the repo history; newest first. */
 const CHANGELOG: { when: string; what: string }[] = [
+  { when: 'Nov 2026', what: 'A daily challenge for every game, the same for everyone until midnight UTC, plus a week of vitals on the About page.' },
   { when: 'Nov 2026', what: 'The sleeping bat dresses for each fandom: classic Batman in Gotham, Poké Ball red in Kanto, gold and silver for the comic ages in Inkwell.' },
   { when: 'Nov 2026', what: 'Tetris, finished: proper SRS rotation, T-spins, combos, a ghost piece, pause, touch controls, and a lot more juice.' },
   { when: 'Nov 2026', what: 'One pixel bat, from my own braille art, for the nav mark, the Bat-Signal and the theme buttons.' },
