@@ -1,4 +1,5 @@
 import { createAsyncCache } from './asyncCache';
+import type { HeartStatus } from './heartRateTypes';
 
 /**
  * Live heart rate from Pulsoid (https://docs.pulsoid.net). Pure and env-free so
@@ -22,12 +23,9 @@ export const HEART_CACHE_MS = 3_000;
 /** After Pulsoid rejects the token, how long to serve the fallback before asking again. */
 export const HEART_REJECTED_RETRY_MS = 5 * 60_000;
 
-export type HeartStatus =
-  | { mode: 'live'; bpm: number; measuredAt: number }
-  | { mode: 'offline' }
-  | { mode: 'widget'; src: string };
+export type { HeartStatus };
 
-type Measured = Exclude<HeartStatus, { mode: 'widget' }>;
+type Measured = { mode: 'live'; bpm: number; measuredAt: number } | { mode: 'offline' };
 type Reading = Measured | { mode: 'rejected' };
 
 const OFFLINE = { mode: 'offline' } as const;

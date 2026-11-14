@@ -6,7 +6,7 @@ import { AboutPage } from '../page-components/AboutPage.tsx';
 import { RetroAboutIntro, RetroAboutRest } from '../retro-components/RetroAboutPage.tsx';
 import { MandyAboutIntro, MandyAboutRest } from '../mandy-components/MandyAboutPage.tsx';
 import HeartRateCard from '../page-components/HeartRateCard.tsx';
-import { heartRateEnabled, initialHeartRate } from '../lib/pulsoid';
+import { heartRateEnabled, initialHeartRate } from '../lib/heartRate';
 
 const skin = getSkin(Astro);
 const interests = cvData.sections.find(s => s.title === 'Interests')?.content ?? [];

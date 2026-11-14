@@ -10,8 +10,8 @@ It ships in **three skins**, switched from the buttons in the bottom-left corner
    ```sh
    npm install
    ```
-2. Copy `.env.example` to `.env` and add my Last.fm credentials, plus the
-   the optional Pulsoid (live heart rate) and Keystatic (CMS) values.
+2. Copy `.env.example` to `.env` and add my Last.fm credentials, plus
+   the optional Health Display / Pulsoid (heart rate) and Keystatic (CMS) values.
    ```sh
    cp .env.example .env
    ```
@@ -62,7 +62,7 @@ A production build **without** those env vars ships no admin routes at all.
 - **Vibration feedback**: The games buzz the controller or phone I'm actually playing on: a thud for a hard drop, a stronger rumble for a Tetris, T-spin or perfect clear, a long one when I top out, and little taps, matches and misses in Star Pairs and Rock Paper Scissors. Keyboard and mouse play stays silent, and a Vibration switch (shown only where something can buzz) turns it off on that device.
 - **Blog reading tools**: My posts show publication dates, reading-time estimates and a linked contents list. A progress strip tracks the article, and readers can copy a section link or a code block. The article and contents remain readable without JavaScript in every skin.
 - **Searchable blog and portfolio**: I can search titles, descriptions and post bodies, sort the results, and filter projects with public GitHub source. Filters are shareable URLs and work in all three skins without JavaScript.
-- **Live heart rate**: When Pulsoid is configured (`PULSOID_ACCESS_TOKEN` or `PULSOID_WIDGET_URL`), I show my live heart rate in every skin's footer, an `/about` box with a sweeping ECG trace, and a draggable floating monitor toggled from the ♥ dock button that remembers its open state and position across pages. `/api/heartrate` shares a 3-second cache across visitors, hides the widget when the strap is off, and falls back to the free Pulsoid widget iframe if the token is missing or lapses.
+- **Live heart rate**: When my [Health Display](https://github.com/KoriKosmos/health-display) server (`HEALTH_STATUS_URL` + `HEALTH_STATUS_TOKEN`) or Pulsoid (`PULSOID_ACCESS_TOKEN` or `PULSOID_WIDGET_URL`) is configured, I show my heart rate in every skin's footer, an `/about` box with a sweeping ECG trace and today's heart, day and night stats, and a draggable floating monitor toggled from the ♥ dock button that remembers its open state and position across pages. Health Display merges my phone, watch and rings; a watch or ring reading up to 15 minutes old shows as `~68 bpm · 5 min ago` instead of live. `/api/heartrate` shares a 3-second cache across visitors, passes on only a whitelist of stats (never weight, glucose or ECG), treats a snapshot older than 60 seconds as offline, falls back to Pulsoid when Health Display is unset or unreachable, and to the free Pulsoid widget iframe if the Pulsoid token is missing or lapses.
 - **Mandy mode**, my default skin:
   - It follows amandata.dev's layout: a pixel nav with dropdowns, page search and a "Change Theme" menu, a slanted pixel wordmark with a sleeping pixel bat hanging from it (its coat changes with each theme, the way amandata's cat does: the classic dark Batman bat in Gotham, tan in Basement, Poké Ball red in Kanto, and comic-age gold and silver in Inkwell), a typewriter tagline, ruled sections and left-bordered cards.
   - Its four themes are my fandoms, and each one draws its own self-playing pixel scene in place of her Othello board. Gotham (Batman) has a bat-signal over a rainy skyline, Basement (The Binding of Isaac) has a crying kid clearing a cellar, Kanto (Pokémon) has a trainer in tall grass, and Inkwell (comics) has halftone paper with POW! bursts.
@@ -122,7 +122,7 @@ A production build **without** those env vars ships no admin routes at all.
 │   ├── env.d.ts         # Type definitions
 │   ├── fonts/           # Vendored Noto Sans TTFs (400 + 800) for OG cards
 │   ├── layouts/         # Layout.astro (dispatcher), ModernLayout, RetroLayout, MandyLayout, SeoHead
-│   ├── lib/             # Game engines, skin/theme cookies, Last.fm, Pulsoid, guestbook, hits, rate limiter, JSON store
+│   ├── lib/             # Game engines, skin/theme cookies, Last.fm, Health Display + Pulsoid, guestbook, hits, rate limiter, JSON store
 │   ├── middleware.ts    # Skin/theme resolution, hit counter, Keystatic OAuth origin fix
 │   ├── pages/           # .astro routes: SSR data fetch → render the right body component
 │   │   ├── api/         # Server-side API endpoints
