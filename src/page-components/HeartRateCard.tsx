@@ -1,4 +1,4 @@
-import type { HeartStatus } from '../lib/pulsoidClient';
+import type { HeartStatus } from '../lib/heartRateTypes';
 import { setHeartFloat, useHeartFloat, useHeartRate } from '../lib/heartRateStore';
 import { EcgTrace, PulsoidWidgetFrame, heartZone, type Skin } from './heartRateParts';
 

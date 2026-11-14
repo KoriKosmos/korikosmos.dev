@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react';
-import type { HeartStatus } from './pulsoidClient';
+import type { HeartStatus } from './heartRateTypes';
 
 /**
  * Client-side state shared by every heart-rate island on a page (footer

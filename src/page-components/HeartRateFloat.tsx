@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent as ReactPointerEvent } from 'react';
-import type { HeartStatus } from '../lib/pulsoidClient';
+import type { HeartStatus } from '../lib/heartRateTypes';
 import { setHeartFloat, useHeartFloat, useHeartRate } from '../lib/heartRateStore';
 import { HeartMonitorBody } from './HeartRateCard';
 import type { Skin } from './heartRateParts';
