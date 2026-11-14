@@ -44,6 +44,8 @@ export function EcgTrace({ bpm, className, height = 56, label, still: frozen = f
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const bpmRef = useRef(bpm);
   bpmRef.current = bpm;
+  // Set while a still strip is showing: redraws it for a new BPM.
+  const redrawStill = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -100,7 +102,11 @@ export function EcgTrace({ bpm, className, height = 56, label, still: frozen = f
 
     if (still) {
       drawStill();
-      return () => observer.disconnect();
+      redrawStill.current = drawStill;
+      return () => {
+        redrawStill.current = null;
+        observer.disconnect();
+      };
     }
 
     let raf = 0;
@@ -142,6 +148,10 @@ export function EcgTrace({ bpm, className, height = 56, label, still: frozen = f
       observer.disconnect();
     };
   }, [height, frozen]);
+
+  // The sweep reads bpmRef every frame, but a still strip is drawn once, so it
+  // would keep the old rhythm while the number beside it changes.
+  useEffect(() => { redrawStill.current?.(); }, [bpm]);
 
   return (
     <canvas
