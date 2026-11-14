@@ -209,6 +209,7 @@ export class TetrisEngine {
   private events: GameEvent[] = [];
 
   private random: () => number;
+  private defaultRandom: () => number;
   private startLevel: number;
   private bag: PieceType[] = [];
   private lockCount = 0;
@@ -231,13 +232,19 @@ export class TetrisEngine {
   private lastKickIndex = 0;
 
   constructor(options: TetrisOptions = {}) {
-    this.random = options.random ?? Math.random;
+    this.defaultRandom = options.random ?? Math.random;
+    this.random = this.defaultRandom;
     this.startLevel = Math.max(1, Math.floor(options.startLevel ?? 1));
     this.level = this.startLevel;
   }
 
-  /** Clear everything and begin a new game. */
-  start(): void {
+  /**
+   * Clear everything and begin a new game. Pass `random` to deal this game's
+   * pieces from a seeded source (the daily challenge); otherwise the engine's
+   * own source is used.
+   */
+  start(random?: () => number): void {
+    this.random = random ?? this.defaultRandom;
     this.board = emptyBoard();
     this.bag = [];
     this.queue = [];

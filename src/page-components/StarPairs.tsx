@@ -6,6 +6,9 @@ import {
 import { DirectionRepeater, otherDialogOpen, watchGamepads, type PadDirection } from '../lib/gamepad';
 import { haptic, trackInputSource } from '../lib/haptics';
 import { HapticsToggle } from './HapticsToggle';
+import { dailyKey, dailyRandom, readDaily, writeDaily } from '../lib/daily';
+
+const DAILY_KEY = 'kk-star-pairs-daily-v1';
 
 const COLUMNS = 4;
 const OFFSETS: Record<PadDirection, number> = { left: -1, right: 1, up: -COLUMNS, down: COLUMNS };
@@ -22,11 +25,16 @@ export function StarPairs() {
   const [focused, setFocused] = useState(0);
   const [message, setMessage] = useState('Find the matching constellations. Take your time.');
   const [bests, setBests] = useState<PersonalBests>({});
+  // The day a daily sky was dealt, or null for a free game. A daily sky that
+  // runs past midnight still counts for the day it was dealt.
+  const [dailyDay, setDailyDay] = useState<string | null>(null);
+  const [dailyBests, setDailyBests] = useState<PersonalBests>({});
   const [padConnected, setPadConnected] = useState(false);
   const buttons = useRef(new Map<number, HTMLButtonElement>());
 
   useEffect(() => {
     try { setBests(parsePersonalBests(localStorage.getItem(BEST_KEY))); } catch { /* Storage is optional. */ }
+    setDailyBests(parsePersonalBests(JSON.stringify(readDaily<PersonalBests>(DAILY_KEY) ?? {})));
   }, []);
 
   useEffect(() => {
@@ -55,15 +63,28 @@ export function StarPairs() {
       try { localStorage.setItem(BEST_KEY, JSON.stringify(next)); } catch { /* Play still works without storage. */ }
       return next;
     });
+    if (dailyDay) {
+      setDailyBests(previous => {
+        const current = dailyDay === dailyKey() ? previous : {};
+        if (!isBetterScore(score, current[game.difficulty])) return previous;
+        const next = { ...current, [game.difficulty]: score };
+        writeDaily(DAILY_KEY, next, dailyDay);
+        return dailyDay === dailyKey() ? next : previous;
+      });
+    }
   }, [game?.won]);
 
-  function start() {
+  function start(daily = false) {
+    const day = dailyKey();
     setRoundId(value => value + 1);
     setSeconds(0);
     setPaused(false);
     setFocused(0);
-    setGame(createPairGame(difficulty));
-    setMessage('A new sky is ready. Reveal two cards to find a pair.');
+    setDailyDay(daily ? day : null);
+    setGame(createPairGame(difficulty, daily ? dailyRandom(`star-pairs:${difficulty}`, day) : Math.random));
+    setMessage(daily
+      ? `Today's ${DIFFICULTIES[difficulty].label} sky is the same for everyone. Reveal two cards to find a pair.`
+      : 'A new sky is ready. Reveal two cards to find a pair.');
   }
 
   function flip(id: number) {
@@ -138,6 +159,7 @@ export function StarPairs() {
   }, []);
 
   const best = bests[difficulty];
+  const dailyBest = dailyBests[difficulty];
   return (
     <section className="star-pairs py-8 space-y-6" aria-labelledby="star-pairs-title">
       <header className="space-y-3">
@@ -155,6 +177,7 @@ export function StarPairs() {
             onChange={event => {
               setDifficulty(event.target.value as Difficulty);
               setGame(null);
+              setDailyDay(null);
               setSeconds(0);
               setPaused(false);
               setMessage('Choose Start game when you are ready.');
@@ -163,7 +186,8 @@ export function StarPairs() {
             {Object.entries(DIFFICULTIES).map(([value, option]) => <option key={value} value={value}>{option.label} · {option.pairs} pairs</option>)}
           </select>
         </label>
-        <button type="button" className="btn btn-primary" onClick={start}>{game ? 'New game' : 'Start game'}</button>
+        <button type="button" className="btn btn-primary" onClick={() => start()}>{game ? 'New game' : 'Start game'}</button>
+        <button type="button" className="btn btn-outline" onClick={() => start(true)} aria-label={`Play today's daily ${DIFFICULTIES[difficulty].label} sky`}>Daily sky</button>
         {game && !game.won && <button type="button" className="btn btn-outline" onClick={() => setPaused(value => !value)}>{paused ? 'Resume' : 'Pause'}</button>}
         <HapticsToggle padConnected={padConnected} />
       </div>
@@ -221,10 +245,11 @@ export function StarPairs() {
         </div>
       )}
 
-      {game?.won && <div className="rounded-xl bg-primary/10 border border-primary/30 p-5 text-center"><p className="text-xl font-bold">Constellation complete ✨</p><p className="mt-2">{game.moves} moves in {clock(seconds)}. Fancy another sky?</p></div>}
+      {game?.won && <div className="rounded-xl bg-primary/10 border border-primary/30 p-5 text-center"><p className="text-xl font-bold">Constellation complete ✨</p><p className="mt-2">{game.moves} moves in {clock(seconds)}. {dailyDay ? 'That was today\'s daily sky; it comes back tomorrow with a new deal.' : 'Fancy another sky?'}</p></div>}
       <footer className="text-sm text-base-content/70 space-y-2">
         <p id="star-pairs-controls">Tap a card, or use the arrow keys and Enter or Space.{padConnected ? ' On a controller, the d-pad or stick moves, A flips, Start pauses, and Select deals a new sky.' : ''} Leaving this tab pauses the game.</p>
         <p>{best ? `Your best ${DIFFICULTIES[difficulty].label}: ${best.moves} moves in ${clock(best.seconds)}.` : `Complete ${DIFFICULTIES[difficulty].label} to set your first personal best.`} Bests stay on this device, with fewer moves ranked first.</p>
+        <p>Daily sky deals the same board to everyone until midnight UTC. {dailyBest ? `Your best today: ${dailyBest.moves} moves in ${clock(dailyBest.seconds)}.` : `You haven't finished today's ${DIFFICULTIES[difficulty].label} sky yet.`}</p>
       </footer>
     </section>
   );

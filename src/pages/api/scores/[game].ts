@@ -4,13 +4,15 @@ import { checkRateLimit, getClientKey } from '../../../lib/rateLimit';
 import { isSameOrigin } from '../../../lib/sameOrigin';
 import { readBodyCapped } from '../../../lib/readBody';
 import {
-  isGame, mergeRps, mergeTetris, normaliseFile, parseRps, parseTetris,
-  type RpsEntry, type ScoreFile, type TetrisEntry,
+  isGame, mergeRps, mergeTetris, normaliseDaily, normaliseFile, parseRps, parseTetris, parseTetrisDaily,
+  type DailyFile, type RpsEntry, type ScoreFile, type TetrisEntry,
 } from '../../../lib/scores';
+import { dailyKey } from '../../../lib/daily';
 
 /**
- * Game leaderboards (Tetris, Rock Paper Scissors), stored in
- * data/scores/<game>.json. Like the guestbook and reactions, the write path
+ * Game leaderboards (Tetris, Rock Paper Scissors, and the daily Tetris
+ * challenge), stored in data/scores/<game>.json. The daily board only ever
+ * holds today's (UTC) scores and answers `{ day, scores }`. Like the guestbook and reactions, the write path
  * is unauthenticated, so it is same-origin only, body-capped, and throttled.
  * None of that stops someone typing a fake score into devtools — a client-side
  * game can't prove a score — but it stops drive-by posts from other sites and
@@ -37,8 +39,9 @@ const fileFor = (game: string) => `scores/${game}.json`;
 export const GET: APIRoute = async ({ params }) => {
   const { game } = params;
   if (!isGame(game)) return json({ error: 'Game not found' }, 404);
-  const file = normaliseFile(await readJson<unknown>(fileFor(game), null));
-  return json(file.scores);
+  const raw = await readJson<unknown>(fileFor(game), null);
+  if (game === 'tetris-daily') return json(normaliseDaily(raw, dailyKey()));
+  return json(normaliseFile(raw).scores);
 };
 
 export const POST: APIRoute = async (context) => {
@@ -71,6 +74,17 @@ export const POST: APIRoute = async (context) => {
   }
 
   try {
+    if (game === 'tetris-daily') {
+      const today = dailyKey();
+      const parsed = parseTetrisDaily(body as Record<string, unknown>, today);
+      // 409 for yesterday's board, so the island can say the day rolled over.
+      if (!parsed.ok) return json({ error: parsed.error }, (body as { day?: unknown }).day !== today ? 409 : 400);
+      const saved = await updateJson<DailyFile>(fileFor(game), { day: today, scores: [] }, current => {
+        const file = normaliseDaily(current, today);
+        return { day: today, scores: mergeTetris(file.scores, parsed.entry) };
+      });
+      return json(saved);
+    }
     if (game === 'tetris') {
       const parsed = parseTetris(body as Record<string, unknown>);
       if (!parsed.ok) return json({ error: parsed.error }, 400);

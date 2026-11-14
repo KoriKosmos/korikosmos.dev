@@ -1,7 +1,7 @@
 // Leaderboard rules for /api/scores/[game], kept pure so they can be tested.
 // Persistence (data/scores/<game>.json via jsonStore) lives in the route.
 
-export const GAMES = ['tetris', 'rps'] as const;
+export const GAMES = ['tetris', 'rps', 'tetris-daily'] as const;
 export type Game = (typeof GAMES)[number];
 
 export const LEADERBOARD_SIZE = 10;
@@ -71,3 +71,21 @@ function merge<T extends { name: string }>(scores: T[], entry: T, value: (e: T) 
 
 export const mergeTetris = (scores: TetrisEntry[], entry: TetrisEntry) => merge(scores, entry, e => e.score);
 export const mergeRps = (scores: RpsEntry[], entry: RpsEntry) => merge(scores, entry, e => e.netScore);
+
+/**
+ * The daily Tetris board holds only one day's scores. A post names the day it
+ * was dealt; a score for any day but today is refused (that challenge is over),
+ * and the first score of a new day starts a fresh board.
+ */
+export interface DailyFile { day: string; scores: TetrisEntry[] }
+
+export function normaliseDaily(raw: unknown, today: string): DailyFile {
+  const file = raw as Partial<DailyFile> | null;
+  if (!file || file.day !== today || !Array.isArray(file.scores)) return { day: today, scores: [] };
+  return { day: today, scores: file.scores };
+}
+
+export function parseTetrisDaily(body: Record<string, unknown>, today: string): Parsed<TetrisEntry> {
+  if (body.day !== today) return { ok: false, error: "That daily challenge has ended. Today's is ready." };
+  return parseTetris(body);
+}
