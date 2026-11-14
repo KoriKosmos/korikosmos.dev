@@ -1041,6 +1041,11 @@ a:hover > .rt-btn88 { border-color: var(--rt-accent); }
 [data-skin='retro'] .rt-heartmon__readout { margin: 8px 0 2px; font-family: var(--rt-font-mono); font-size: 1.1em; }
 [data-skin='retro'] .rt-heartmon__readout .rt-heart__lcd { font-size: 1.4em; }
 [data-skin='retro'] .rt-heartmon__widget { display: flex; justify-content: center; background: var(--rt-panel); }
+/* A recent reading (watch/ring, not live): no LIVE badge, a still heart, a
+   dimmed still strip on the CRT, and its age in soft ink. */
+[data-skin='retro'] .rt-heart--recent .rt-heart__icon { animation: none; opacity: 0.6; }
+[data-skin='retro'] .rt-heart__age { color: var(--rt-ink-soft); font-style: italic; }
+[data-skin='retro'] .rt-heartmon__screen--recent .rt-heartmon__trace { opacity: 0.5; }
 /* Floating window: a draggable Win9x window. */
 [data-skin='retro'] .rt-heartwin {
   position: fixed;

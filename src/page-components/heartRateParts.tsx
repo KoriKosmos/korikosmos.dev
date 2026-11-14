@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import type { HeartStatus } from '../lib/heartRateTypes';
 
 /** Pieces shared by the heart-rate footer, /about box, and floating window. */
 
@@ -30,13 +31,15 @@ const SWEEP_SECONDS = 3;
  * A bedside-monitor ECG trace that sweeps at the live BPM: the line is drawn
  * left to right and erases a gap just ahead of itself. `bpm = null` draws a
  * flatline. Colour is the canvas's CSS `color`, so each skin sets it with a
- * class. Under prefers-reduced-motion it draws one static strip instead.
+ * class. Under prefers-reduced-motion, or with `still` (a recent reading that
+ * isn't live), it draws one static strip instead.
  */
-export function EcgTrace({ bpm, className, height = 56, label }: {
+export function EcgTrace({ bpm, className, height = 56, label, still: frozen = false }: {
   bpm: number | null;
   className?: string;
   height?: number;
   label: string;
+  still?: boolean;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const bpmRef = useRef(bpm);
@@ -46,7 +49,7 @@ export function EcgTrace({ bpm, className, height = 56, label }: {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext('2d');
     if (!canvas || !ctx) return;
-    const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const still = frozen || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     let width = 0;
     let samples = new Float32Array(0);
@@ -138,7 +141,7 @@ export function EcgTrace({ bpm, className, height = 56, label }: {
       cancelAnimationFrame(raf);
       observer.disconnect();
     };
-  }, [height]);
+  }, [height, frozen]);
 
   return (
     <canvas
@@ -149,6 +152,30 @@ export function EcgTrace({ bpm, className, height = 56, label }: {
       aria-label={label}
     />
   );
+}
+
+/** What a reading shows: the number, "~72" when it isn't live, and how old it is. */
+export function readingView(reading: HeartStatus) {
+  if (reading.mode !== 'live' && reading.mode !== 'recent') return null;
+  const recent = reading.mode === 'recent';
+  return {
+    bpm: reading.bpm,
+    recent,
+    text: reading.bpm_text ?? `${recent ? '~' : ''}${reading.bpm}`,
+    /** "5 min ago", only for a recent reading. */
+    age: recent ? reading.bpm_age ?? 'a few minutes ago' : null,
+    /** Live readings beat at their BPM; a recent one sits still. */
+    beat: recent ? undefined : { animationDuration: `${(60 / reading.bpm).toFixed(3)}s` },
+  };
+}
+
+/**
+ * Mandy's pixel display face draws "~" as a short dash, so "~68" reads as
+ * "-68". There the tilde is set in the body face, with "about" for screen readers.
+ */
+export function MandyBpm({ bpm, recent }: { bpm: number | string; recent: boolean }) {
+  if (!recent) return <>{bpm}</>;
+  return <><span className="md-approx" aria-hidden="true">~</span><span className="md-sr-only">about </span>{bpm}</>;
 }
 
 /**

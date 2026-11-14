@@ -1,12 +1,16 @@
 import type { HeartStatus } from '../lib/heartRateTypes';
 import { setHeartFloat, useHeartFloat, useHeartRate } from '../lib/heartRateStore';
-import { EcgTrace, PulsoidWidgetFrame, heartZone, type Skin } from './heartRateParts';
+import { EcgTrace, MandyBpm, PulsoidWidgetFrame, heartZone, readingView, type Skin } from './heartRateParts';
+
+const HEALTH_DISPLAY = 'https://github.com/KoriKosmos/health-display';
+const OFF_NOTE = 'no reading right now: my watch is probably charging';
 
 /**
  * The heart monitor proper: ECG trace, BPM and a mood label. Rendered by the
  * /about box below and by the floating window (HeartRateFloat.tsx). Stays
- * visible while the strap is off (flatline + a note), unlike the footer pill,
- * because a box that vanishes from a page reads as broken.
+ * visible with no reading (flatline + a note), unlike the footer pill, because
+ * a box that vanishes from a page reads as broken. A recent (not live) reading
+ * gets a still, dimmed strip and its age instead of a sweeping trace.
  */
 export function HeartMonitorBody({ skin, reading }: { skin: Skin; reading: HeartStatus }) {
   if (reading.mode === 'widget') {
@@ -14,21 +18,28 @@ export function HeartMonitorBody({ skin, reading }: { skin: Skin; reading: Heart
     return <div className={wrap}><PulsoidWidgetFrame src={reading.src} /></div>;
   }
 
-  const bpm = reading.mode === 'live' ? reading.bpm : null;
-  const label = bpm ? `ECG trace beating at ${bpm} beats per minute` : 'A flat ECG trace: the heart monitor is off';
-  const zone = bpm ? heartZone(bpm) : 'monitor’s off — probably asleep, or it’s charging';
-  const beat = bpm ? { animationDuration: `${(60 / bpm).toFixed(3)}s` } : undefined;
+  const view = readingView(reading);
+  const bpm = view?.bpm ?? null;
+  const recent = view?.recent ?? false;
+  const label = !view
+    ? 'A flat ECG trace: no heart rate reading right now'
+    : recent
+      ? `A still ECG strip at ${view.bpm} beats per minute, last measured ${view.age}`
+      : `ECG trace beating at ${view.bpm} beats per minute`;
+  const zone = !view ? OFF_NOTE : recent ? `last reading ${view.age}, not live` : heartZone(view.bpm);
+  const beat = view?.beat;
 
   if (skin === 'retro') {
+    const lcd = view ? `${recent ? '~' : ''}${String(view.bpm).padStart(3, '0')}` : '---';
     return (
       <div className="rt-heartmon">
-        <div className="rt-heartmon__screen">
-          <EcgTrace bpm={bpm} label={label} className="rt-heartmon__trace" />
+        <div className={`rt-heartmon__screen${recent ? ' rt-heartmon__screen--recent' : ''}`}>
+          <EcgTrace bpm={bpm} label={label} still={recent} className="rt-heartmon__trace" />
         </div>
-        <p className="rt-heartmon__readout">
+        <p className={`rt-heartmon__readout${recent ? ' rt-heart--recent' : ''}`}>
           <span className="rt-heart__icon" style={beat} aria-hidden="true">♥</span>{' '}
-          <span className="rt-heart__lcd">{bpm ? String(bpm).padStart(3, '0') : '---'}</span> BPM
-          {bpm ? <> <span className="rt-heart__live">LIVE</span></> : null}
+          <span className="rt-heart__lcd">{lcd}</span> BPM
+          {view && !recent ? <> <span className="rt-heart__live">LIVE</span></> : null}
         </p>
         <p className="rt-note" style={{ margin: 0 }}>status: {zone}</p>
       </div>
@@ -37,13 +48,13 @@ export function HeartMonitorBody({ skin, reading }: { skin: Skin; reading: Heart
 
   if (skin === 'mandy') {
     return (
-      <div className="md-heartmon">
+      <div className={`md-heartmon${recent ? ' md-heartmon--recent' : ''}`}>
         <div className="md-heartmon__screen">
-          <EcgTrace bpm={bpm} label={label} className="md-heartmon__trace" />
+          <EcgTrace bpm={bpm} label={label} still={recent} className="md-heartmon__trace" />
         </div>
         <p className="md-heartmon__readout">
           <span className="md-heart__icon" style={beat} aria-hidden="true">♥</span>
-          <span className="md-heartmon__bpm">{bpm ?? '--'}</span>
+          <span className="md-heartmon__bpm">{view ? <MandyBpm bpm={view.bpm} recent={recent} /> : '--'}</span>
           <span className="md-heartmon__unit">bpm</span>
         </p>
         <p className="md-heartmon__zone">{zone}</p>
@@ -53,12 +64,12 @@ export function HeartMonitorBody({ skin, reading }: { skin: Skin; reading: Heart
 
   return (
     <div>
-      <div className="rounded-lg bg-base-300/70 p-2 text-error">
-        <EcgTrace bpm={bpm} label={label} />
+      <div className={`rounded-lg bg-base-300/70 p-2 text-error${recent ? ' opacity-50' : ''}`}>
+        <EcgTrace bpm={bpm} label={label} still={recent} />
       </div>
       <p className="mt-3 flex items-baseline gap-2">
-        <span className="kk-heartbeat text-2xl text-error" style={beat} aria-hidden="true">♥</span>
-        <span className="text-4xl font-extrabold tabular-nums">{bpm ?? '--'}</span>
+        <span className={recent ? 'text-2xl text-error/60' : 'kk-heartbeat text-2xl text-error'} style={beat} aria-hidden="true">♥</span>
+        <span className={`text-4xl font-extrabold tabular-nums${recent ? ' text-base-content/70' : ''}`}>{view?.text ?? '--'}</span>
         <span className="text-sm text-base-content/60">bpm</span>
       </p>
       <p className="text-sm text-base-content/70">{zone}</p>
@@ -77,6 +88,9 @@ export function HeartRateCard({ skin, initial }: Props) {
   const { open } = useHeartFloat();
   const popLabel = open ? 'Close the floating monitor' : 'Pop out as a floating window';
   const toggle = () => setHeartFloat({ open: !open });
+  const link = (className?: string) => (
+    <a className={className} href={HEALTH_DISPLAY} target="_blank" rel="noopener noreferrer">Health Display</a>
+  );
 
   if (skin === 'retro') {
     return (
@@ -84,8 +98,8 @@ export function HeartRateCard({ skin, initial }: Props) {
         <div className="rt-panel__title">MY_HEART.EXE</div>
         <div className="rt-panel__body">
           <p style={{ marginTop: 0 }}>
-            This is my actual heart, beating right now. A chest strap sends it to my phone, my phone sends it to
-            Pulsoid, and Pulsoid sends it to you. The future is amazing.
+            This is my actual heart, beating right now. My watch, my ring and my phone all report to a little
+            server I wrote ({link()}), and it reports to you. The future is amazing.
           </p>
           <HeartMonitorBody skin="retro" reading={reading} />
           <p style={{ margin: '10px 0 0' }}>
@@ -103,12 +117,12 @@ export function HeartRateCard({ skin, initial }: Props) {
       <section className="md-section" aria-labelledby="md-about-heart">
         <div className="md-section__head">
           <h2 className="md-section__title" id="md-about-heart">Vitals</h2>
-          <span className="md-section__tag">live from the strap</span>
+          <span className="md-section__tag">live from my wrist</span>
         </div>
         <div className="md-section__body">
           <p>
-            My actual heart rate, right now &mdash; a chest strap, my phone, and{' '}
-            <a href="https://pulsoid.net" target="_blank" rel="noopener noreferrer">Pulsoid</a> in between.
+            My heart rate right now &mdash; my watch, ring and phone, merged by{' '}
+            {link()}, a little server I wrote.
           </p>
         </div>
         <HeartMonitorBody skin="mandy" reading={reading} />
@@ -136,8 +150,8 @@ export function HeartRateCard({ skin, initial }: Props) {
         </button>
       </div>
       <p className="mb-4 mt-1 text-sm text-base-content/70">
-        My actual heart, beating right now: a chest strap, my phone, and{' '}
-        <a className="underline" href="https://pulsoid.net" target="_blank" rel="noopener noreferrer">Pulsoid</a>.
+        My heart rate right now: my watch, ring and phone, merged by{' '}
+        {link('underline')}, a little server I wrote.
       </p>
       <HeartMonitorBody skin="modern" reading={reading} />
     </section>
