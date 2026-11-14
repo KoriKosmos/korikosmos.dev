@@ -1,9 +1,9 @@
 import type { APIRoute } from 'astro';
-import { getCollection } from 'astro:content';
 import { adjustReaction, getCounts, isValidEmoji } from '../../../lib/reactions';
 import { checkRateLimit, getClientKey } from '../../../lib/rateLimit';
 import { isSameOrigin } from '../../../lib/sameOrigin';
 import { readBodyCapped } from '../../../lib/readBody';
+import { knownSlug } from '../../../lib/blogSlugs';
 
 export const prerender = false;
 
@@ -19,23 +19,6 @@ const json = (body: unknown, status = 200) =>
     status,
     headers: { 'Content-Type': 'application/json' },
   });
-
-/**
- * Slugs are validated against the blog collection rather than a shape regex,
- * so an attacker can't grow data/reactions.json with arbitrary keys.
- * Cached for the process lifetime — the collection is fixed at build time.
- */
-let slugCache: Set<string> | undefined;
-
-/** The slug if it names a real post, else `null`. */
-async function knownSlug(slug: unknown): Promise<string | null> {
-  if (typeof slug !== 'string') return null;
-  if (!slugCache) {
-    const posts = await getCollection('blog');
-    slugCache = new Set(posts.map(post => post.slug));
-  }
-  return slugCache.has(slug) ? slug : null;
-}
 
 export const GET: APIRoute = async ({ params }) => {
   const slug = await knownSlug(params.slug);

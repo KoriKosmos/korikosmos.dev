@@ -4,6 +4,7 @@ import { getEntry } from 'astro:content';
 import { getSkin } from '../../lib/skin';
 import { BlogPostPage } from '../../page-components/BlogPostPage.tsx';
 import { PostReactions } from '../../page-components/PostReactions.tsx';
+import { PostComments } from '../../page-components/PostComments.tsx';
 import { RetroBlogPostPage } from '../../retro-components/RetroBlogPostPage.tsx';
 import RetroIslandShell from '../../retro-components/RetroIslandShell.astro';
 import { MandyBlogPostPage } from '../../mandy-components/MandyBlogPostPage.tsx';
@@ -60,6 +61,14 @@ const skin = getSkin(Astro);
       >
         <PostReactions client:visible slug={slug!} />
       </RetroIslandShell>
+      <RetroIslandShell
+        title="COMMENTS.EXE"
+        blinkie="guestbook"
+        blinkieAlt="Leave a comment"
+        notes={["No sign-in. Pick any display name and say hi."]}
+      >
+        <PostComments client:visible slug={slug!} />
+      </RetroIslandShell>
     </>
   ) : skin === 'mandy' ? (
     <>
@@ -76,6 +85,9 @@ const skin = getSkin(Astro);
       <MandyIslandShell title="Reactions" tag="// one click, no account" level={2} first={false}>
         <PostReactions client:visible slug={slug!} />
       </MandyIslandShell>
+      <MandyIslandShell title="Comments" tag="// no sign-in, just a name" level={2} first={false}>
+        <PostComments client:visible slug={slug!} />
+      </MandyIslandShell>
     </>
   ) : (
     <>
@@ -90,6 +102,7 @@ const skin = getSkin(Astro);
         <Content />
       </BlogPostPage>
       <PostReactions client:visible slug={slug!} />
+      <PostComments client:visible slug={slug!} />
     </>
   )}
 </Layout>

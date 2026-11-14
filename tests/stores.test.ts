@@ -10,6 +10,7 @@ const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'kk-stores-'));
 process.chdir(dir);
 const { getGuestbook, signGuestbook } = await import('../src/lib/guestbook');
 const { bumpHits, getHits } = await import('../src/lib/hits');
+const { addComment, getComments, MAX_COMMENTS_PER_POST } = await import('../src/lib/comments');
 
 const readData = async (file: string) => JSON.parse(await fs.readFile(path.join(dir, 'data', file), 'utf-8'));
 
@@ -55,4 +56,32 @@ test('a full guestbook refuses new signatures without rewriting the file', async
   assert.match(!result.ok ? result.error : '', /full/);
   assert.equal((await fs.stat(target)).mtimeMs, before.mtimeMs, 'No write happens when the book is full');
   assert.equal((await getGuestbook()).length, 200);
+});
+
+test('comments are per post, oldest first, trimmed, and validated', async () => {
+  assert.deepEqual(await getComments('hello-world'), []);
+  const first = await addComment('hello-world', { name: '  Mandy ', body: ' First! ' });
+  assert.ok(first.ok);
+  const second = await addComment('hello-world', { name: 'Kori', body: 'Second' });
+  assert.ok(second.ok);
+  assert.deepEqual(second.comments.map(c => [c.name, c.body]), [['Mandy', 'First!'], ['Kori', 'Second']]);
+  assert.deepEqual(await getComments('other-post'), [], 'Threads do not leak between posts');
+  assert.deepEqual(await addComment('hello-world', { name: 'x', body: '   ' }), { ok: false, error: 'Please write a comment.' });
+  assert.deepEqual(await addComment('hello-world', { name: '', body: 'hi' }), { ok: false, error: 'Please pick a display name.' });
+  assert.equal((await addComment('hello-world', { name: 'n'.repeat(500), body: 'b'.repeat(5000) }) as any).comments.at(-1).body.length, 2000);
+});
+
+test('a full comment thread refuses new comments without rewriting the file', async () => {
+  const thread = Array.from({ length: MAX_COMMENTS_PER_POST }, (_, i) => ({
+    id: String(i), date: new Date(Date.UTC(2021, 0, 1, 0, 0, i)).toISOString(), name: `N${i}`, body: 'b',
+  }));
+  const target = path.join(dir, 'data', 'comments.json');
+  await fs.writeFile(target, JSON.stringify({ full: thread, other: [] }));
+  const before = await fs.stat(target);
+
+  const result = await addComment('full', { name: 'Late', body: 'Too late' });
+  assert.equal(result.ok, false);
+  assert.equal((await fs.stat(target)).mtimeMs, before.mtimeMs, 'No write happens when the thread is full');
+  assert.ok((await addComment('other', { name: 'A', body: 'still open' })).ok, 'Other posts still accept comments');
+  assert.equal((await getComments('full')).length, MAX_COMMENTS_PER_POST);
 });
