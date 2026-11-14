@@ -10,6 +10,11 @@ import { dailyKey, dailyRandom, readDaily, writeDaily } from '../lib/daily';
 
 const DAILY_KEY = 'kk-star-pairs-daily-v1';
 
+/** One day's daily-sky bests, tagged with that day so a stale page can't mix two days. */
+interface DailyBests { day: string; bests: PersonalBests }
+const loadDailyBests = (day: string): DailyBests =>
+  ({ day, bests: parsePersonalBests(JSON.stringify(readDaily<PersonalBests>(DAILY_KEY, day) ?? {})) });
+
 const COLUMNS = 4;
 const OFFSETS: Record<PadDirection, number> = { left: -1, right: 1, up: -COLUMNS, down: COLUMNS };
 const KEY_DIRECTIONS: Record<string, PadDirection> = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down' };
@@ -28,13 +33,13 @@ export function StarPairs() {
   // The day a daily sky was dealt, or null for a free game. A daily sky that
   // runs past midnight still counts for the day it was dealt.
   const [dailyDay, setDailyDay] = useState<string | null>(null);
-  const [dailyBests, setDailyBests] = useState<PersonalBests>({});
+  const [dailyBests, setDailyBests] = useState<DailyBests | null>(null);
   const [padConnected, setPadConnected] = useState(false);
   const buttons = useRef(new Map<number, HTMLButtonElement>());
 
   useEffect(() => {
     try { setBests(parsePersonalBests(localStorage.getItem(BEST_KEY))); } catch { /* Storage is optional. */ }
-    setDailyBests(parsePersonalBests(JSON.stringify(readDaily<PersonalBests>(DAILY_KEY) ?? {})));
+    setDailyBests(loadDailyBests(dailyKey()));
   }, []);
 
   useEffect(() => {
@@ -64,13 +69,14 @@ export function StarPairs() {
       return next;
     });
     if (dailyDay) {
-      setDailyBests(previous => {
-        const current = dailyDay === dailyKey() ? previous : {};
-        if (!isBetterScore(score, current[game.difficulty])) return previous;
+      // Re-read the dealt day's bests from storage rather than trusting state,
+      // which may belong to another day if the page stayed open past midnight.
+      const { bests: current } = loadDailyBests(dailyDay);
+      if (isBetterScore(score, current[game.difficulty])) {
         const next = { ...current, [game.difficulty]: score };
         writeDaily(DAILY_KEY, next, dailyDay);
-        return dailyDay === dailyKey() ? next : previous;
-      });
+        setDailyBests({ day: dailyDay, bests: next });
+      }
     }
   }, [game?.won]);
 
@@ -81,6 +87,7 @@ export function StarPairs() {
     setPaused(false);
     setFocused(0);
     setDailyDay(daily ? day : null);
+    if (daily) setDailyBests(loadDailyBests(day));
     setGame(createPairGame(difficulty, daily ? dailyRandom(`star-pairs:${difficulty}`, day) : Math.random));
     setMessage(daily
       ? `Today's ${DIFFICULTIES[difficulty].label} sky is the same for everyone. Reveal two cards to find a pair.`
@@ -159,7 +166,7 @@ export function StarPairs() {
   }, []);
 
   const best = bests[difficulty];
-  const dailyBest = dailyBests[difficulty];
+  const dailyBest = dailyBests?.day === dailyKey() ? dailyBests.bests[difficulty] : undefined;
   return (
     <section className="star-pairs py-8 space-y-6" aria-labelledby="star-pairs-title">
       <header className="space-y-3">

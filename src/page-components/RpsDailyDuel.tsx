@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { dailyKey, readDaily, writeDaily } from "../lib/daily";
+import { useEffect, useRef, useState } from "react";
+import { dailyKey, msUntilNextDaily, readDaily, writeDaily } from "../lib/daily";
 import { haptic, type HapticKind } from "../lib/haptics";
 import {
   DUEL_KEY, DUEL_ROUNDS, THROWS, duelThrows, judge, parseDuel, tally, type DuelOutcome, type Throw,
@@ -21,10 +21,35 @@ export function RpsDailyDuel() {
 
   // Client-only: the server doesn't know the visitor's progress, and the day
   // must come from the browser's clock at play time.
-  useEffect(() => {
+  const dayRef = useRef<string | null>(null);
+  const syncDay = () => {
     const today = dailyKey();
-    setDay(today);
-    setThrows(parseDuel(readDaily(DUEL_KEY, today)));
+    if (dayRef.current !== today) {
+      dayRef.current = today;
+      setDay(today);
+      setThrows(parseDuel(readDaily(DUEL_KEY, today)));
+    }
+    return today;
+  };
+
+  // A page left open past midnight UTC moves on to the new opponent: at the
+  // rollover itself, and whenever the tab comes back (timers sleep in the
+  // background, so the timeout alone can be late).
+  useEffect(() => {
+    syncDay();
+    let timer: ReturnType<typeof setTimeout>;
+    const schedule = () => {
+      timer = setTimeout(() => { syncDay(); schedule(); }, msUntilNextDaily() + 1000);
+    };
+    schedule();
+    const onVisible = () => { if (document.visibilityState === "visible") syncDay(); };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onVisible);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onVisible);
+    };
   }, []);
 
   if (!day) return null;
@@ -34,7 +59,8 @@ export function RpsDailyDuel() {
   const last = throws.length ? throws.length - 1 : -1;
 
   const play = (t: Throw) => {
-    if (done) return;
+    // A click that lands after midnight starts on the new day, not yesterday's duel.
+    if (syncDay() !== day || done) return;
     const next = [...throws, t];
     setThrows(next);
     writeDaily(DUEL_KEY, { throws: next }, day);
