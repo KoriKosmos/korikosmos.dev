@@ -1,4 +1,4 @@
-// Retro skin for /games. Same two games and the same descriptions as
+// Retro skin for /games. Same games and the same descriptions as
 // page-components/GamesIndexPage.tsx, presented as a shareware download
 // directory circa 1999: a file listing, FREEWARE stamps, invented file sizes,
 // and big "DOWNLOAD" buttons that are, of course, just links.
@@ -55,6 +55,17 @@ const GAMES: GameEntry[] = [
     released: 'prehistory',
     requires: 'one mouse, one hand',
     extras: ['CPU opponent', 'Score keeping', 'Undefeated bragging rights'],
+  },
+  {
+    href: '/games/bounty-office/',
+    title: 'Bounty Office',
+    description: 'An idle game about running a bounty office on a frontier station.',
+    file: 'BOUNTY.EXE',
+    size: '56 KB',
+    version: '3.0',
+    released: 'still running in the background',
+    requires: 'one finger, many hours',
+    extras: ['Crew who work while you sleep', 'Guild contracts', 'Save export and import'],
   },
 ];
 

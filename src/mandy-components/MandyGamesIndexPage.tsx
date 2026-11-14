@@ -1,7 +1,7 @@
 import type { ReactElement } from 'react';
 
 /**
- * The games index in Mandy mode: an md-grid of cards for the three games, each
+ * The games index in Mandy mode: an md-grid of cards for the four games, each
  * with a tiny inline pixel icon. Same games, links and descriptions as
  * GamesIndexPage.tsx. Purely presentational (no client JS).
  */
@@ -84,6 +84,19 @@ const ICONS = {
     '.a.a.a.a..',
     '..a...a...',
   ],
+  // a bounty crosshair
+  bounty: [
+    '....a.....',
+    '..ccacc...',
+    '.c..a..c..',
+    '.c.....c..',
+    'aaa.b.aaa.',
+    '.c.....c..',
+    '.c..a..c..',
+    '..ccacc...',
+    '....a.....',
+    '..........',
+  ],
 };
 
 interface Game {
@@ -117,6 +130,13 @@ const GAMES: Game[] = [
     meta: 'vs the CPU · global leaderboard',
     icon: 'rps',
   },
+  {
+    href: '/games/bounty-office/',
+    title: 'Bounty Office',
+    description: 'An idle game about running a bounty office on a frontier station.',
+    meta: 'idle · earns while you are away',
+    icon: 'bounty',
+  },
 ];
 
 export function MandyGamesIndexPage() {
@@ -129,8 +149,8 @@ export function MandyGamesIndexPage() {
         </div>
         <div className="md-section__body">
           <p>
-            Three small browser games, no installs, no loot boxes. Pick one and see if you can
-            get your name on a leaderboard.
+            Four small browser games, no installs, no loot boxes. Pick one and see if you can
+            get your name on a leaderboard, or leave Bounty Office running and come back richer.
           </p>
         </div>
         <ul className="md-grid">
@@ -150,7 +170,7 @@ export function MandyGamesIndexPage() {
       <section className="md-section">
         <div className="md-section__head">
           <h2 className="md-section__title">Meanwhile, in the background</h2>
-          <span className="md-section__tag">// a fourth game</span>
+          <span className="md-section__tag">// a fifth game</span>
         </div>
         <div className="md-section__body">
           <p>

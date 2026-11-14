@@ -23,7 +23,7 @@ export const PAGE_META = {
   '/cv': { title: 'CV', description: 'CV and professional background of Maan.' },
   '/blog': { title: 'Blog', description: 'Blog posts by Maan on tech, creativity, and personal projects.' },
   '/tunes': { title: 'Tunes', description: "What I'm listening to right now, powered by Last.fm scrobbles." },
-  '/games': { title: 'Games', description: 'Play Tetris, Rock Paper Scissors, and more browser games.' },
+  '/games': { title: 'Games', description: 'Play Tetris, Rock Paper Scissors, Bounty Office, and more browser games.' },
   '/games/tetris': { title: 'Tetris', description: 'Play Tetris in your browser with leaderboard support.' },
   '/games/star-pairs': {
     title: 'Star Pairs',

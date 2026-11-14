@@ -24,6 +24,17 @@ export function GamesIndexPage() {
           <h2 className="text-2xl font-bold mb-2">Rock Paper Scissors</h2>
           <p className="opacity-90">Challenge the CPU in this timeless hand game.</p>
         </a>
+
+        {/* A standalone page, so a full load rather than a ClientRouter swap. */}
+        <a
+          href="/games/bounty-office/"
+          data-astro-reload
+          className="block p-6 rounded-xl bg-gradient-to-br from-amber-500 to-stone-700 shadow-lg hover:scale-105 focus:scale-105 focus:outline-none focus:ring-2 focus:ring-white transition-transform text-white"
+        >
+          <h2 className="text-2xl font-bold mb-2">Bounty Office</h2>
+          <p className="opacity-90">An idle game about running a bounty office on a frontier station.</p>
+          <p className="text-sm mt-4 opacity-80">Hire crew · Take contracts · Earns while you're away</p>
+        </a>
       </div>
     </>
   );
