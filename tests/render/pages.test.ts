@@ -36,7 +36,7 @@ for (const skin of ['modern', 'retro', 'mandy'] as const) {
 
     const sorted = await render('/blog?sort=oldest', skin);
     const cards = [...sorted.document.querySelectorAll('main a[href^="/blog/"]')];
-    assert.equal(cards[0]?.getAttribute('href'), '/blog/hello-world/');
+    assert.equal(cards[0]?.getAttribute('href'), '/blog/rebuilding-react-islands/');
 
     const portfolio = await render('/portfolio?source=github&q=astro', skin);
     assert.match(portfolio.document.querySelector('main')?.textContent ?? '', /\d+ of \d+ projects/);

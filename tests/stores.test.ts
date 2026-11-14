@@ -59,16 +59,16 @@ test('a full guestbook refuses new signatures without rewriting the file', async
 });
 
 test('comments are per post, oldest first, trimmed, and validated', async () => {
-  assert.deepEqual(await getComments('hello-world'), []);
-  const first = await addComment('hello-world', { name: '  Mandy ', body: ' First! ' });
+  assert.deepEqual(await getComments('mandy-mode'), []);
+  const first = await addComment('mandy-mode', { name: '  Mandy ', body: ' First! ' });
   assert.ok(first.ok);
-  const second = await addComment('hello-world', { name: 'Kori', body: 'Second' });
+  const second = await addComment('mandy-mode', { name: 'Kori', body: 'Second' });
   assert.ok(second.ok);
   assert.deepEqual(second.comments.map(c => [c.name, c.body]), [['Mandy', 'First!'], ['Kori', 'Second']]);
   assert.deepEqual(await getComments('other-post'), [], 'Threads do not leak between posts');
-  assert.deepEqual(await addComment('hello-world', { name: 'x', body: '   ' }), { ok: false, error: 'Please write a comment.' });
-  assert.deepEqual(await addComment('hello-world', { name: '', body: 'hi' }), { ok: false, error: 'Please pick a display name.' });
-  assert.equal((await addComment('hello-world', { name: 'n'.repeat(500), body: 'b'.repeat(5000) }) as any).comments.at(-1).body.length, 2000);
+  assert.deepEqual(await addComment('mandy-mode', { name: 'x', body: '   ' }), { ok: false, error: 'Please write a comment.' });
+  assert.deepEqual(await addComment('mandy-mode', { name: '', body: 'hi' }), { ok: false, error: 'Please pick a display name.' });
+  assert.equal((await addComment('mandy-mode', { name: 'n'.repeat(500), body: 'b'.repeat(5000) }) as any).comments.at(-1).body.length, 2000);
 });
 
 test('a full comment thread refuses new comments without rewriting the file', async () => {
