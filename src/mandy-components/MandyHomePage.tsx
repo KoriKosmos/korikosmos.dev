@@ -233,7 +233,11 @@ const HUBS = [
 
 /* Hand-written from the repo history; newest first. */
 const CHANGELOG: { when: string; what: string }[] = [
-  { when: 'Oct 2026', what: 'Mandy mode lands: a third skin, inspired by amandata.dev, with a theme for each fandom.' },
+  { when: 'Nov 2026', what: 'The sleeping bat dresses for each fandom: classic Batman in Gotham, Poké Ball red in Kanto, gold and silver for the comic ages in Inkwell.' },
+  { when: 'Nov 2026', what: 'Tetris, finished: proper SRS rotation, T-spins, combos, a ghost piece, pause, touch controls, and a lot more juice.' },
+  { when: 'Nov 2026', what: 'One pixel bat, from my own braille art, for the nav mark, the Bat-Signal and the theme buttons.' },
+  { when: 'Nov 2026', what: 'My live heart rate, in every footer, on the About page, and in a monitor you can drag around.' },
+  { when: 'Oct 2026', what: 'Mandy mode lands, and becomes the default: a third skin, inspired by amandata.dev, with a theme for each fandom.' },
   { when: 'Sep 2026', what: 'Star Pairs, a constellation memory game, joins Tetris and Rock Paper Scissors.' },
   { when: 'Sep 2026', what: 'Blog reading tools, plus shareable search for the blog and portfolio.' },
   { when: 'Aug 2026', what: 'The theme now renders server-side, so it can never flash the default.' },
