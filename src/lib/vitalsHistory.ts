@@ -9,7 +9,7 @@ const FILE = 'vitals.json';
 /** At most one write per this long, plus one whenever the numbers change. */
 const WRITE_EVERY_MS = 15 * 60_000;
 
-/** The server's own calendar day (honours TZ, so set it in compose for local midnights). */
+/** The server's own calendar day. Compose sets TZ=Europe/London, so it follows UK midnight. */
 export function localDay(now: number = Date.now()): string {
   return new Date(now).toLocaleDateString('en-CA');
 }

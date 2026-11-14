@@ -16,6 +16,9 @@ services:
       - PULSOID_WIDGET_URL=${PULSOID_WIDGET_URL}
       - HEALTH_STATUS_URL=${HEALTH_STATUS_URL}
       - HEALTH_STATUS_TOKEN=${HEALTH_STATUS_TOKEN}
+      # The vitals log's day boundary (src/lib/vitalsHistory.ts). The game
+      # dailies always roll over at midnight UTC, whatever this says.
+      - TZ=Europe/London
       # Runtime: Keystatic GitHub-mode auth (server API routes)
       - KEYSTATIC_GITHUB_CLIENT_ID=${KEYSTATIC_GITHUB_CLIENT_ID}
       - KEYSTATIC_GITHUB_CLIENT_SECRET=${KEYSTATIC_GITHUB_CLIENT_SECRET}
