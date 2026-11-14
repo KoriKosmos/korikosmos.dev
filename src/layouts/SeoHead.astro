@@ -24,6 +24,12 @@ interface Props {
   /** ISO 8601. Only emitted for `type="article"`. */
   publishedTime?: string;
   modifiedTime?: string;
+  /**
+   * `theme-color`: Discord's embed stripe and mobile browser chrome. Mandy
+   * mode passes its gotham yellow, since a crawler has no cookie and so always
+   * gets Mandy mode; the other shells keep the indigo default.
+   */
+  themeColor?: string;
 }
 
 const {
@@ -35,9 +41,10 @@ const {
   type = 'website',
   publishedTime,
   modifiedTime,
+  themeColor = '#818cf8',
 } = Astro.props;
 
-// The generated cards are a fixed 1200x630 (see src/pages/og/[...route].ts).
+// The generated cards are a fixed 1200x630 (see src/lib/ogCard.ts).
 // Declaring the dimensions lets a crawler reserve the large-image layout before
 // it has fetched the file — without them some clients fall back to the small
 // thumbnail treatment, which is most of what made the embed look plain.
@@ -48,7 +55,7 @@ const OG_IMAGE_HEIGHT = '630';
 // mid-sentence reads as noise when this is spoken aloud. The homepage's page
 // title *is* the site name, so it would otherwise say it twice.
 const cardSubject = pageTitle === SITE_TITLE ? SITE_TITLE : `${pageTitle} — ${SITE_TITLE}`;
-const imageAlt = `${cardSubject} social card on a constellation background`;
+const imageAlt = `${cardSubject} social card: a pixel-art Gotham skyline under the Bat-Signal`;
 ---
 
 <meta name="description" content={description} />
@@ -57,10 +64,10 @@ const imageAlt = `${cardSubject} social card on a constellation background`;
 <meta name="generator" content={Astro.generator} />
 
 {/* Discord tints the embed's left stripe with this, and mobile browsers use it
-    for the address-bar chrome. It is read by a crawler that has no cookie, so
-    it can't follow the visitor's chosen theme — this is the accent shared by
-    all five, and matches the border on the generated cards. */}
-<meta name="theme-color" content="#818cf8" />
+    for the address-bar chrome. The crawler has no cookie, so it sees Mandy
+    mode, whose shell passes the gotham yellow that the generated cards
+    (src/lib/ogCard.ts) are drawn in. */}
+<meta name="theme-color" content={themeColor} />
 
 <!-- Open Graph -->
 <meta property="og:type" content={type} />

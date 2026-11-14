@@ -253,3 +253,23 @@ test('retro: the generated theme script restores its own scheme and tolerates bl
     win.close();
   }
 });
+
+test('every skin points link previews at a social card that the build generated', async () => {
+  const cases = [
+    ['/', '/og/site.png'],
+    ['/about', '/og/page/about.png'],
+    ['/games/tetris', '/og/page/games/tetris.png'],
+    ['/blog/rebuilding-react-islands', '/og/blog/rebuilding-react-islands.png'],
+  ] as const;
+  for (const skin of ['modern', 'retro', 'mandy', null] as const) {
+    for (const [path, card] of cases) {
+      const { document } = await render(path, skin);
+      const image = document.querySelector('meta[property="og:image"]')?.getAttribute('content');
+      assert.equal(image, `https://korikosmos.dev${card}`, `${skin ?? 'default'} ${path}`);
+      await readFile(new URL(`../../dist/client${card}`, import.meta.url));
+    }
+  }
+  // A cookieless crawler gets Mandy mode, whose embed stripe matches the cards.
+  const { document } = await render('/about', null);
+  assert.equal(document.querySelector('meta[name="theme-color"]')?.getAttribute('content'), '#F5C518');
+});

@@ -1,4 +1,5 @@
 ---
+import { PAGE_META } from '../../data/pageMeta';
 import Layout from '../../layouts/Layout.astro';
 import { getSkin } from '../../lib/skin';
 import { StarPairs } from '../../page-components/StarPairs';
@@ -8,7 +9,7 @@ import MandyIslandShell from '../../mandy-components/MandyIslandShell.astro';
 const skin = getSkin(Astro);
 ---
 
-<Layout title="Star Pairs" description="A constellation memory game. Match the stars, explore three board sizes, and beat your personal best.">
+<Layout {...PAGE_META['/games/star-pairs']}>
   <noscript><p>Star Pairs needs JavaScript to play. You can still browse the <a href="/blog">blog</a> or <a href="/portfolio">portfolio</a>.</p></noscript>
   {skin === 'retro' ? (
     <RetroIslandShell title="STARPAIRS.EXE" notes={['Match the constellations. No floppy disk required.', 'Your personal best stays on this computer.']}>

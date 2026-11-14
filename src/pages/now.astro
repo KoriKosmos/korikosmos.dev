@@ -1,4 +1,5 @@
 ---
+import { PAGE_META } from '../data/pageMeta';
 import Layout from '../layouts/Layout.astro';
 import { getRecentTracks } from '../lib/lastfm';
 import { trackArtistName } from '../lib/lastfmTrack';
@@ -16,7 +17,7 @@ const isPlaying = raw?.['@attr']?.nowplaying === 'true';
 const skin = getSkin(Astro);
 ---
 
-<Layout title="Now" description="What Maan is focused on right now — projects, music, and more.">
+<Layout {...PAGE_META['/now']}>
   {skin === 'retro' ? (
     <RetroNowPage currentTrack={currentTrack} isPlaying={isPlaying} />
   ) : skin === 'mandy' ? (

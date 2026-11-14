@@ -1,4 +1,5 @@
 ---
+import { PAGE_META } from '../../data/pageMeta';
 import Layout from '../../layouts/Layout.astro';
 import { getSkin } from '../../lib/skin';
 import { Tetris } from '../../page-components/Tetris.tsx';
@@ -8,7 +9,7 @@ import MandyIslandShell from '../../mandy-components/MandyIslandShell.astro';
 const skin = getSkin(Astro);
 ---
 
-<Layout title="Tetris" description="Play Tetris in your browser with leaderboard support.">
+<Layout {...PAGE_META['/games/tetris']}>
   {skin === 'retro' ? (
     <RetroIslandShell
       title="TETRIS.EXE"

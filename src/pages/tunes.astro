@@ -1,4 +1,5 @@
 ---
+import { PAGE_META } from '../data/pageMeta';
 import Layout from '../layouts/Layout.astro';
 import { getRecentTracks, getTopArtists, getTopAlbums } from '../lib/lastfm';
 import { getSkin } from '../lib/skin';
@@ -16,7 +17,7 @@ const [recentTracks, topArtists, topAlbums] = await Promise.all([
 const skin = getSkin(Astro);
 ---
 
-<Layout title="Tunes" description="What I'm listening to right now, powered by Last.fm scrobbles." isWide={true}>
+<Layout {...PAGE_META['/tunes']} isWide={true}>
   {skin === 'retro' ? (
     <RetroIslandShell
       title="MY MUSIC"
