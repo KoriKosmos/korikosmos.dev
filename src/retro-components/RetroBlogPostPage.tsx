@@ -43,28 +43,28 @@ export function RetroBlogPostPage({
   children,
 }: Props) {
   return (
-    <article>
+    <article className="h-entry">
       <div className="rt-panel">
         <div className="rt-panel__title">
           <span className="rt-mono">Now reading: {title}</span>
         </div>
 
         <div className="rt-panel__body">
-          <h1 className="rt-heading">{title}</h1>
+          <h1 className="rt-heading p-name">{title}</h1>
 
           <p className="rt-center rt-alt rt-small" style={{ marginBottom: "10px" }}>
             Posted on{" "}
-            <time dateTime={pubDate}>
+            <time className="dt-published" dateTime={pubDate}>
               <strong>{longDate(pubDate)}</strong>
             </time>{" "}
-            by <strong>Maan</strong>
+            by <strong className="p-author h-card">Maan</strong>
             <span> · {minutes} min read</span>
             {updatedDate && (
               <>
                 <span aria-hidden="true"> &nbsp;•&nbsp; </span>
                 <span className="rt-soft">
                   last updated{" "}
-                  <time dateTime={updatedDate}>{longDate(updatedDate)}</time>
+                  <time className="dt-updated" dateTime={updatedDate}>{longDate(updatedDate)}</time>
                 </span>
               </>
             )}
@@ -73,14 +73,14 @@ export function RetroBlogPostPage({
           <div className="rt-inset rt-serif" style={{ marginBottom: "10px" }}>
             <p style={{ margin: 0 }}>
               <span className="rt-alt rt-small rt-soft">In this entry: </span>
-              <em>{description}</em>
+              <em className="p-summary">{description}</em>
             </p>
           </div>
 
           <div className="rt-hr"></div>
 
           <PostContents headings={headings} retro />
-          <div data-reader-content className="rt-prose">{children}</div>
+          <div data-reader-content className="rt-prose e-content">{children}</div>
 
           <div className="rt-hr rt-hr--stars"></div>
 

@@ -1,4 +1,6 @@
+import { useEffect, useState } from 'react';
 import type { HeartStatus } from '../lib/heartRateTypes';
+import { sparklinePoints, type VitalsTrend } from '../lib/vitalsTrend';
 import { setHeartFloat, useHeartFloat, useHeartRate } from '../lib/heartRateStore';
 import { EcgTrace, MandyBpm, PulsoidWidgetFrame, heartZone, readingView, todayGroups, type Skin } from './heartRateParts';
 
@@ -174,6 +176,93 @@ export function HeartToday({ skin, reading, compact = false }: { skin: Skin; rea
   );
 }
 
+const SPARK_W = 120;
+const SPARK_H = 28;
+const fmt = (n: number) => n.toLocaleString('en-GB');
+const weekday = (day: string) => new Date(`${day}T12:00:00Z`).toLocaleDateString('en-GB', { weekday: 'short', timeZone: 'UTC' });
+
+/**
+ * "This week": a sparkline per stat over the last seven days, from the site's
+ * own daily log (/api/vitals). Fetched once when the card hydrates (it is
+ * client:visible), and absent until at least two days are logged.
+ */
+export function HeartWeek({ skin }: { skin: Skin }) {
+  const [trend, setTrend] = useState<VitalsTrend | null>(null);
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch('/api/vitals', { signal: controller.signal })
+      .then(res => (res.ok ? res.json() : null))
+      .then(data => { if (data?.series) setTrend(data); })
+      .catch(() => { /* No trend is fine. */ });
+    return () => controller.abort();
+  }, []);
+  if (!trend?.series.length) return null;
+
+  const range = `${weekday(trend.days[0])} to ${weekday(trend.days[trend.days.length - 1])}`;
+  const spark = (values: (number | null)[], label: string, className?: string) => (
+    <svg viewBox={`0 0 ${SPARK_W} ${SPARK_H}`} width={SPARK_W} height={SPARK_H} className={className} role="img" aria-label={label}>
+      <polyline points={sparklinePoints(values, SPARK_W, SPARK_H)} fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+    </svg>
+  );
+  const describe = (s: VitalsTrend['series'][number]) =>
+    `${s.label} over the last seven days: ${s.values.map(v => (v === null ? 'no data' : fmt(v))).join(', ')}`;
+
+  if (skin === 'retro') {
+    return (
+      <table className="rt-table rt-week">
+        <caption>THIS WEEK ({range.toUpperCase()})</caption>
+        <tbody>
+          {trend.series.map(s => (
+            <tr key={s.key}>
+              <th scope="row">{s.label}</th>
+              <td className="rt-week__spark">{spark(s.values, describe(s))}</td>
+              <td>{fmt(s.latest)}{s.unit ? ` ${s.unit}` : null}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    );
+  }
+
+  if (skin === 'mandy') {
+    return (
+      <>
+        <h3 className="md-subhead">this week</h3>
+        <dl className="md-week">
+          {trend.series.map(s => (
+            <div className="md-week__row" key={s.key}>
+              <dt>{s.label}</dt>
+              <dd>
+                {spark(s.values, describe(s), 'md-week__spark')}
+                <span className="md-week__latest">{fmt(s.latest)}{s.unit ? <span className="md-today__unit">{s.unit}</span> : null}</span>
+              </dd>
+            </div>
+          ))}
+        </dl>
+        <p className="md-note">{range}, latest on the right.</p>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <h3 className="mb-3 mt-6 text-sm font-semibold uppercase tracking-wide text-base-content/60">This week</h3>
+      <dl className="grid gap-2 sm:grid-cols-2">
+        {trend.series.map(s => (
+          <div className="flex items-center justify-between gap-3 rounded-lg bg-base-300/50 px-3 py-2" key={s.key}>
+            <dt className="text-sm text-base-content/70">{s.label}</dt>
+            <dd className="flex items-center gap-2 text-sm font-semibold tabular-nums">
+              {spark(s.values, describe(s), 'text-primary')}
+              <span>{fmt(s.latest)}{s.unit ? <span className="ml-1 text-xs font-normal text-base-content/60">{s.unit}</span> : null}</span>
+            </dd>
+          </div>
+        ))}
+      </dl>
+      <p className="mt-2 text-xs text-base-content/60">{range}, latest on the right.</p>
+    </>
+  );
+}
+
 interface Props {
   skin: Skin;
   initial: HeartStatus;
@@ -200,6 +289,7 @@ export function HeartRateCard({ skin, initial }: Props) {
           </p>
           <HeartMonitorBody skin="retro" reading={reading} />
           <HeartToday skin="retro" reading={reading} />
+          <HeartWeek skin="retro" />
           <p style={{ margin: '10px 0 0' }}>
             <button type="button" className="rt-btn" onClick={toggle} aria-pressed={open}>
               {open ? '✕ Close floating window' : '⧉ Pop out!!'}
@@ -225,6 +315,7 @@ export function HeartRateCard({ skin, initial }: Props) {
         </div>
         <HeartMonitorBody skin="mandy" reading={reading} />
         <HeartToday skin="mandy" reading={reading} />
+        <HeartWeek skin="mandy" />
         <p style={{ marginTop: '1.25rem' }}>
           <button type="button" className="md-btn md-btn--ghost" onClick={toggle} aria-pressed={open}>
             {open ? 'Close the floating monitor' : 'Pop it out'}
@@ -254,6 +345,7 @@ export function HeartRateCard({ skin, initial }: Props) {
       </p>
       <HeartMonitorBody skin="modern" reading={reading} />
       <HeartToday skin="modern" reading={reading} />
+      <HeartWeek skin="modern" />
     </section>
   );
 }

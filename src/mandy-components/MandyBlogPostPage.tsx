@@ -31,19 +31,21 @@ export function MandyBlogPostPage({ title, description, pubDate, updatedDate, mi
   const sections = headings.filter(heading => heading.depth === 2 || heading.depth === 3);
 
   return (
-    <article className="md-section md-section--first md-section--static">
+    <article className="md-section md-section--first md-section--static h-entry">
       <div className="md-section__head" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
-        <h1 className="md-section__title">{title}</h1>
+        <h1 className="md-section__title p-name">{title}</h1>
         <span className="md-section__tag">
-          <time dateTime={pubDate}>{formatPostDate(pubDate)}</time>
+          <time className="dt-published" dateTime={pubDate}>{formatPostDate(pubDate)}</time>
           {' · '}{minutes} min read
           {updatedDate && (
-            <> · updated <time dateTime={updatedDate}>{formatPostDate(updatedDate)}</time></>
+            <> · updated <time className="dt-updated" dateTime={updatedDate}>{formatPostDate(updatedDate)}</time></>
           )}
         </span>
       </div>
 
-      <p className="md-note" style={{ fontSize: '1.02rem', fontStyle: 'italic' }}>{description}</p>
+      <p className="md-note p-summary" style={{ fontSize: '1.02rem', fontStyle: 'italic' }}>{description}</p>
+      {/* Microformats author for IndieWeb readers; the byline is implied in this skin. */}
+      <span className="p-author h-card" hidden>Maan</span>
 
       {sections.length >= 2 && (
         <nav aria-label="On this page" className="md-toc">
@@ -58,7 +60,7 @@ export function MandyBlogPostPage({ title, description, pubDate, updatedDate, mi
         </nav>
       )}
 
-      <div data-reader-content className="md-prose">{children}</div>
+      <div data-reader-content className="md-prose e-content">{children}</div>
 
       <p className="md-actions">
         <a className="md-btn md-btn--ghost" href="/blog">&larr; All posts</a>

@@ -14,20 +14,20 @@ interface Props {
 
 export function BlogPostPage({ title, description, pubDate, updatedDate, minutes, headings, children }: Props) {
   return (
-    <article className="my-8 min-w-0">
+    <article className="h-entry my-8 min-w-0">
       <a href="/blog" className="text-sm link link-hover text-primary">← All posts</a>
       <header className="mt-5">
-        <h1 className="text-3xl sm:text-4xl font-bold leading-tight mb-4">{title}</h1>
+        <h1 className="p-name text-3xl sm:text-4xl font-bold leading-tight mb-4">{title}</h1>
         <p className="text-sm text-base-content/70 flex flex-wrap gap-x-3 gap-y-1">
-          <span>By Maan</span>
-          <time dateTime={pubDate}>{formatPostDate(pubDate)}</time>
+          <span>By <span className="p-author h-card">Maan</span></span>
+          <time className="dt-published" dateTime={pubDate}>{formatPostDate(pubDate)}</time>
           <span>{minutes} min read</span>
-          {updatedDate && <span>Updated <time dateTime={updatedDate}>{formatPostDate(updatedDate)}</time></span>}
+          {updatedDate && <span>Updated <time className="dt-updated" dateTime={updatedDate}>{formatPostDate(updatedDate)}</time></span>}
         </p>
-        <p className="text-lg text-base-content/80 mt-4">{description}</p>
+        <p className="p-summary text-lg text-base-content/80 mt-4">{description}</p>
       </header>
       <PostContents headings={headings} />
-      <div data-reader-content className="prose max-w-none mt-8">{children}</div>
+      <div data-reader-content className="e-content prose max-w-none mt-8">{children}</div>
     </article>
   );
 }

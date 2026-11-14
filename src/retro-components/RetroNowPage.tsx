@@ -63,14 +63,9 @@ export function RetroNowPage({ currentTrack, isPlaying }: Props) {
             <img src="/retro/gfx/new.svg" alt="(new!)" width="36" height="16" className="rt-pixel" />
           </h2>
           <ul>
-            <li>
-              This site &mdash; rebuilt it on Astro + React islands, now polishing the details (you&rsquo;re looking at
-              one of them).
-            </li>
-            <li>Tinkering with my home server and self-hosted services.</li>
-            <li>
-              Slowly growing the little <a href="/games">games hub</a> here.
-            </li>
+            <li>This site &mdash; <a href="/blog/mandy-mode">Mandy mode</a>, the skin inspired by amandata.dev, is now the default, and I&rsquo;m still polishing the details (you&rsquo;re looking at one of them).</li>
+            <li>My home server, and the Health Display service on it that merges my phone, watch and rings into one feed. It&rsquo;s where the heart rate in the footer comes from.</li>
+            <li>Growing the little <a href="/games">games hub</a>: controller support, vibration, and now a daily challenge for each game.</li>
           </ul>
           <img
             className="rt-construction"
