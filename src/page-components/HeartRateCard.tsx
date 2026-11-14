@@ -1,6 +1,6 @@
 import type { HeartStatus } from '../lib/heartRateTypes';
 import { setHeartFloat, useHeartFloat, useHeartRate } from '../lib/heartRateStore';
-import { EcgTrace, MandyBpm, PulsoidWidgetFrame, heartZone, readingView, type Skin } from './heartRateParts';
+import { EcgTrace, MandyBpm, PulsoidWidgetFrame, heartZone, readingView, todayGroups, type Skin } from './heartRateParts';
 
 const HEALTH_DISPLAY = 'https://github.com/KoriKosmos/health-display';
 const OFF_NOTE = 'no reading right now: my watch is probably charging';
@@ -77,12 +77,100 @@ export function HeartMonitorBody({ skin, reading }: { skin: Skin; reading: Heart
   );
 }
 
+/** Today's stats, grouped heart / day / night; only rows with data render. */
+export function HeartToday({ skin, reading }: { skin: Skin; reading: HeartStatus }) {
+  const groups = todayGroups(reading.mode === 'widget' ? undefined : reading.stats);
+  if (!groups.length) return null;
+
+  if (skin === 'retro') {
+    const icons = { heart: '♥', day: '☀', night: '☾' };
+    return (
+      <table className="rt-table rt-today">
+        <caption>TODAY&apos;S STATS</caption>
+        {groups.map(({ group, title, rows }) => (
+          <tbody key={group}>
+            {rows.map((row, index) => (
+              <tr key={row.key}>
+                {index === 0 ? (
+                  <th scope="rowgroup" rowSpan={rows.length}>
+                    <span aria-hidden="true">{icons[group]}</span> {title.toUpperCase()}
+                  </th>
+                ) : null}
+                <td>{row.label}</td>
+                <td>
+                  {row.key === 'steps' && /^\d+$/.test(row.value)
+                    ? <span className="rt-heart__lcd">{row.value.padStart(6, '0')}</span>
+                    : row.value}
+                  {row.unit ? ` ${row.unit}` : null}
+                  {row.src ? <> <span className="rt-today__src">({row.src})</span></> : null}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        ))}
+      </table>
+    );
+  }
+
+  if (skin === 'mandy') {
+    return (
+      <>
+        <h3 className="md-subhead">today</h3>
+        <div className="md-today">
+          {groups.map(({ group, title, rows }) => (
+            <div className="md-today__group" key={group}>
+              <h4 className="md-today__title">{title}</h4>
+              <dl className="md-today__list">
+                {rows.map(row => (
+                  <div className="md-today__row" key={row.key}>
+                    <dt>{row.label}</dt>
+                    <dd>
+                      {row.value}
+                      {row.unit ? <span className="md-today__unit">{row.unit}</span> : null}
+                      {row.src ? <span className="md-today__src">{row.src}</span> : null}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          ))}
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <h3 className="mb-3 mt-6 text-sm font-semibold uppercase tracking-wide text-base-content/60">Today</h3>
+      <div className="grid gap-3 sm:grid-cols-[repeat(auto-fit,minmax(10rem,1fr))]">
+        {groups.map(({ group, title, rows }) => (
+          <div className="rounded-lg bg-base-300/50 p-3" key={group}>
+            <h4 className="mb-2 text-sm font-semibold">{title}</h4>
+            <dl className="space-y-1 text-sm">
+              {rows.map(row => (
+                <div className="flex items-baseline justify-between gap-2" key={row.key}>
+                  <dt className="text-base-content/70">{row.label}</dt>
+                  <dd className="flex items-baseline gap-1 text-right font-semibold tabular-nums">
+                    {row.value}
+                    {row.unit ? <span className="text-xs font-normal text-base-content/60">{row.unit}</span> : null}
+                    {row.src ? <span className="badge badge-ghost badge-xs font-normal">{row.src}</span> : null}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
 interface Props {
   skin: Skin;
   initial: HeartStatus;
 }
 
-/** "Its own box" on /about, with a button that pops the floating window. */
+/** "Its own box" on /about: the monitor, today's stats, and a pop-out button. */
 export function HeartRateCard({ skin, initial }: Props) {
   const reading = useHeartRate(initial);
   const { open } = useHeartFloat();
@@ -102,6 +190,7 @@ export function HeartRateCard({ skin, initial }: Props) {
             server I wrote ({link()}), and it reports to you. The future is amazing.
           </p>
           <HeartMonitorBody skin="retro" reading={reading} />
+          <HeartToday skin="retro" reading={reading} />
           <p style={{ margin: '10px 0 0' }}>
             <button type="button" className="rt-btn" onClick={toggle} aria-pressed={open}>
               {open ? '✕ Close floating window' : '⧉ Pop out!!'}
@@ -121,11 +210,12 @@ export function HeartRateCard({ skin, initial }: Props) {
         </div>
         <div className="md-section__body">
           <p>
-            My heart rate right now &mdash; my watch, ring and phone, merged by{' '}
+            My heart rate right now, plus the rest of today &mdash; my watch, ring and phone, merged by{' '}
             {link()}, a little server I wrote.
           </p>
         </div>
         <HeartMonitorBody skin="mandy" reading={reading} />
+        <HeartToday skin="mandy" reading={reading} />
         <p style={{ marginTop: '1.25rem' }}>
           <button type="button" className="md-btn md-btn--ghost" onClick={toggle} aria-pressed={open}>
             {open ? 'Close the floating monitor' : 'Pop it out'}
@@ -138,7 +228,7 @@ export function HeartRateCard({ skin, initial }: Props) {
   return (
     <section className="bg-base-200 rounded-xl p-6 shadow-lg my-8" aria-labelledby="about-heart">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 id="about-heart" className="text-2xl font-bold">Live heart rate</h2>
+        <h2 id="about-heart" className="text-2xl font-bold">Heart rate &amp; today</h2>
         <button
           type="button"
           onClick={toggle}
@@ -150,10 +240,11 @@ export function HeartRateCard({ skin, initial }: Props) {
         </button>
       </div>
       <p className="mb-4 mt-1 text-sm text-base-content/70">
-        My heart rate right now: my watch, ring and phone, merged by{' '}
+        My heart rate right now, and how today&apos;s going: my watch, ring and phone, merged by{' '}
         {link('underline')}, a little server I wrote.
       </p>
       <HeartMonitorBody skin="modern" reading={reading} />
+      <HeartToday skin="modern" reading={reading} />
     </section>
   );
 }

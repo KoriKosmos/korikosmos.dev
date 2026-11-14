@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import type { HeartStatus } from '../lib/heartRateTypes';
+import type { HeartStats, HeartStatus, StatGroup, StatValues } from '../lib/heartRateTypes';
 
 /** Pieces shared by the heart-rate footer, /about box, and floating window. */
 
@@ -176,6 +176,67 @@ export function readingView(reading: HeartStatus) {
 export function MandyBpm({ bpm, recent }: { bpm: number | string; recent: boolean }) {
   if (!recent) return <>{bpm}</>;
   return <><span className="md-approx" aria-hidden="true">~</span><span className="md-sr-only">about </span>{bpm}</>;
+}
+
+export interface TodayRow {
+  key: string;
+  label: string;
+  value: string;
+  /** Only for bare numbers, so a preformatted "19 min" never reads "19 min min". */
+  unit?: string;
+  /** The device the value came from ("watch", "oura"). */
+  src?: string;
+}
+
+export interface TodayGroup {
+  group: StatGroup;
+  title: string;
+  rows: TodayRow[];
+}
+
+const ROWS: Record<StatGroup, { title: string; rows: [key: string, label: string, unit?: string][] }> = {
+  // bpm is left out: the monitor above the stats already shows it.
+  heart: { title: 'Heart', rows: [['avg', 'avg', 'bpm'], ['rhr', 'resting', 'bpm'], ['hrv', 'HRV', 'ms']] },
+  day: { title: 'Day', rows: [['steps', 'steps'], ['active', 'active', 'min'], ['calories', 'calories', 'kcal'], ['azm', 'zone min']] },
+  night: {
+    title: 'Night',
+    rows: [['sleep', 'sleep'], ['sleep_score', 'sleep score'], ['readiness', 'readiness'], ['recovery', 'recovery'], ['stress', 'stress']],
+  },
+};
+
+const isNumber = (value: string) => /^[\d.,]+$/.test(value);
+
+function row(values: StatValues, key: string, label: string, unit?: string): TodayRow | null {
+  const value = values[key as keyof StatValues];
+  if (!value) return null;
+  const src = values[`${key}_src` as keyof StatValues];
+  return { key, label, value, ...(unit && isNumber(value) ? { unit } : {}), ...(src ? { src } : {}) };
+}
+
+/** Today's stats as card rows. Rows and groups without data are left out. */
+export function todayGroups(stats: HeartStats | undefined): TodayGroup[] {
+  if (!stats) return [];
+  const groups: TodayGroup[] = [];
+  for (const group of ['heart', 'day', 'night'] as const) {
+    const values = stats[group];
+    if (!values) continue;
+    const rows: TodayRow[] = [];
+    if (group === 'heart') {
+      // min and max read best as one "range" row.
+      const { min, max } = values;
+      const range = min && max ? `${min}–${max}` : min ?? max;
+      if (range) {
+        const src = values.min_src ?? values.max_src;
+        rows.push({ key: 'range', label: min && max ? 'range' : min ? 'low' : 'high', value: range, unit: 'bpm', ...(src ? { src } : {}) });
+      }
+    }
+    for (const [key, label, unit] of ROWS[group].rows) {
+      const next = row(values, key, label, unit);
+      if (next) rows.push(next);
+    }
+    if (rows.length) groups.push({ group, title: ROWS[group].title, rows });
+  }
+  return groups;
 }
 
 /**
