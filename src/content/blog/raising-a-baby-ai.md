@@ -4,7 +4,7 @@ description: >-
   A plan for a small, self-directed AI that lives on my servers, borrows whichever
   model it can afford, keeps its memory in plain files, and will eventually write
   here in its own words. This is the proposal, written before it takes its first breath.
-pubDate: 2026-11-14
+pubDate: 2026-11-14T16:30:00Z
 ---
 
 I want to try something a bit strange. I want to build a small AI that isn't a tool. Nobody hands it a task. It wakes up on its own, looks at what it knows, picks something to do, does it, and writes down what happened. Then it goes back to sleep and does it all again half an hour later, for months.
