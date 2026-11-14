@@ -234,6 +234,7 @@ Mandy mode takes the general structure of [amandata.dev](https://amandata.dev), 
 - Keep commits focused and write a short imperative subject line (e.g. `Fix navbar links`).
 - I run `npm run check`, `npm test`, `npm run build` and `npm run test:render` before committing.
 - New pages go in `src/pages`, and reusable pieces belong in `src/components`.
+- Blog posts sort newest first by `pubDate`, and ties fall back to the title. If two posts go out on the same day, give the later one a time (`pubDate: 2026-11-14T16:30:00Z`) so it lists first. Keep the time in the afternoon UTC so the date still reads the same in every skin.
 - Never apply a "codex" label to PRs; omit ChatGPT chat links.
 - Write documentation in first-person voice, from my perspective.
 - Keep `README.md` in sync with features.
