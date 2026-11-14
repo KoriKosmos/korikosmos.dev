@@ -342,6 +342,14 @@ html[data-skin='mandy'] {
   letter-spacing: 0.1em; text-transform: uppercase; color: var(--md-tag);
 }
 [data-skin='mandy'] .md-today__list { margin: 0; }
+/* The floating window's version: one column, tighter. */
+[data-skin='mandy'] .md-today__heading {
+  margin: 1rem 0 0.5rem;
+  font-family: var(--md-micro); font-size: 1.2rem; letter-spacing: 0.1em; color: var(--md-tag);
+}
+[data-skin='mandy'] .md-today--compact { grid-template-columns: 1fr; gap: 0.5rem; }
+[data-skin='mandy'] .md-today--compact .md-today__group { padding: 0.5rem 0.75rem; }
+[data-skin='mandy'] .md-today--compact .md-today__title { font-size: 1.1rem; margin-bottom: 0.2rem; }
 [data-skin='mandy'] .md-today__row {
   display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem;
   padding: 0.15rem 0;
@@ -381,7 +389,7 @@ html[data-skin='mandy'] {
   font-size: 1rem; padding: 0.1rem 0.35rem; border-radius: 3px;
 }
 [data-skin='mandy'] .md-heartwin__close:hover { background: rgba(255, 255, 255, 0.12); }
-[data-skin='mandy'] .md-heartwin__body { padding: 0.75rem; }
+[data-skin='mandy'] .md-heartwin__body { padding: 0.75rem; max-height: calc(100vh - 10rem); overflow-y: auto; }
 [data-skin='mandy'] .md-heartdock { position: fixed; right: 1rem; bottom: 4rem; z-index: 70; }
 
 /* skin switcher dock (SkinToggle.tsx, mandy branch) */

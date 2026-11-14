@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent as ReactPointerEvent } from 'react';
 import type { HeartStatus } from '../lib/heartRateTypes';
 import { setHeartFloat, useHeartFloat, useHeartRate } from '../lib/heartRateStore';
-import { HeartMonitorBody } from './HeartRateCard';
+import { HeartMonitorBody, HeartToday } from './HeartRateCard';
 import type { Skin } from './heartRateParts';
 
 /**
- * A toggleable, draggable floating heart monitor, on every page of every skin.
- * A small ♥ button (stacked above the cat toggle, bottom right) opens it; the
- * /about box's "pop out" button drives the same state.
+ * A toggleable, draggable floating vitals window, on every page of every skin:
+ * the heart monitor plus today's stats (the compact HeartToday). A small
+ * ♥ Vitals button (stacked above the cat toggle, bottom right) opens it; the
+ * /about box's "pop out" button drives the same state. The body scrolls when
+ * the stats are taller than the viewport allows.
  *
  * Persistence: open state + position live in localStorage via
  * heartRateStore, so the window comes back after the full-reload navigations
@@ -76,18 +78,18 @@ export function HeartRateFloat({ skin, initial }: Props) {
 
   const at = live ?? (float.x !== null && float.y !== null ? { x: float.x, y: float.y } : null);
   const position = at ? { left: at.x, top: at.y } : { right: 16, bottom: 112 };
-  const toggleLabel = float.open ? 'Hide the floating heart monitor' : 'Show a floating heart monitor';
+  const toggleLabel = float.open ? 'Hide the floating vitals window' : 'Show a floating vitals window';
   const dragHandlers = { onPointerDown, onPointerMove, onPointerUp, onPointerCancel: onPointerUp };
   const onKeyDown = (event: KeyboardEvent) => { if (event.key === 'Escape') close(); };
-  const title = 'Heart monitor';
+  const title = 'Vitals';
 
   const toggleButton = skin === 'retro' ? (
     <button type="button" className="rt-btn rt-heartdock" onClick={toggle} aria-pressed={float.open} aria-label={toggleLabel} title={toggleLabel}>
-      ♥ {float.open ? 'Hide' : 'Heart'}
+      ♥ {float.open ? 'Hide' : 'Vitals'}
     </button>
   ) : skin === 'mandy' ? (
     <button type="button" className="md-skins__btn md-heartdock" onClick={toggle} aria-pressed={float.open} aria-label={toggleLabel} title={toggleLabel}>
-      <span aria-hidden="true">♥</span> {float.open ? 'Hide' : 'Heart'}
+      <span aria-hidden="true">♥</span> {float.open ? 'Hide' : 'Vitals'}
     </button>
   ) : (
     <button
@@ -98,13 +100,18 @@ export function HeartRateFloat({ skin, initial }: Props) {
       title={toggleLabel}
       className="fixed bottom-16 right-4 z-50 flex items-center gap-1.5 rounded bg-base-200 px-3 py-2 text-sm text-base-content transition-transform duration-200 hover:scale-105"
     >
-      <span className="text-error" aria-hidden="true">♥</span> {float.open ? 'Hide' : 'Heart'}
+      <span className="text-error" aria-hidden="true">♥</span> {float.open ? 'Hide' : 'Vitals'}
     </button>
   );
 
   if (!float.open) return toggleButton;
 
-  const body = <HeartMonitorBody skin={skin} reading={reading} />;
+  const body = (
+    <>
+      <HeartMonitorBody skin={skin} reading={reading} />
+      <HeartToday skin={skin} reading={reading} compact />
+    </>
+  );
 
   if (skin === 'retro') {
     return (
@@ -112,10 +119,10 @@ export function HeartRateFloat({ skin, initial }: Props) {
         {toggleButton}
         <div ref={windowRef} className="rt-heartwin" style={position} role="region" aria-label={title} onKeyDown={onKeyDown}>
           <div className="rt-panel__title rt-heartwin__bar" {...dragHandlers}>
-            <span>♥ HEART_MONITOR.EXE</span>
-            <button type="button" className="rt-heartwin__close" onClick={close} aria-label="Close the heart monitor">✕</button>
+            <span>♥ VITALS.EXE</span>
+            <button type="button" className="rt-heartwin__close" onClick={close} aria-label="Close the vitals window">✕</button>
           </div>
-          <div className="rt-panel__body">{body}</div>
+          <div className="rt-panel__body rt-heartwin__body">{body}</div>
         </div>
       </>
     );
@@ -128,7 +135,7 @@ export function HeartRateFloat({ skin, initial }: Props) {
         <div ref={windowRef} className="md-heartwin" style={position} role="region" aria-label={title} onKeyDown={onKeyDown}>
           <div className="md-heartwin__bar" {...dragHandlers}>
             <span>♥ vitals</span>
-            <button type="button" className="md-heartwin__close" onClick={close} aria-label="Close the heart monitor">✕</button>
+            <button type="button" className="md-heartwin__close" onClick={close} aria-label="Close the vitals window">✕</button>
           </div>
           <div className="md-heartwin__body">{body}</div>
         </div>
@@ -152,17 +159,17 @@ export function HeartRateFloat({ skin, initial }: Props) {
           style={{ touchAction: 'none' }}
           {...dragHandlers}
         >
-          <span><span className="text-error" aria-hidden="true">♥</span> Heart monitor</span>
+          <span><span className="text-error" aria-hidden="true">♥</span> Vitals</span>
           <button
             type="button"
             onClick={close}
-            aria-label="Close the heart monitor"
+            aria-label="Close the vitals window"
             className="rounded px-1.5 text-base-content/60 hover:bg-base-300 hover:text-base-content"
           >
             ✕
           </button>
         </div>
-        <div className="p-3">{body}</div>
+        <div className="max-h-[calc(100vh-10rem)] overflow-y-auto p-3">{body}</div>
       </div>
     </>
   );

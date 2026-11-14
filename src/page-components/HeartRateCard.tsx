@@ -77,15 +77,20 @@ export function HeartMonitorBody({ skin, reading }: { skin: Skin; reading: Heart
   );
 }
 
-/** Today's stats, grouped heart / day / night; only rows with data render. */
-export function HeartToday({ skin, reading }: { skin: Skin; reading: HeartStatus }) {
+/**
+ * Today's stats, grouped heart / day / night; only rows with data render.
+ * `compact` is the floating window's version: one column, tighter, and plain
+ * text titles instead of headings, since the window sits on every page and
+ * shouldn't add to each page's heading outline.
+ */
+export function HeartToday({ skin, reading, compact = false }: { skin: Skin; reading: HeartStatus; compact?: boolean }) {
   const groups = todayGroups(reading.mode === 'widget' ? undefined : reading.stats);
   if (!groups.length) return null;
 
   if (skin === 'retro') {
     const icons = { heart: '♥', day: '☀', night: '☾' };
     return (
-      <table className="rt-table rt-today">
+      <table className={`rt-table rt-today${compact ? ' rt-today--compact' : ''}`}>
         <caption>TODAY&apos;S STATS</caption>
         {groups.map(({ group, title, rows }) => (
           <tbody key={group}>
@@ -115,11 +120,11 @@ export function HeartToday({ skin, reading }: { skin: Skin; reading: HeartStatus
   if (skin === 'mandy') {
     return (
       <>
-        <h3 className="md-subhead">today</h3>
-        <div className="md-today">
+        {compact ? <p className="md-today__heading">today</p> : <h3 className="md-subhead">today</h3>}
+        <div className={`md-today${compact ? ' md-today--compact' : ''}`}>
           {groups.map(({ group, title, rows }) => (
             <div className="md-today__group" key={group}>
-              <h4 className="md-today__title">{title}</h4>
+              {compact ? <p className="md-today__title">{title}</p> : <h4 className="md-today__title">{title}</h4>}
               <dl className="md-today__list">
                 {rows.map(row => (
                   <div className="md-today__row" key={row.key}>
@@ -141,11 +146,15 @@ export function HeartToday({ skin, reading }: { skin: Skin; reading: HeartStatus
 
   return (
     <>
-      <h3 className="mb-3 mt-6 text-sm font-semibold uppercase tracking-wide text-base-content/60">Today</h3>
-      <div className="grid gap-3 sm:grid-cols-[repeat(auto-fit,minmax(10rem,1fr))]">
+      {compact
+        ? <p className="mb-2 mt-4 text-xs font-semibold uppercase tracking-wide text-base-content/60">Today</p>
+        : <h3 className="mb-3 mt-6 text-sm font-semibold uppercase tracking-wide text-base-content/60">Today</h3>}
+      <div className={compact ? 'grid gap-2' : 'grid gap-3 sm:grid-cols-[repeat(auto-fit,minmax(10rem,1fr))]'}>
         {groups.map(({ group, title, rows }) => (
-          <div className="rounded-lg bg-base-300/50 p-3" key={group}>
-            <h4 className="mb-2 text-sm font-semibold">{title}</h4>
+          <div className={compact ? 'rounded-lg bg-base-300/50 px-3 py-2' : 'rounded-lg bg-base-300/50 p-3'} key={group}>
+            {compact
+              ? <p className="mb-1 text-sm font-semibold">{title}</p>
+              : <h4 className="mb-2 text-sm font-semibold">{title}</h4>}
             <dl className="space-y-1 text-sm">
               {rows.map(row => (
                 <div className="flex items-baseline justify-between gap-2" key={row.key}>

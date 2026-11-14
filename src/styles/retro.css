@@ -1057,6 +1057,10 @@ a:hover > .rt-btn88 { border-color: var(--rt-accent); }
 }
 [data-skin='retro'] .rt-today th[scope='rowgroup'] { vertical-align: top; white-space: nowrap; }
 [data-skin='retro'] .rt-today__src { color: var(--rt-ink-soft); font-size: 0.85em; }
+[data-skin='retro'] .rt-today--compact { font-size: 0.8em; }
+[data-skin='retro'] .rt-today--compact th,
+[data-skin='retro'] .rt-today--compact td { padding: 2px 4px; }
+[data-skin='retro'] .rt-heartwin__body { max-height: calc(100vh - 10rem); overflow-y: auto; }
 /* Floating window: a draggable Win9x window. */
 [data-skin='retro'] .rt-heartwin {
   position: fixed;
