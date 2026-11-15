@@ -7,6 +7,9 @@ services:
         # public app slug into the client bundle
         - KEYSTATIC_GITHUB_CLIENT_ID=${KEYSTATIC_GITHUB_CLIENT_ID}
         - PUBLIC_KEYSTATIC_GITHUB_APP_SLUG=${PUBLIC_KEYSTATIC_GITHUB_APP_SLUG}
+        # Build-time: the BountyIdle commit to bake in (set by update-deploy.sh;
+        # empty keeps the copy committed in public/games/bounty-office/)
+        - BOUNTY_OFFICE_REF=${BOUNTY_OFFICE_REF:-}
     ports:
       - "8484:4321"
     environment:
