@@ -32,12 +32,14 @@ COPY . .
 # Bounty Office: update-deploy.sh passes the commit at the tip of BountyIdle's
 # main, and the image gets that version of the game in place of the copy
 # committed in public/games/bounty-office/. A new commit is a new arg value, so
-# Docker can't reuse a cached copy of the old one. If GitHub can't be reached
-# the build keeps the committed copy rather than failing the deploy.
+# Docker can't reuse a cached copy of the old one. A failed fetch must fail
+# the build: falling back here would cache the committed copy under the real
+# commit, and every later deploy of that commit would reuse it without trying
+# again. update-deploy.sh does the fallback instead, by rebuilding with the arg
+# empty, which is a different cache key.
 ARG BOUNTY_OFFICE_REF
 RUN if [ -n "$BOUNTY_OFFICE_REF" ]; then \
-      node scripts/sync-bounty-office.mjs "$BOUNTY_OFFICE_REF" \
-      || echo "WARNING: could not fetch Bounty Office $BOUNTY_OFFICE_REF; keeping the committed copy"; \
+      node scripts/sync-bounty-office.mjs "$BOUNTY_OFFICE_REF"; \
     fi
 RUN npm run build
 
