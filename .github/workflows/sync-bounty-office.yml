@@ -1,0 +1,104 @@
+name: Sync Bounty Office
+
+# Copies the latest Bounty Office (KoriKosmos/BountyIdle) into
+# public/games/bounty-office/, commits it to main, and starts a deploy.
+#
+# Triggers:
+# - repository_dispatch `bounty-office-updated`: sent by BountyIdle's
+#   notify-site workflow on every push to its main, with the commit SHA.
+#   Sending one needs write access to this repo, so it can't come from a
+#   stranger.
+# - a daily schedule, as a fallback if a dispatch is ever lost.
+# - workflow_dispatch, to sync by hand (optionally to a given ref).
+#
+# SECURITY (this is a PUBLIC repo): runs on GitHub's hosted runners, never the
+# self-hosted deploy runner, and only ever passes the dispatch payload to the
+# sync script through an env var after checking it is a commit SHA.
+on:
+  repository_dispatch:
+    types: [bounty-office-updated]
+  schedule:
+    - cron: '17 4 * * *'
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: BountyIdle branch, tag or commit to sync (default main)
+        required: false
+        default: ''
+
+# Pushes to main must not race each other; a newer sync queues behind.
+concurrency:
+  group: sync-bounty-office
+  cancel-in-progress: false
+
+permissions:
+  contents: write # commit the synced copy to main
+  actions: write # start deploy.yml (a GITHUB_TOKEN push doesn't trigger it)
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Pick the BountyIdle ref
+        id: ref
+        env:
+          DISPATCH_SHA: ${{ github.event.client_payload.sha }}
+          INPUT_REF: ${{ github.event.inputs.ref }}
+        run: |
+          ref=""
+          if [ -n "$DISPATCH_SHA" ]; then
+            if ! printf '%s' "$DISPATCH_SHA" | grep -Eq '^[0-9a-f]{40}$'; then
+              echo "::error::client_payload.sha is not a commit SHA"
+              exit 1
+            fi
+            ref="$DISPATCH_SHA"
+          elif [ -n "$INPUT_REF" ]; then
+            if ! printf '%s' "$INPUT_REF" | grep -Eq '^[A-Za-z0-9._/-]{1,100}$'; then
+              echo "::error::ref has unexpected characters"
+              exit 1
+            fi
+            ref="$INPUT_REF"
+          fi
+          echo "ref=$ref" >> "$GITHUB_OUTPUT"
+          echo "Syncing BountyIdle ${ref:-main}"
+
+      # The script and its test use only Node built-ins, so no npm install.
+      - name: Copy the game in
+        env:
+          REF: ${{ steps.ref.outputs.ref }}
+        run: node scripts/sync-bounty-office.mjs ${REF:+"$REF"}
+
+      - name: Check the copy
+        run: node --experimental-strip-types --test tests/bountyOffice.test.ts
+
+      - name: Commit and push
+        id: commit
+        run: |
+          if [ -z "$(git status --porcelain -- public/games/bounty-office)" ]; then
+            echo "Already up to date."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          commit=$(sed -n 's/^commit \([0-9a-f]\{7\}\).*/\1/p' public/games/bounty-office/SOURCE.txt)
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898283+github-actions[bot]@users.noreply.github.com'
+          git add public/games/bounty-office
+          git commit -m "Sync Bounty Office to ${commit}" \
+            -m "https://github.com/KoriKosmos/BountyIdle/commit/${commit}"
+          git push origin HEAD:main
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy
+        if: steps.commit.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run deploy.yml --ref main
